@@ -41,6 +41,8 @@ npm run preview
 
 首版交付目标日期为 **2026 年 11 月 30 日**。已确认的完整范围与开发顺序见 [项目计划](docs/PROJECT_PLAN.md)。
 
+六类场景的概念图与说明见 [概念图集](docs/concept-art/README.md)。
+
 详细设计与任务书保存于 Notion，访问权限由页面共享设置决定。[设计与任务书](https://app.notion.com/p/414a0724a2ab818084e1ff97631447d9)
 
 ## 主要文件
