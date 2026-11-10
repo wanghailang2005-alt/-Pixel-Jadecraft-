@@ -3,13 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pixel Jadecraft · 开发环境</title>
-    <style>
-      body { margin: 0; background: #101c1b; display: grid; place-items: center; min-height: 100vh; }
-      canvas { max-width: 100%; height: auto; }
-    </style>
+    <meta name="theme-color" content="#172b2b" />
+    <title>像素琢玉 · Pixel Jadecraft</title>
   </head>
   <body>
+    <main>
+      <div class="frame-heading"><span>像素琢玉</span><span>一石一器，琢见光华</span></div>
+      <div id="game" aria-label="像素琢玉游戏">
+        <div id="canvas" aria-hidden="true"></div>
+        <div id="interface"></div>
+      </div>
+      <footer>Pixel Jadecraft <span>基础系统原型 · 鼠标操作 · Esc 返回</span></footer>
+    </main>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

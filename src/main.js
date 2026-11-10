@@ -1,25 +1,16 @@
-import Phaser from 'phaser';
+import './style.css';
+import { GameStore, MATERIALS, tasks } from './state.js';
+import { createInterface } from './ui.js';
+import { createRuntime } from './runtime.js';
 
-class SetupScene extends Phaser.Scene {
-  create() {
-    this.add.text(480, 230, '玉石游戏 · 开发环境已就绪', {
-      fontFamily: 'Microsoft YaHei, sans-serif',
-      fontSize: '30px',
-      color: '#b6ebc7',
-    }).setOrigin(0.5);
-    this.add.text(480, 295, `Phaser ${Phaser.VERSION}`, {
-      fontFamily: 'monospace',
-      fontSize: '20px',
-      color: '#d5c69e',
-    }).setOrigin(0.5);
-  }
-}
-
-new Phaser.Game({
-  type: Phaser.AUTO,
-  width: 960,
-  height: 540,
-  backgroundColor: '#101c1b',
-  pixelArt: true,
-  scene: SetupScene,
+const store = new GameStore();
+let runtime;
+const ui = createInterface(store, MATERIALS, tasks, {
+  onOverlayChange: open => runtime?.setPaused('overlay', open),
 });
+runtime = createRuntime(store);
+store.addEventListener('change', () => { runtime.sync(); ui.render(); });
+window.addEventListener('beforeunload', event => {
+  if (store.dirty) { event.preventDefault(); event.returnValue = ''; }
+});
+ui.render();
