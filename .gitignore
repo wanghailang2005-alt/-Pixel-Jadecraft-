@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+UnityEditor/
+*.log
+unity-install.ps1
