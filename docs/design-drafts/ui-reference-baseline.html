@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pixel Jadecraft 原图布局基准</title>
+    <style>
+      body {
+        margin: 0;
+        background: #101c1b;
+        color: #efe0be;
+        font-family: sans-serif;
+      }
+      nav {
+        padding: 16px;
+        display: flex;
+        gap: 24px;
+      }
+      a { color: inherit; }
+      figure {
+        margin: 0 0 24px;
+        overflow-x: auto;
+      }
+      img {
+        display: block;
+        width: 1024px;
+        height: auto;
+        image-rendering: pixelated;
+      }
+      figcaption { padding: 12px 16px; }
+    </style>
+  </head>
+  <body>
+    <nav aria-label="原图对照">
+      <a href="#components">基础 UI 原图</a>
+      <a href="#dialogs">弹窗与设置原图</a>
+    </nav>
+    <main>
+      <figure id="components">
+        <img src="../concept-art/07-ui-components.png" alt="基础 UI 原图，按面板、按钮、物品栏、进度控件四列排列" />
+        <figcaption>基础 UI 的布局、尺寸比例、组件排列与像素材质基准。</figcaption>
+      </figure>
+      <figure id="dialogs">
+        <img src="../concept-art/08-dialogs-and-menus.png" alt="弹窗原图，按确认弹窗、任务日志、设置菜单三列排列" />
+        <figcaption>弹窗与设置的布局、字段分布、边框与装饰基准。</figcaption>
+      </figure>
+    </main>
+  </body>
+</html>
