@@ -1,5 +1,6 @@
 export const SAVE_KEY = 'pixel-jadecraft.save.v1';
 export const BACKUP_KEY = 'pixel-jadecraft.backup.v1';
+export const PREV_BACKUP_KEY = 'pixel-jadecraft.backup.prev.v1';
 export const SETTINGS_KEY = 'pixel-jadecraft.settings.v1';
 export const MATERIALS = Object.freeze({
   nephrite: { name: '和田玉原石', color: '#b7d8ac' },
@@ -38,8 +39,14 @@ export function validateState(value) {
   if (!Array.isArray(value.exhibits) || value.exhibits.length !== 3) fail();
   const occupied = value.exhibits.filter(id => id !== null);
   if (new Set(occupied).size !== occupied.length || occupied.some(id => !value.pieces.some(p => p.id === id))) fail();
-  // A validated crafting schema will land alongside the crafting system.
-  if (value.crafting !== null) fail();
+  if (value.crafting !== null) {
+    const crafting = value.crafting;
+    if (!crafting || typeof crafting !== 'object' || Array.isArray(crafting)) fail();
+    if (!['shape', 'carve', 'polish'].includes(crafting.step)) fail();
+    if (!Number.isInteger(crafting.progress) || crafting.progress < 0 || crafting.progress > 100) fail();
+    if (typeof crafting.materialId !== 'string' || !crafting.materialId.trim()) fail();
+    if (typeof crafting.tool !== 'string') fail();
+  }
   if (!value.settings || typeof value.settings.muted !== 'boolean' || !Number.isFinite(value.settings.volume) || value.settings.volume < 0 || value.settings.volume > 1) fail();
   if (value.updatedAt !== null && (typeof value.updatedAt !== 'string' || !Number.isFinite(Date.parse(value.updatedAt)))) fail();
   const opening = Object.hasOwn(value, 'opening') ? value.opening : { introduced: true, polished: false };
@@ -83,14 +90,16 @@ export class GameStore extends EventTarget {
     const previous = this.storage.getItem(SAVE_KEY);
     if (previous === null) return;
     try { validateState(JSON.parse(previous)); } catch { return; }
+    const backup = this.storage.getItem(BACKUP_KEY);
+    if (backup !== null) this.storage.setItem(PREV_BACKUP_KEY, backup);
     this.storage.setItem(BACKUP_KEY, previous);
   }
-  recovery() {
-    try { return validateState(JSON.parse(this.storage?.getItem(BACKUP_KEY) ?? 'null')); }
+  recovery(key = BACKUP_KEY) {
+    try { return validateState(JSON.parse(this.storage?.getItem(key) ?? 'null')); }
     catch { return null; }
   }
-  recover() {
-    const backup = this.recovery();
+  recover(key = BACKUP_KEY) {
+    const backup = this.recovery(key);
     if (!backup) throw new Error('没有可恢复的有效备份。');
     this.importSave(JSON.stringify(backup));
   }
@@ -145,7 +154,7 @@ export class GameStore extends EventTarget {
     this.notify();
   }
   /** Shared settlement for the forthcoming mining interaction. */
-  addMaterial(material, id = crypto.randomUUID()) {
+  addMaterial(material, id = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`) {
     if (!this.active || !Object.hasOwn(MATERIALS, material) || this.state.inventory.length >= 12 || this.state.inventory.some(i => i.id === id) || this.state.pieces.some(i => i.id === id)) return false;
     const next = clone(this.state); next.inventory.push({ id, material });
     this.state = validateState(next); this.save(); this.notify(); return true;

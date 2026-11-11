@@ -35,7 +35,8 @@
 - Phaser 4.2.1
 - Vite 8.3.7
 - JavaScript ES Modules
-- 已验证的本地工具为 Node.js 24.14.0 与 npm 11.9.0
+- 指定的本地工具基准为 Node.js 22.22.2 与 npm 10.9.7
+- 2026 年 11 月 11 日本轮终端实测与验证环境为 Node.js 24.14.0 与 npm 11.9.0
 
 依赖版本以 `package-lock.json` 为准。
 

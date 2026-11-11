@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { GameStore, SAVE_KEY, BACKUP_KEY, freshState, validateState, tasks } from './state.js';
+import { GameStore, SAVE_KEY, BACKUP_KEY, PREV_BACKUP_KEY, freshState, validateState, tasks } from './state.js';
 import { PauseGate } from './pause.js';
 
 function storage(raw = null) {
@@ -105,7 +105,7 @@ test('write failure preserves imported state and exposes automatic-save failure'
   game.navigate('mine'); assert.ok(game.error); assert.equal(game.state.location, 'mine');
   assert.equal(disk.getItem(SAVE_KEY), saved);
 });
-test('schema rejects illegal references, non-finite values, duplicate IDs and future crafting data', () => {
+test('schema rejects illegal references, non-finite values, duplicate IDs and malformed crafting data', () => {
   const invalid = [
     { exhibits:['missing',null,null] }, { settings:{muted:false,volume:NaN} },
     { stamina:-1 }, { observations:1.5 }, { crafting:{} },
@@ -162,4 +162,98 @@ test('pause reasons compose and clearing a panel never resumes a hidden tab', ()
   gate.set('hidden', false); assert.equal(gate.paused, false);
   gate.set('overlay', true); gate.set('overlay', true); gate.set('overlay', false);
   assert.equal(gate.paused, false);
+});
+
+test('crafting schema round-trips every step and progress boundaries', () => {
+  for (const step of ['shape', 'carve', 'polish']) {
+    for (const progress of [0, 42, 100]) {
+      const crafting = { step, progress, materialId: 'ore-1', tool: '' };
+      const disk = storage(), game = new GameStore(disk);
+      game.importSave(JSON.stringify({ ...freshState(), crafting }));
+      assert.deepEqual(new GameStore(disk).state.crafting, crafting);
+      assert.deepEqual(JSON.parse(game.exportSave()).crafting, crafting);
+    }
+  }
+});
+
+test('crafting schema rejects invalid fields with the existing Chinese error', () => {
+  const valid = { step: 'carve', progress: 50, materialId: 'ore-1', tool: 'chisel' };
+  const invalid = [undefined, false, [], 'carve', {},
+    ...['step', 'progress', 'materialId', 'tool'].map(key => {
+      const crafting = { ...valid }; delete crafting[key]; return crafting;
+    }),
+    ...['cut', null, 1].map(step => ({ ...valid, step })),
+    ...[-1, 101, 1.5, NaN, Infinity, '50', null].map(progress => ({ ...valid, progress })),
+    ...['', '   ', null, 1].map(materialId => ({ ...valid, materialId })),
+    ...[null, 1, {}].map(tool => ({ ...valid, tool })),
+  ];
+  const disk = storage(), game = new GameStore(disk); game.startNew();
+  const before = game.exportSave(), saved = disk.getItem(SAVE_KEY);
+  for (const crafting of invalid) {
+    const state = { ...freshState(), crafting };
+    assert.throws(() => validateState(state), /存档格式不完整或版本不兼容，请选择有效的备份。/);
+    assert.throws(() => game.importSave(JSON.stringify(state)), /存档格式不完整或版本不兼容，请选择有效的备份。/);
+    assert.equal(game.exportSave(), before);
+    assert.equal(disk.getItem(SAVE_KEY), saved);
+  }
+});
+
+test('two consecutive new games retain the original nonempty save in the earlier backup', () => {
+  const disk = storage(), game = new GameStore(disk); game.startNew();
+  game.addMaterial('nephrite', 'original-ore');
+  const original = JSON.parse(game.exportSave());
+  game.startNew(); game.startNew();
+  assert.equal(game.recovery().inventory.length, 0);
+  assert.deepEqual(game.recovery(PREV_BACKUP_KEY), original);
+  const reloaded = new GameStore(disk);
+  reloaded.recover(PREV_BACKUP_KEY);
+  assert.deepEqual(reloaded.state.inventory, original.inventory);
+  assert.deepEqual(new GameStore(disk).state.inventory, original.inventory);
+});
+
+test('invalid earlier backups are unavailable and rejected without replacing progress', () => {
+  const disk = storage(), game = new GameStore(disk); game.startNew();
+  for (const raw of [null, '{broken', JSON.stringify({ version: 2 })]) {
+    disk.setItem(PREV_BACKUP_KEY, raw);
+    const saved = disk.getItem(SAVE_KEY), before = game.exportSave();
+    assert.equal(game.recovery(PREV_BACKUP_KEY), null);
+    assert.throws(() => game.recover(PREV_BACKUP_KEY), /没有可恢复的有效备份/);
+    assert.equal(disk.getItem(SAVE_KEY), saved);
+    assert.equal(game.exportSave(), before);
+  }
+});
+
+test('backup rotation failure preserves primary save and supports retry', () => {
+  const disk = storage(), game = new GameStore(disk); game.startNew();
+  game.addMaterial('jadeite', 'retained-ore');
+  const saved = disk.getItem(SAVE_KEY), backup = disk.getItem(BACKUP_KEY);
+  const write = disk.setItem;
+  disk.setItem = (key, value) => {
+    if (key === PREV_BACKUP_KEY) throw new Error('quota');
+    return write(key, value);
+  };
+  game.startNew();
+  assert.equal(game.dirty, true);
+  assert.equal(disk.getItem(SAVE_KEY), saved);
+  assert.equal(disk.getItem(BACKUP_KEY), backup);
+  disk.setItem = write;
+  assert.equal(game.retrySave(), true);
+  game.recover();
+  assert.equal(game.state.inventory[0].id, 'retained-ore');
+});
+
+test('material IDs fall back when crypto or randomUUID is unavailable', () => {
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
+  try {
+    const game = new GameStore(storage()); game.startNew();
+    for (const crypto of [undefined, {}]) {
+      Object.defineProperty(globalThis, 'crypto', { configurable: true, value: crypto });
+      assert.equal(game.addMaterial('jadeite'), true);
+    }
+    assert.equal(new Set(game.state.inventory.map(item => item.id)).size, 2);
+    assert.ok(game.state.inventory.every(item => typeof item.id === 'string' && item.id.length > 0));
+  } finally {
+    if (descriptor) Object.defineProperty(globalThis, 'crypto', descriptor);
+    else delete globalThis.crypto;
+  }
 });

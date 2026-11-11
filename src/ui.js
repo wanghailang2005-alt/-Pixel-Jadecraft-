@@ -1,4 +1,4 @@
-import { validateState } from './state.js';
+import { validateState, PREV_BACKUP_KEY } from './state.js';
 import { icon, CODEX } from './icons.js';
 import { createMenuLogo } from './menu-art.js';
 import './menu.css';
@@ -126,7 +126,7 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
       <p class="muted">当前提供按钮提示音。场景音乐与加工音效将随玩法加入。</p>
       <hr><h3>本地单档</h3><p>进度保存在当前浏览器。清理浏览器数据前，请导出备份。</p>
       <div class="save-summary"><span>${store.dirty ? '有未保存的进度' : store.hasSave ? '本地已有存档' : '尚未开始旅程'}</span><small>${store.state.updatedAt ? escape(new Date(store.state.updatedAt).toLocaleString('zh-CN')) : '开始旅程后自动保存'}</small></div>
-      <div class="backup-actions">${button('导出存档', 'export', '', !store.hasSession)}${button('导入备份', 'import')}${store.error ? button('导出原始数据', 'raw') : ''}${store.hasSession ? button('立即保存', 'save') : ''}${store.recovery() ? button('恢复上一份存档', 'recover') : ''}</div>
+      <div class="backup-actions">${button('导出存档', 'export', '', !store.hasSession)}${button('导入备份', 'import')}${store.error ? button('导出原始数据', 'raw') : ''}${store.hasSession ? button('立即保存', 'save') : ''}${store.recovery() ? button('恢复上一份存档', 'recover') : ''}${store.recovery(PREV_BACKUP_KEY) ? button('恢复更早存档', 'recoverEarlier') : ''}</div>
       <p class="muted">${store.active ? '切换地点与调整设置后自动保存。' : '开始或继续游戏后，声音设置随进度保存。'}</p>
       <p id="settings-error" class="error">${escape(store.error)}</p>`);
     const update = () => {
@@ -187,6 +187,7 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
     inventory: () => { inventoryTab = 'raw'; selectedItem = 0; inventory(); }, tasks, settings, close, import: chooseImport,
     save: () => { const ok = store.retrySave(); notify(ok ? '进度已保存' : '未能保存，请导出备份'); if (dialog.open) settings(); },
     recover: () => confirm('恢复上一份存档？', '将恢复最近一次成功保存前的进度。当前存档会被替换，建议先导出备份。', '确认恢复', () => { try { store.recover(); notify('已恢复上一份存档'); } catch(error) { show('恢复未完成', `<p>${escape(error.message)}</p>`); } }),
+    recoverEarlier: () => confirm('恢复更早存档？', '将恢复前一份备份中的进度。当前存档会被替换，建议先导出备份。', '确认恢复', () => { try { store.recover(PREV_BACKUP_KEY); notify('已恢复更早存档'); } catch(error) { show('恢复未完成', `<p>${escape(error.message)}</p>`); } }),
     help: () => show('玉作学徒手册', '<p>从矿洞寻石，带回工坊识玉、琢玉，最后在展厅陈列你的作品。</p><dl class="key-guide"><dt>B</dt><dd>打开行囊</dd><dt>J</dt><dd>查看委托</dd><dt>G</dt><dd>玉器图鉴</dd><dt>M</dt><dd>静音／恢复声音</dd><dt>F</dt><dd>切换全屏</dd><dt>Esc</dt><dd>关闭面板／暂停</dd></dl><p class="muted">当前为基础系统版本。矿洞采集、鉴赏、加工和布展将逐项接入；鼠标可以完成所有现有操作。</p>'),
     fullscreen: async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await frame.requestFullscreen(); } catch { notify('此环境不支持全屏，可以放大浏览器窗口'); } },
     mute: () => { store.configure({ ...store.state.settings, muted: !store.state.settings.muted }); notify(store.state.settings.muted ? '已静音' : '声音已开启'); },
@@ -235,7 +236,7 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
     resize();
     if (isWorkshop) {
       if (!workshop.element.isConnected) root.replaceChildren(workshop.element);
-      workshop.render(state);
+      workshop.render();
       return;
     }
     if (!store.active) {
