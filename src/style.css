@@ -163,6 +163,20 @@ blockquote { margin: 0 0 18px; padding: 13px 16px; border-left: 2px solid #b19b6
 .key-guide dd { margin: 0; align-self: center; }
 .toast { position: absolute; z-index: 20; left: 50%; bottom: 17%; transform: translateX(-50%); padding: 10px 22px; border: 1px solid #bbac77; background: #25382bef; color: #eee1b6; font-size: clamp(10px, 1.1vw, 14px); box-shadow: 3px 3px #0005; opacity: 0; pointer-events: none; transition: opacity .15s; }
 .toast.visible { opacity: 1; }
+.mine-interface {
+  --panel-bg: #1e120c;
+  --wood: #6b4426;
+  --gold: #c9a15a;
+  --text-cream: #f0e2c0;
+  --select-ring: #8fd46a;
+}
+.mine-hotbar { position: absolute; left: 0; bottom: 0; width: 100%; height: 28px; display: flex; justify-content: center; background: var(--panel-bg); border-top: 3px double var(--gold); }
+.mine-hotbar button { min-width: 130px; padding: 1px 12px; border: 2px double var(--gold); background: var(--wood); color: var(--text-cream); font-size: 11px; }
+.mine-hotbar button:focus-visible { outline: 2px solid var(--select-ring); outline-offset: -3px; }
+.mine-hotbar kbd { height: 16px; color: var(--text-cream); border-color: var(--gold); }
+.mine-interface .bottom-bar { bottom: 28px; }
+.mine-interface .save-status { bottom: 104px; }
+.mine-instructions { position: absolute; top: 68px; right: 18px; padding: 6px 10px; background: var(--panel-bg); color: var(--text-cream); border: 3px double var(--gold); font-size: 11px; }
 @media (max-width: 650px) {
   body { padding: 10px; }
   main { width: 100%; }
@@ -182,3 +196,14 @@ blockquote { margin: 0 0 18px; padding: 13px 16px; border-left: 2px solid #b19b6
   button, .toast { transition: none; }
   .station-label button:hover { transform: none; }
 }
+.mine-status { position:absolute; top:16px; left:20px; right:20px; height:48px; display:flex; align-items:center; gap:28px; padding:0 16px; background:#101c1bef; border:3px double #8b7955; box-shadow:0 4px 0 #101c1b; color:#e8dcc0; font:14px monospace; pointer-events:auto; }
+.mine-status strong { margin-left:auto; letter-spacing:4px; font:16px 'Microsoft YaHei',sans-serif; }
+.mine-hearts { color:#bd6854; font-size:22px; letter-spacing:3px; }
+.mine-status b { color:#7fe3b0; font-size:20px; }
+.mine-pause { min-width:32px; padding:4px; }
+.mine-tools { position:absolute; left:24px; bottom:22px; display:flex; gap:8px; pointer-events:auto; }
+.mine-tools button { width:64px; height:64px; position:relative; padding:4px; border:4px double #a38b5f; border-radius:0; background:#182b2cee; box-shadow:3px 4px 0 #101c1b; }
+.mine-tools button:first-child { border-color:#d8bf82; background:#35493c; }
+.mine-tools canvas { width:48px; height:48px; image-rendering:pixelated; }
+.mine-tools kbd { position:absolute; right:2px; bottom:1px; font-size:10px; }
+.mine-controls { position:absolute; right:24px; bottom:25px; margin:0; padding:8px 12px; color:#e8dcc0; background:#101c1be6; border-bottom:2px solid #8b7955; font-size:12px; letter-spacing:1px; }

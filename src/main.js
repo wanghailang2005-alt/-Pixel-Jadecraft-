@@ -14,6 +14,7 @@ const ui = createInterface(store, MATERIALS, tasks, {
     runtime?.setPaused('overlay', open);
     polishing?.setPaused('overlay', open);
   },
+  onMine: () => runtime?.collect(),
   onPolish: () => {
     const workshop = store.active && store.state.location === 'workshop';
     const source = workshop ? `workshop-${store.sessionRevision}` : 'menu';
@@ -23,7 +24,7 @@ const ui = createInterface(store, MATERIALS, tasks, {
     polishing.open();
   },
 });
-runtime = createRuntime(store);
+runtime = createRuntime(store, { notify: ui.notify, hit: ui.playMiningHit });
 polishing = createPolishingDemo({
   onOpenChange: open => {
     runtime.setPaused('polishing', open);

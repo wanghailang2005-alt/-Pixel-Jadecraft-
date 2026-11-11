@@ -1,3 +1,4 @@
+import { paintMineIcon } from './mine-art.js';
 import { validateState, PREV_BACKUP_KEY } from './state.js';
 import { icon, CODEX } from './icons.js';
 import { createMenuLogo } from './menu-art.js';
@@ -8,7 +9,7 @@ const NAMES = { workshop: '玉作工坊', mine: '青岚矿洞', gallery: '像素
 const SHAPES = { bi: '玉璧', fish: '玉鱼佩', seal: '玉印' };
 const escape = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
-export function createInterface(store, materials, taskList, { onOverlayChange = () => {}, onPolish = () => {} } = {}) {
+export function createInterface(store, materials, taskList, { onOverlayChange = () => {}, onPolish = () => {}, onMine = () => {} } = {}) {
   const root = document.querySelector('#interface');
   const frame = document.querySelector('#game');
   const dialog = document.createElement('dialog');
@@ -53,15 +54,15 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
   workshopWarning.hidden = true;
   frame.after(workshopWarning);
   workshopWarning.addEventListener('click', handle);
-  function sound() {
+  function sound(miningHit = false) {
     const { muted, volume } = store.state.settings;
     if (muted || !volume) return;
     try {
       audio ??= new (window.AudioContext || window.webkitAudioContext)();
       void audio.resume().catch(() => {});
       const tone = audio.createOscillator(), gain = audio.createGain();
-      tone.type = 'sine'; tone.frequency.setValueAtTime(660, audio.currentTime);
-      tone.frequency.exponentialRampToValueAtTime(440, audio.currentTime + .07);
+      tone.type = miningHit ? 'triangle' : 'sine'; tone.frequency.setValueAtTime(miningHit ? 220 : 660, audio.currentTime);
+      tone.frequency.exponentialRampToValueAtTime(miningHit ? 80 : 440, audio.currentTime + .07);
       gain.gain.setValueAtTime(volume * .12, audio.currentTime);
       gain.gain.exponentialRampToValueAtTime(.001, audio.currentTime + .1);
       tone.connect(gain); gain.connect(audio.destination);
@@ -136,7 +137,7 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
     };
     dialog.querySelector('#muted').onchange = update;
     dialog.querySelector('#volume').oninput = update;
-    dialog.querySelector('#volume').onchange = sound;
+    dialog.querySelector('#volume').onchange = () => sound();
   }
   function inventory() {
     const isCodex = inventoryTab === 'codex';
@@ -198,6 +199,7 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
     'to-menu': () => { closeCallback = () => store.menu(); close(); },
     inspect: () => show('鉴赏台', '<p>观察光泽、纹理和透光示意，认识不同玉材。</p><p class="muted">鉴赏热点与六道知识题将在鉴赏阶段接入。</p>'),
     craft: onPolish,
+    pickaxe: onMine,
     codex: () => { inventoryTab = 'codex'; selectedItem = 0; inventory(); },
   };
   function handle(event) {
@@ -222,9 +224,10 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
     const focusedAction = root.contains(document.activeElement) ? document.activeElement.dataset.action : null;
     const saveText = store.dirty ? '进度尚未保存' : store.hasSave ? '本地存档已保存' : '尚无本地存档';
     frame.classList.toggle('reference-mode', isWorkshop);
+    root.classList.toggle('mine-interface', store.active && state.location === 'mine');
     root.style.width = `${isWorkshop ? 1024 : 960}px`;
     root.style.height = `${isWorkshop ? 559 : 540}px`;
-    workshopTools.hidden = !isWorkshop;
+    workshopTools.hidden = !isWorkshop && !(store.active && state.location === 'mine');
     workshopWarning.hidden = !isWorkshop || !store.error;
     workshopWarning.innerHTML = store.error ? `${escape(store.error)} ${store.dirty ? button('重试保存', 'save') : ''}` : '';
     workshop.setPaused('inactive', !isWorkshop);
@@ -252,19 +255,34 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
       if (focusedAction) root.querySelector(`[data-action="${focusedAction}"]`)?.focus({ preventScroll: true });
       return;
     }
+    if (state.location === 'mine') {
+      root.innerHTML = `<header class="mine-status"><span class="mine-hearts" aria-label="体力 ${state.stamina}/100">♥ ♥ ♥ ♥ ♥</span><span>JADE <b>${String(state.inventory.length).padStart(2, '0')}</b> / 12</span><strong>青岚矿洞</strong>${button('Ⅱ', 'pause', 'mine-pause')}</header>
+        <nav class="mine-tools" aria-label="矿洞工具">${button('<canvas data-mine-icon="pick"></canvas><kbd>E</kbd>', 'pickaxe')}${button('<canvas data-mine-icon="white"></canvas><kbd>B</kbd>', 'inventory')}${button('<canvas data-mine-icon="green"></canvas><kbd>G</kbd>', 'codex')}</nav>
+        <p class="mine-controls">A D 行走　W S 爬梯　E / 空格 挥镐</p>
+        ${store.error ? `<div class="save-status save-warning">${escape(store.error)}${button('重试保存', 'save')}</div>` : ''}`;
+      root.querySelectorAll('[data-mine-icon]').forEach(canvas => paintMineIcon(canvas, canvas.dataset.mineIcon));
+      root.querySelector('[data-action="pickaxe"]').setAttribute('aria-label', '挥镐采集');
+      root.querySelector('[data-action="inventory"]').setAttribute('aria-label', '打开行囊');
+      root.querySelector('[data-action="codex"]').setAttribute('aria-label', '打开图鉴');
+      if (focusedAction) root.querySelector(`[data-action="${focusedAction}"]`)?.focus({ preventScroll: true });
+      return;
+    }
     const location = state.location;
     const objectives = taskList(state);
     const complete = objectives.filter(task => task.done).length;
     root.innerHTML = `<header class="hud"><div class="place-name"><span class="seal">玉</span><div><strong>${NAMES[location]}</strong><small>玉作学徒 · 首展之约</small></div></div><div class="stamina"><div><span>体力</span><strong>${state.stamina}<small> / 100</small></strong></div><meter min="0" max="100" value="${state.stamina}" aria-label="体力">${state.stamina}/100</meter></div><div class="hud-tools">${button(state.settings.muted ? '声音：关' : '声音：开', 'mute')}${button('全屏', 'fullscreen')}${button('设置', 'settings')}${button('暂停', 'pause')}</div></header>
       <aside class="quest-strip"><div><span>师傅的首展委托</span><small>${complete} / 4</small></div><strong>${objectives.find(task => !task.done)?.name ?? '首展完成'}</strong><p>${objectives.find(task => !task.done)?.detail ?? '三器齐备，温润成展。'}</p><progress max="4" value="${complete}" aria-label="委托完成度"></progress>${button('查看委托 <kbd>J</kbd>', 'tasks', 'quiet')}</aside>
-      <div class="location-note"><h2>${location === 'mine' ? '山藏玉，待君寻' : '一器一故事'}</h2><p>${location === 'mine' ? '矿洞场景预览 · 移动与采集将在后续接入' : '展厅场景预览 · 成品布展将在后续接入'}</p></div>
-      <div class="scene-caption">场景预览<span>基础系统版本 · 玩法将逐项开放</span></div>
+      ${location === 'mine' ? '<div class="mine-instructions">方向键 / WASD 移动 · 靠近矿点按 E / 空格采集</div>' : '<div class="location-note"><h2>一器一故事</h2><p>展厅场景预览 · 成品布展将在后续接入</p></div>'}
+      ${location === 'mine' ? '' : '<div class="scene-caption">场景预览<span>基础系统版本 · 玩法将逐项开放</span></div>'}
       <div class="bottom-bar"><nav class="travel" aria-label="地点切换">${Object.entries(NAMES).map(([id,name])=>`<button data-action="${id}" ${location === id ? 'aria-current="location"' : ''}><span>${name}</span><small>${{ workshop:'归来琢玉',mine:'寻石之旅',gallery:'陈列珍藏' }[id]}</small></button>`).join('')}</nav><nav class="pack-tools" aria-label="学徒工具">${button(`${icon('bag')}<span>行囊 <small>${state.inventory.length}/12</small></span><kbd>B</kbd>`, 'inventory')}${button(`${icon('scroll')}<span>委托</span><kbd>J</kbd>`, 'tasks')}${button(`${icon('book')}<span>图鉴</span><kbd>G</kbd>`, 'codex')}${button('?', 'help', 'help-button')}</nav></div>
+      ${location === 'mine' ? `<nav class="mine-hotbar" aria-label="矿洞热键栏">${button('镐 <kbd>E / 空格</kbd>', 'pickaxe')}${button(`行囊 ${state.inventory.length}/12 <kbd>B</kbd>`, 'inventory')}${button('委托 <kbd>J</kbd>', 'tasks')}${button('图鉴 <kbd>G</kbd>', 'codex')}</nav>` : ''}
       <div class="save-status ${store.error ? 'save-warning' : ''}" role="status" title="${escape(store.error)}"><span>${store.error ? escape(store.error) : `◆ ${saveText}`}</span>${store.dirty ? button('重试', 'save') : ''}</div>`;
     if (focusedAction) root.querySelector(`[data-action="${focusedAction}"]`)?.focus({ preventScroll: true });
   }
   return {
     render,
+    notify,
+    playMiningHit: () => sound(true),
     openSettings: settings,
     setWorkshopPaused(reason, paused) {
       workshop.setPaused(reason, paused);

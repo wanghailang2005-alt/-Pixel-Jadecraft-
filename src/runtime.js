@@ -5,8 +5,14 @@ import masterUrl from './assets/master-carver-v1.png';
 import { decorateMenuScene } from './menu-art.js';
 import { drawScene } from './scenery.js';
 import { PauseGate } from './pause.js';
+import { createMining } from './mining.js';
+import { preloadMine, createMineScene } from './mine-scene.js';
 
-export function createRuntime(store) {
+export function createRuntime(store, feedback) {
+  const nodeStates = new Map();
+  const mining = createMining(store, nodeStates);
+  let sessionRevision = store.sessionRevision;
+  let collect = null;
   const gate = new PauseGate();
   let ready = false;
   let current = null;
@@ -21,6 +27,11 @@ export function createRuntime(store) {
   function sync() {
     if (!ready) return;
     const next = desired();
+    if (sessionRevision !== store.sessionRevision) {
+      sessionRevision = store.sessionRevision;
+      mining.reset();
+      if (current === 'mine') { game.scene.stop(current); current = null; }
+    }
     if (next === current) { syncPause(); return; }
     if (current) game.scene.stop(current);
     game.scale.resize(next === 'workshop' ? 1024 : 960, next === 'workshop' ? 559 : 540);
@@ -34,6 +45,7 @@ export function createRuntime(store) {
       this.load.image('workshop', workshopUrl);
       this.load.image('menu-landscape', menuUrl);
       this.load.image('master-carver', masterUrl);
+      preloadMine(this);
     }
     create() { ready = true; sync(); this.scene.stop('boot'); }
   }
@@ -69,17 +81,23 @@ export function createRuntime(store) {
       this.events.once('create', syncPause);
     }
   };
+  const MineScene = createMineScene({
+    store, mining, feedback, paused: () => gate.paused,
+    onReady: callback => { collect = callback; syncPause(); },
+    onStop: () => { collect = null; },
+  });
   game = new Phaser.Game({
     type: Phaser.AUTO, parent: 'canvas', width:960, height:540,
     backgroundColor:'#142623', pixelArt:true,
     scale:{ mode:Phaser.Scale.FIT, autoCenter:Phaser.Scale.CENTER_BOTH },
-    scene:[BootScene, ...['menu','workshop','mine','gallery'].map(sceneClass)],
+    scene:[BootScene, ...['menu','workshop','gallery'].map(sceneClass), MineScene],
   });
   const onVisibility = () => { gate.set('hidden', document.hidden); syncPause(); };
   document.addEventListener('visibilitychange', onVisibility);
   onVisibility();
   return {
     sync,
+    collect() { if (!gate.paused) collect?.(); },
     setPaused(reason, value) { gate.set(reason,value); syncPause(); },
     destroy() { document.removeEventListener('visibilitychange',onVisibility); game.destroy(true); },
   };

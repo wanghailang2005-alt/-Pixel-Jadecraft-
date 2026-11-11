@@ -62,3 +62,12 @@ Create a production-ready 16:9 landscape background asset for an original Chines
 ## 图标、人物与备用场景
 
 `src/icons.js` 中的简化 SVG 玉器／工具图标，以及 `src/runtime.js` 中的角色和 `src/scenery.js` 的场景均为本项目编写的可编辑程序绘图，未引用第三方图标或角色资源。图鉴插图用于游戏界面示意，不作为真实馆藏照片或鉴定依据。声音为 Web Audio 合成短提示音，无外部音频文件。
+
+
+## 矿洞视觉试玩 · 2026-11-11
+
+`mine-cavern-v1.png`：使用 OpenAI imagegen，以 `docs/concept-art/01-mine-exploration.png` 为参考生成的洞穴背景，保留冷光洞口、苔藓、蓝灰岩壁与石柱。它是背景画面，不是 tileset。交互平台、梯子、矿车、矿工及玉脉由 `src/mine-art.js` 独立绘制。固定替换路径仍为 `src/assets/tiles-mine.png`（16×16 帧）、`src/assets/player-32x48.png`（32×48 帧，左/右/下各 4 行走 + 2 挥镐，18 帧行优先），地图为 `public/maps/mine.tmj`。当前三者未提供；地图回落二维数组。Tiled 可增加 ladders 对象层，矩形中心 x 与上下边界定义梯子，采用地图逻辑像素。
+
+生成提示词：
+
+> Use case: stylized-concept. Asset type: production background plate for the playable Pixel Jadecraft mine. Use the supplied 01 mine image as the authoritative pixel-art style and composition reference. Produce a NEW clean 16:9 landscape game BACKGROUND ONLY, 1536x864 or 1920x1080. Match the original's very visible chunky square pixels, hard pixel edges, restrained 16-bit game palette, dark blue-grey rock, muted green moss, a large luminous misty blue-grey cave opening in the center-right, broken ancient stone columns on both sides, irregular rocky overhang framing the top and sides. Left quarter is a broad dark textured rock face for separate collectible jade veins. Center x40%-85% has the pale cold cave depth and ruined vertical pillar silhouette, just like the reference. Keep the playable lower region open. Preserve the original atmosphere and bold coarse pixel density, apparent logical resolution approximately 480x270. IMPORTANT: no miner, no people, no tools, no jade stones, no crystals, no minecart, no wooden boxes, no ladders, no UI, no border, no buttons, no words, no letters, no numbers. These interactive objects are separately drawn by the game. No horizontal floor/platform across the image: the bottom quarter should continue the dark rough rock backdrop with quiet shadows; separate foreground platforms are drawn by the game. Palette dominated by #101C1B, #2B3A42, #4A5A62, moss #3E6B45, cold opening #8AABA9. Crisp hand-pixelled game environment, no painting, no blur, no photorealism, no smooth gradients, no fine high-resolution detail.

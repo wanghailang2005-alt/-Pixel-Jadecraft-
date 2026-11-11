@@ -1,3 +1,5 @@
+import { CELL_SIZE, MINE_MAP, WORLD_WIDTH, WORLD_HEIGHT } from './mining.js';
+
 // Original geometric pixel scenery; no third-party assets.
 export function drawScene(g, location) {
   g.clear();
@@ -17,20 +19,11 @@ export function drawScene(g, location) {
   };
   rect(0,0,960,540,0x182b2c);
   if (location === 'mine') {
-    rect(0,90,960,390,0x20383b);
-    for(let i=0;i<14;i++) {
-      const x=i*78;
-      poly([[x,100],[x+70,100],[x+46,170+(i%3)*26],[x+28,200]],0x152829);
-      poly([[x,465],[x+70,465],[x+52,385-(i%4)*17],[x+32,410]],0x30494a);
-    }
-    rect(0,430,960,110,0x293b36); rect(0,430,960,8,0x52654b);
-    for(let i=0;i<6;i++) {
-      const x=130+i*138,y=365+(i%2)*22;
-      poly([[x-28,y+35],[x-35,y],[x-9,y-25],[x+22,y-20],[x+37,y+20],[x+15,y+35]],0x536458);
-      poly([[x-12,y+18],[x-18,y-5],[x+3,y-15],[x+19,y],[x+8,y+20]],i%2?0x54a888:0xa5c69c);
-      rect(x-8,y-4,8,8,0xd3dfac);
-    }
-    lantern(56,235); lantern(872,245); return;
+    rect(0, 0, WORLD_WIDTH, WORLD_HEIGHT, 0x182b2c);
+    MINE_MAP.forEach((row, y) => row.forEach((tile, x) => {
+      rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE, [0x20383b, 0x152829, 0x30494a][tile]);
+    }));
+    return;
   }
   if (location === 'gallery') {
     rect(0,90,960,450,0x213938);
