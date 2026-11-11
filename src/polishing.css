@@ -1,0 +1,48 @@
+.polishing-demo { position: absolute; inset: 0 auto auto 0; z-index: 10; width: 960px; height: 540px; transform-origin: top left; background: #09251e; color: #e9d99e; border: 8px ridge #9c6538; box-shadow: inset 0 0 0 2px #d5a35d; }
+.polishing-demo[hidden], .polishing-demo [hidden] { display: none !important; }
+.polish-heading { height: 65px; margin: 0 9px; border-bottom: 3px double #9e7447; display: flex; align-items: center; gap: 15px; padding: 0 12px; background: #241c16; }
+.polish-heading h1 { margin: 0; font: 29px SimSun, serif; letter-spacing: 8px; color: #f1df9e; }
+.polish-heading > div { margin-left: auto; display: flex; gap: 8px; }
+.polishing-demo button { color: #efdfad; border: 3px ridge #b6894e; background: #503025; box-shadow: inset 0 0 0 1px #281b14, 2px 2px #061810; padding: 7px 15px; font-size: 13px; }
+.polishing-demo button:hover { background: #714a30; border-color: #e1bb70; }
+.polishing-demo button:disabled { opacity: .45; }
+.polishing-demo button.primary { background: #446743; border-color: #c1b071; color: #f6e8b7; }
+.polish-stages { height: 49px; display: flex; justify-content: center; align-items: center; gap: 23px; font: 17px SimSun, serif; }
+.polish-stages span, .polish-stages strong { padding: 5px 25px; border: 2px ridge #9a7143; background: #35241c; font-weight: normal; }
+.polish-stages strong { background: #72512b; border-color: #e5be6a; color: #fff1b8; }
+.polish-panel { border: 4px ridge #a97643; background: #281c16; box-shadow: inset 0 0 0 2px #100f0b, 2px 3px #071b14; }
+.polish-panel h2 { font: 19px SimSun, serif; letter-spacing: 3px; text-align: center; color: #efdaa2; border-bottom: 2px ridge #79542f; padding: 9px 0; background: #3e291c; }
+.polish-tools { position: absolute; left: 17px; top: 117px; width: 116px; height: 338px; text-align: center; }
+.polish-tools .polish-cloth { display: flex; flex-direction: column; align-items: center; width: 80px; height: 102px; margin: 24px auto 13px; border-color: #e6c46d; font-size: 17px; }
+.polish-cloth canvas { width: 52px; height: 52px; transform: rotate(-10deg); }
+.polish-tools p { color: #c6bb96; font-size: 12px; }
+.polish-tools label { display: block; margin: 19px 11px 0; font-size: 11px; color: #c8b58c; }
+.polish-tools input { display: block; width: 100%; margin-top: 9px; accent-color: #d7b46a; }
+.polish-workarea { position: absolute; left: 145px; top: 117px; width: 600px; height: 350px; border: 5px ridge #aa794a; box-shadow: 3px 4px #031a12; }
+.polish-workarea > canvas { width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+.polish-cursor { position: absolute; pointer-events: none; border: 1px dashed #f3dfa0; border-radius: 50%; transform: translate(-50%, -50%); }
+.polish-cursor span { position: absolute; left: 40%; top: 35%; font: 47px Georgia, serif; color: #e9d3a1; text-shadow: 3px 3px #786241, 6px 6px #342919; transform: rotate(-25deg); }
+.polish-details { position: absolute; left: 758px; top: 117px; width: 169px; }
+.polish-preview { height: 206px; text-align: center; }
+.polish-preview canvas { width: 118px; height: 118px; margin: 2px auto; }
+.polish-preview p { font: 16px SimSun, serif; letter-spacing: 2px; }
+.polish-progress { margin-top: 14px; min-height: 130px; padding-bottom: 7px; }
+.polish-progress > div { display: flex; align-items: center; gap: 7px; padding: 14px 10px 5px; }
+.polish-progress progress { width: 95px; height: 15px; margin: 0; border: 2px ridge #aa8550; background: #171b12; }
+.polish-progress progress::-webkit-progress-bar { background: #171b12; }
+.polish-progress progress::-webkit-progress-value { background: #70ae76; }
+.polish-progress output { color: #f3df9f; font-size: 16px; min-width: 36px; }
+.polish-progress p { padding: 4px 10px; color: #c6bb96; font-size: 11px; line-height: 1.7; }
+.polish-footer { position: absolute; bottom: 7px; left: 9px; right: 9px; height: 44px; border-top: 3px double #a77d49; display: flex; align-items: center; gap: 12px; padding-top: 6px; }
+.polish-footer p { flex: 1; text-align: center; font-size: 11px; color: #c8ba91; }
+.polish-footer button { padding: 7px 11px; font-size: 12px; }
+.polish-pause { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 17px; background: #0b1e18e8; }
+.polish-pause h2 { font-size: 29px; letter-spacing: 5px; }
+.polish-pause p { color: #bbbc9d; font-size: 13px; }
+.polish-result { position: absolute; inset: 0; z-index: 3; background: #07150ee8; display: grid; place-items: center; }
+.polish-result-card { width: 470px; border: 5px ridge #c29556; background: #142d24; text-align: center; padding: 20px 25px; }
+.polish-result h2 { font: 28px SimSun, serif; color: #f0dca0; letter-spacing: 8px; }
+.polish-result canvas { width: 210px; height: 210px; margin: 2px auto; }
+.polish-result p { font-size: 15px; }
+.polish-result [data-result-score] { color: #b9c49d; font-size: 12px; margin-bottom: 16px; }
+.polish-result button { margin: 0 5px; }

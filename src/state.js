@@ -13,6 +13,7 @@ export function freshState() {
     version: 1, location: 'workshop', stamina: 100,
     inventory: [], pieces: [], discoveries: [], observations: 0,
     exhibits: [null, null, null], crafting: null,
+    opening: { introduced: false, polished: false },
     settings: { muted: false, volume: 0.35 }, updatedAt: null,
   };
 }
@@ -41,8 +42,10 @@ export function validateState(value) {
   if (value.crafting !== null) fail();
   if (!value.settings || typeof value.settings.muted !== 'boolean' || !Number.isFinite(value.settings.volume) || value.settings.volume < 0 || value.settings.volume > 1) fail();
   if (value.updatedAt !== null && (typeof value.updatedAt !== 'string' || !Number.isFinite(Date.parse(value.updatedAt)))) fail();
+  const opening = Object.hasOwn(value, 'opening') ? value.opening : { introduced: true, polished: false };
+  if (!opening || typeof opening.introduced !== 'boolean' || typeof opening.polished !== 'boolean' || (opening.polished && !opening.introduced)) fail();
   const state = freshState();
-  for (const key of Object.keys(state)) state[key] = clone(value[key]);
+  for (const key of Object.keys(state)) state[key] = clone(key === 'opening' ? opening : value[key]);
   return state;
 }
 export function tasks(state) {
@@ -59,6 +62,7 @@ export class GameStore extends EventTarget {
     try { this.storage = storage ?? globalThis.localStorage; } catch { this.storage = null; }
     this.state = freshState(); this.active = false; this.error = ''; this.hasSave = false;
     this.hasSession = false;
+    this.sessionRevision = 0;
     this.dirty = false;
     this.read();
     try {
@@ -112,9 +116,20 @@ export class GameStore extends EventTarget {
   startNew() {
     const settings = clone(this.state.settings);
     this.state = freshState(); this.state.settings = settings;
+    this.sessionRevision++;
     this.active = true; this.hasSession = true; this.save(); this.notify();
   }
   resume() { if (this.hasSession) { this.active = true; this.notify(); } }
+  acknowledgeOpening() {
+    if (!this.active || this.state.location !== 'workshop' || this.state.opening.introduced) return false;
+    this.state.opening.introduced = true;
+    this.save(); this.notify(); return true;
+  }
+  completeOpeningPolish() {
+    if (!this.active || this.state.location !== 'workshop' || !this.state.opening.introduced || this.state.opening.polished) return false;
+    this.state.opening.polished = true;
+    this.save(); this.notify(); return true;
+  }
   navigate(location) {
     if (!this.active || !LOCATIONS.includes(location)) return;
     this.state.location = location;
@@ -146,7 +161,9 @@ export class GameStore extends EventTarget {
     next.updatedAt = new Date().toISOString();
     try { this.checkpoint(); this.storage.setItem(SAVE_KEY, JSON.stringify(next)); }
     catch { throw new Error('备份未导入：无法写入本地存储，原进度保留。'); }
-    this.state = next; this.hasSave = true; this.hasSession = true; this.dirty = false; this.error = ''; this.active = true; this.notify();
+    this.state = next; this.hasSave = true; this.hasSession = true; this.dirty = false; this.error = ''; this.active = true;
+    this.sessionRevision++;
+    this.notify();
     try { this.storage.setItem(SETTINGS_KEY, JSON.stringify(next.settings)); } catch { /* Save remains valid. */ }
   }
 }

@@ -1,11 +1,14 @@
 import { validateState } from './state.js';
 import { icon, CODEX } from './icons.js';
+import { createMenuLogo } from './menu-art.js';
+import './menu.css';
+import { createWorkshopReference } from './workshop-reference.js';
 
 const NAMES = { workshop: '玉作工坊', mine: '青岚矿洞', gallery: '像素数字展厅' };
 const SHAPES = { bi: '玉璧', fish: '玉鱼佩', seal: '玉印' };
 const escape = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
-export function createInterface(store, materials, taskList, { onOverlayChange = () => {} } = {}) {
+export function createInterface(store, materials, taskList, { onOverlayChange = () => {}, onPolish = () => {} } = {}) {
   const root = document.querySelector('#interface');
   const frame = document.querySelector('#game');
   const dialog = document.createElement('dialog');
@@ -17,16 +20,39 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
   let inventoryTab = 'raw';
   let selectedItem = 0;
   let toastTimer;
+  let workshopRevision = store.sessionRevision;
+  const workshop = createWorkshopReference({
+    onAction: action => {
+      store.acknowledgeOpening();
+      sound();
+      actions[action]?.();
+    },
+  });
   const toast = document.createElement('div');
   toast.className = 'toast'; toast.setAttribute('role', 'status'); frame.append(toast);
   function notify(message) {
     clearTimeout(toastTimer); toast.textContent = message; toast.classList.add('visible');
     toastTimer = setTimeout(() => toast.classList.remove('visible'), 3000);
   }
-  const resize = () => { root.style.transform = `scale(${frame.clientWidth / 960})`; };
+  const resize = () => {
+    const width = frame.classList.contains('reference-mode') ? 1024 : 960;
+    root.style.transform = `scale(${frame.clientWidth / width})`;
+  };
   new ResizeObserver(resize).observe(frame);
   resize();
   const button = (label, action, className = '', disabled = false) => `<button class="${className}" data-action="${action}" ${disabled ? 'disabled' : ''}>${label}</button>`;
+  const workshopTools = document.createElement('nav');
+  workshopTools.className = 'workshop-page-tools';
+  workshopTools.setAttribute('aria-label', '游戏导航');
+  workshopTools.hidden = true;
+  workshopTools.innerHTML = button('工坊', 'workshop') + button('矿洞', 'mine') + button('展厅', 'gallery') + button('行囊', 'inventory') + button('委托', 'tasks') + button('设置', 'settings') + button('主菜单', 'menu');
+  document.querySelector('.frame-heading').append(workshopTools);
+  const workshopWarning = document.createElement('p');
+  workshopWarning.className = 'workshop-save-warning';
+  workshopWarning.setAttribute('role', 'status');
+  workshopWarning.hidden = true;
+  frame.after(workshopWarning);
+  workshopWarning.addEventListener('click', handle);
   function sound() {
     const { muted, volume } = store.state.settings;
     if (muted || !volume) return;
@@ -47,6 +73,7 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
   dialog.addEventListener('close', () => {
     const callback = closeCallback; closeCallback = null;
     onOverlayChange(false);
+    workshop.setPaused('overlay', false);
     callback?.();
     if (dialog.open) return;
     if (returnFocus?.isConnected) returnFocus.focus();
@@ -56,10 +83,10 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
     if (!dialog.open) returnFocus = document.activeElement;
     dialog.classList.toggle('wide', wide);
     dialog.innerHTML = `<header><h2 id="dialog-title">${title}</h2>${button('关闭', 'close', 'quiet')}</header><div class="dialog-body">${body}</div>${actions ? `<div class="dialog-actions">${actions}</div>` : ''}`;
-    if (!dialog.open) { dialog.showModal(); onOverlayChange(true); }
+    if (!dialog.open) { dialog.showModal(); onOverlayChange(true); workshop.setPaused('overlay', true); }
   }
-  function confirm(title, body, label, callback) {
-    show(title, `<p>${body}</p>`, button('保留当前进度', 'close', 'quiet') + button(label, 'confirm', 'primary'));
+  function confirm(title, body, label, callback, cancelLabel = '保留当前进度') {
+    show(title, `<p>${body}</p>`, button(cancelLabel, 'close', 'quiet') + button(label, 'confirm', 'primary'));
     closeCallback = null;
     dialog.querySelector('[data-action="confirm"]').onclick = () => {
       // Complete after closing, so nested error dialogs keep their focus and visibility.
@@ -135,8 +162,27 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
       <ol class="task-list">${taskList(store.state).map(t => `<li class="${t.done ? 'done' : ''}"><span class="task-mark">${t.done ? '✓' : '○'}</span><div><h3>${t.name}</h3><p>${t.detail}</p></div></li>`).join('')}</ol>
       <p class="muted">委托进度由采集、鉴赏、制作与陈列记录自动计算。后续玩法接入后推进。</p>`);
   }
+  function exitGame() {
+    confirm('退出游戏？', '游戏进度保存在当前浏览器。退出后，打磨试玩进度会重置。', '确认退出', () => {
+      if (store.dirty && !store.retrySave()) {
+        show('进度尚未保存', '<p>保存失败，请先导出存档备份，再关闭标签页。</p>', button('导出存档', 'export') + button('返回', 'close', 'primary'));
+        return;
+      }
+      window.close();
+      setTimeout(() => {
+        if (!window.closed) {
+          show('关闭游戏标签页', '<p>浏览器保留了这个标签页。请点击标签页的关闭按钮，或按 Ctrl＋W 退出游戏。</p>', button('返回主菜单', 'close', 'primary'));
+        }
+      }, 250);
+    }, '继续游戏');
+  }
+  function startJourney() {
+    store.startNew();
+  }
   const actions = {
-    new: () => store.hasSave || store.error || store.active ? confirm('重新开始旅程？', '重新开始将覆盖当前本地存档。你可以取消，并先在“声音与存档”中导出备份。', '确认重新开始', () => store.startNew()) : store.startNew(),
+    mentor: () => show('师傅的首展委托', '<p>从一块原石开始，识玉、琢玉，完成玉璧、玉鱼佩与玉印，为工坊筹备第一场小展。</p><p>点击雕刻台可练习打磨。右侧可选择玉种和纹样，生成本次界面试作。</p>'),
+    exit: exitGame,
+    new: () => store.hasSave || store.error || store.active ? confirm('重新开始旅程？', '重新开始将覆盖当前本地存档。你可以取消，并先在“声音与存档”中导出备份。', '确认重新开始', startJourney) : startJourney(),
     continue: () => store.resume(), mine: () => store.navigate('mine'), workshop: () => store.navigate('workshop'), gallery: () => store.navigate('gallery'),
     inventory: () => { inventoryTab = 'raw'; selectedItem = 0; inventory(); }, tasks, settings, close, import: chooseImport,
     save: () => { const ok = store.retrySave(); notify(ok ? '进度已保存' : '未能保存，请导出备份'); if (dialog.open) settings(); },
@@ -150,7 +196,7 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
     pause: () => show('稍歇片刻', '<p>喝一盏茶，再继续你的琢玉之旅。</p>', button('继续旅程', 'close', 'primary') + button('返回主菜单', 'to-menu', 'quiet')),
     'to-menu': () => { closeCallback = () => store.menu(); close(); },
     inspect: () => show('鉴赏台', '<p>观察光泽、纹理和透光示意，认识不同玉材。</p><p class="muted">鉴赏热点与六道知识题将在鉴赏阶段接入。</p>'),
-    craft: () => show('玉雕工坊', '<p>一件玉器，将经历琢形、雕纹、抛光三个步骤。</p><p class="muted">加工玩法尚未接入。先从矿洞采集一块原石。</p>'),
+    craft: onPolish,
     codex: () => { inventoryTab = 'codex'; selectedItem = 0; inventory(); },
   };
   function handle(event) {
@@ -159,6 +205,8 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
     if (target.dataset.action !== 'confirm') { sound(); actions[target.dataset.action]?.(); }
   }
   root.addEventListener('click', handle); dialog.addEventListener('click', handle);
+  workshopTools.addEventListener('click', handle);
+  document.addEventListener('visibilitychange', () => workshop.setPaused('hidden', document.hidden));
   document.addEventListener('keydown', event => {
     if (event.repeat || event.ctrlKey || event.altKey || event.metaKey || event.target.closest('input,textarea,select,[contenteditable="true"]')) return;
     if (dialog.open) return;
@@ -169,26 +217,57 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
   });
   function render() {
     const state = store.state;
+    const isWorkshop = store.active && state.location === 'workshop';
     const focusedAction = root.contains(document.activeElement) ? document.activeElement.dataset.action : null;
     const saveText = store.dirty ? '进度尚未保存' : store.hasSave ? '本地存档已保存' : '尚无本地存档';
+    frame.classList.toggle('reference-mode', isWorkshop);
+    root.style.width = `${isWorkshop ? 1024 : 960}px`;
+    root.style.height = `${isWorkshop ? 559 : 540}px`;
+    workshopTools.hidden = !isWorkshop;
+    workshopWarning.hidden = !isWorkshop || !store.error;
+    workshopWarning.innerHTML = store.error ? `${escape(store.error)} ${store.dirty ? button('重试保存', 'save') : ''}` : '';
+    workshop.setPaused('inactive', !isWorkshop);
+    workshop.setPaused('hidden', document.hidden);
+    if (workshopRevision !== store.sessionRevision) {
+      workshop.reset();
+      workshopRevision = store.sessionRevision;
+    }
+    resize();
+    if (isWorkshop) {
+      if (!workshop.element.isConnected) root.replaceChildren(workshop.element);
+      workshop.render(state);
+      return;
+    }
     if (!store.active) {
-      root.innerHTML = `<div class="menu-art-caption"><span>玉作工坊</span><p>一石一器，琢见光华</p></div><section class="title-menu">
-        <span class="seal">玉</span><p class="small-title">Pixel Jadecraft</p><h1>像素琢玉</h1><p class="title-description">从一块原石，开启你的玉作之旅。</p>
-        <div class="menu-buttons">${button('开启旅程', 'new', 'primary')}${button('继续旅程', 'continue', '', !store.hasSession)}${button('声音与存档', 'settings', 'quiet')}${button('学徒手册', 'help', 'quiet')}</div>
-        <p class="save-note">${store.hasSession ? `${saveText}<br>${state.updatedAt ? escape(new Date(state.updatedAt).toLocaleString('zh-CN')) : '请导出备份保留当前进度'}` : '单人体验 · 本地保存'}</p>
-        ${store.error ? `<p class="error">${store.hasSession ? '进度或设置未能保存，请在“声音与存档”中查看。' : '存档读取失败，请在“声音与存档”中恢复。'}</p>` : ''}</section><span class="prototype-tag">基础系统 · 工坊初见</span>`;
+      root.innerHTML = `<section class="landscape-menu" aria-label="游戏主菜单">
+        <h1 class="menu-title"><span class="screen-reader-text">Pixel Jadecraft · 像素琢玉</span></h1>
+        <p class="menu-chinese-title">像 素 琢 玉</p>
+        <nav class="landscape-menu-actions" aria-label="开始游戏">
+          ${button('继续旅程', 'continue', '', !store.hasSession)}${button('开启旅程', 'new')}${button('试玩玉璧打磨', 'craft')}${button('玉器图鉴', 'codex')}${button('学徒手册', 'help')}${button('设置', 'settings')}${button('退出游戏', 'exit')}
+        </nav>
+        ${store.error ? `<p class="menu-error" role="status">存档或设置需要处理，请打开“设置”查看。</p>` : ''}
+      </section>`;
+      root.querySelector('.menu-title').append(createMenuLogo());
+      if (focusedAction) root.querySelector(`[data-action="${focusedAction}"]`)?.focus({ preventScroll: true });
       return;
     }
     const location = state.location;
     const objectives = taskList(state);
-    const complete = objectives.filter(t => t.done).length;
+    const complete = objectives.filter(task => task.done).length;
     root.innerHTML = `<header class="hud"><div class="place-name"><span class="seal">玉</span><div><strong>${NAMES[location]}</strong><small>玉作学徒 · 首展之约</small></div></div><div class="stamina"><div><span>体力</span><strong>${state.stamina}<small> / 100</small></strong></div><meter min="0" max="100" value="${state.stamina}" aria-label="体力">${state.stamina}/100</meter></div><div class="hud-tools">${button(state.settings.muted ? '声音：关' : '声音：开', 'mute')}${button('全屏', 'fullscreen')}${button('设置', 'settings')}${button('暂停', 'pause')}</div></header>
-      <aside class="quest-strip"><div><span>师傅的首展委托</span><small>${complete} / 4</small></div><strong>${objectives.find(t => !t.done)?.name ?? '首展完成'}</strong><p>${objectives.find(t => !t.done)?.detail ?? '三器齐备，温润成展。'}</p><progress max="4" value="${complete}" aria-label="委托完成度"></progress>${button('查看委托 <kbd>J</kbd>', 'tasks', 'quiet')}</aside>
-      ${location === 'workshop' ? `<div class="station-label inspection-station">${button('鉴赏台 <span>观察玉材</span>', 'inspect')}</div><div class="station-label carving-station">${button('玉雕工作台 <span>琢形 · 雕纹 · 抛光</span>', 'craft')}</div><div class="station-label codex-station">${button('玉器图鉴 <span>识器藏珍</span>', 'codex')}</div>` : `<div class="location-note"><h2>${location === 'mine' ? '山藏玉，待君寻' : '一器一故事'}</h2><p>${location === 'mine' ? '矿洞场景预览 · 移动与采集将在后续接入' : '展厅场景预览 · 成品布展将在后续接入'}</p></div>`}
-      <div class="scene-caption">${location === 'workshop' ? '工坊初见' : '场景预览'}<span>基础系统版本 · 玩法将逐项开放</span></div>
+      <aside class="quest-strip"><div><span>师傅的首展委托</span><small>${complete} / 4</small></div><strong>${objectives.find(task => !task.done)?.name ?? '首展完成'}</strong><p>${objectives.find(task => !task.done)?.detail ?? '三器齐备，温润成展。'}</p><progress max="4" value="${complete}" aria-label="委托完成度"></progress>${button('查看委托 <kbd>J</kbd>', 'tasks', 'quiet')}</aside>
+      <div class="location-note"><h2>${location === 'mine' ? '山藏玉，待君寻' : '一器一故事'}</h2><p>${location === 'mine' ? '矿洞场景预览 · 移动与采集将在后续接入' : '展厅场景预览 · 成品布展将在后续接入'}</p></div>
+      <div class="scene-caption">场景预览<span>基础系统版本 · 玩法将逐项开放</span></div>
       <div class="bottom-bar"><nav class="travel" aria-label="地点切换">${Object.entries(NAMES).map(([id,name])=>`<button data-action="${id}" ${location === id ? 'aria-current="location"' : ''}><span>${name}</span><small>${{ workshop:'归来琢玉',mine:'寻石之旅',gallery:'陈列珍藏' }[id]}</small></button>`).join('')}</nav><nav class="pack-tools" aria-label="学徒工具">${button(`${icon('bag')}<span>行囊 <small>${state.inventory.length}/12</small></span><kbd>B</kbd>`, 'inventory')}${button(`${icon('scroll')}<span>委托</span><kbd>J</kbd>`, 'tasks')}${button(`${icon('book')}<span>图鉴</span><kbd>G</kbd>`, 'codex')}${button('?', 'help', 'help-button')}</nav></div>
       <div class="save-status ${store.error ? 'save-warning' : ''}" role="status" title="${escape(store.error)}"><span>${store.error ? escape(store.error) : `◆ ${saveText}`}</span>${store.dirty ? button('重试', 'save') : ''}</div>`;
-    if (focusedAction) root.querySelector(`[data-action="${focusedAction}"]`)?.focus({preventScroll:true});
+    if (focusedAction) root.querySelector(`[data-action="${focusedAction}"]`)?.focus({ preventScroll: true });
   }
-  return { render };
+  return {
+    render,
+    openSettings: settings,
+    setWorkshopPaused(reason, paused) {
+      workshop.setPaused(reason, paused);
+      if (reason === 'polishing') workshopTools.inert = paused;
+    },
+  };
 }

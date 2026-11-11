@@ -1,0 +1,51 @@
+.gameplay-interface { position: absolute; inset: 0; }
+.workshop-sidebar { position: absolute; left: 714px; top: 19px; width: 228px; height: 444px; display: grid; grid-template-rows: 66px minmax(156px, 1fr) 134px 26px minmax(16px, auto); gap: 8px; }
+.workshop-panel { position: relative; min-width: 0; padding: 18px 12px 10px; border: 4px ridge #ae814b; background: #2c1b14; box-shadow: inset 0 0 0 1px #664126, 2px 2px #071910; }
+.workshop-panel .sidebar-panel-title { position: absolute; left: 50%; top: -11px; transform: translateX(-50%); min-width: 142px; margin: 0; padding: 4px 14px; border: 2px solid #a77a45; background: #4a2c1c; color: #eed8a2; font: 15px SimSun, serif; line-height: 17px; text-align: center; letter-spacing: 2px; white-space: nowrap; clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px); box-shadow: inset 0 0 0 2px #302015; }
+.sidebar-quest-heading { display: flex; align-items: center; justify-content: space-between; gap: 5px; margin-top: 5px; }
+.sidebar-quest-heading strong { font: 18px SimSun, serif; color: #edd9aa; }
+.sidebar-quest-heading small { flex-shrink: 0; font-size: 9px; color: #b9bd98; }
+.workshop-quest p { margin-top: 8px; font-size: 11px; line-height: 1.75; color: #c6bea3; }
+.workshop-quest progress { margin-top: 8px; height: 7px; border: 1px solid #8e7948; }
+.sidebar-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.sidebar-actions button { min-width: 0; height: 25px; padding: 3px 4px; border: 2px ridge #a78250; background: #493020; color: #e8d6a8; font-size: 10px; line-height: 15px; }
+.sidebar-actions button:hover { background: #685033; border-color: #e5bd70; }
+.workbench-station { position: absolute; left: 218px; top: 258px; width: 230px; height: 145px; }
+.workbench-station .workbench-hotspot { position: relative; width: 100%; height: 100%; padding: 0; border: 2px solid transparent; background: transparent; box-shadow: none; }
+.workbench-station .workbench-hotspot:hover, .workbench-station .workbench-hotspot:focus-visible { border-color: #e3c17c; background: #dfc38b12; outline: 1px solid #533c25; outline-offset: 3px; box-shadow: inset 0 0 0 3px #b58c4a38; }
+.workbench-label { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); width: 164px; padding: 7px 12px; border: 3px ridge #ba8c50; background: #263b2cee; color: #f0dca5; font: 17px SimSun, serif; text-shadow: 1px 1px #102216; }
+.workbench-label small { display: block; font: 10px 'Microsoft YaHei', sans-serif; margin-top: 5px; color: #c9cfad; }
+.workbench-hotspot:hover .workbench-label { background: #43583a; color: #fff0bd; }
+.mentor-station { left: 436px; top: 264px; }
+.mentor-station button { padding: 5px 12px; font-size: 11px; }
+.mentor-station button span { display: inline; font-size: 9px; margin-left: 6px; }
+.mentor-dialogue { position: absolute; inset: 0; z-index: 5; display: flex; align-items: flex-end; padding: 0 28px 31px; background: #09231c3d; }
+.mentor-dialogue-card { display: flex; gap: 22px; width: 100%; min-height: 174px; padding: 21px 25px 17px; border: 5px ridge #b88e56; background: #342019fa; box-shadow: inset 0 0 0 2px #d9b67855, 0 5px 20px #0006; }
+.mentor-portrait { display: grid; place-items: center; align-self: center; width: 79px; height: 94px; flex-shrink: 0; background: #203a2e; border: 4px ridge #b59760; font: 42px SimSun, serif; color: #dacb9d; }
+.mentor-words { flex: 1; }
+.mentor-dialogue-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
+.mentor-dialogue-title h2 { font: 23px SimSun, serif; letter-spacing: 3px; color: #ead3a1; }
+.mentor-dialogue-title span { font-size: 10px; color: #beab83; }
+.mentor-words p { min-height: 64px; font-size: 16px; line-height: 1.9; color: #e1d9bc; }
+.mentor-dialogue-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 11px; }
+.mentor-dialogue-actions button { padding: 7px 17px; font-size: 12px; }
+.workshop-layout .hud { position: absolute; left: 220px; top: 18px; width: 270px; height: 35px; padding: 0; background: transparent; border: 0; justify-content: center; }
+.workshop-layout .place-name { width: auto; }
+.workshop-layout .place-name strong { font-size: 22px; letter-spacing: 8px; }
+.workshop-layout .place-name .seal, .workshop-layout .place-name small { display: none; }
+.workshop-sidebar .stamina { width: 100%; }
+.workshop-sidebar .stamina > div { margin-bottom: 5px; font-size: 10px; }
+.workshop-sidebar .hud-tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; min-width: 0; }
+.workshop-sidebar .hud-tools button { min-width: 0; height: 26px; padding: 3px 1px; background: #452b1c; border: 2px ridge #9e7948; font-size: 9px; }
+.workshop-layout .inspection-station { left: 81px; top: 285px; }
+.workshop-layout .scene-caption { left: 31px; bottom: 106px; background: #142b22df; }
+.workshop-layout .bottom-bar { height: 63px; background: #172c23; border-color: #9b7445; }
+.sidebar-piece-preview { display: flex; align-items: center; gap: 12px; margin-top: 5px; }
+.workshop-piece .item-icon { width: 48px; height: 48px; }
+.workshop-piece span { font: 17px SimSun, serif; color: #e4d7aa; }
+.workshop-piece small { display: block; font: 9px 'Microsoft YaHei', sans-serif; color: #b9b190; margin-top: 6px; }
+.workshop-panel::before, .workshop-panel::after, .mentor-dialogue-card::before, .mentor-dialogue-card::after { content: ''; position: absolute; width: 25px; height: 25px; background-image: url('../docs/concept-art/08-dialogs-and-menus.png'); background-size: 1024px 559px; background-position: -82px -176px; image-rendering: pixelated; pointer-events: none; }
+.workshop-panel::before, .mentor-dialogue-card::before { left: -3px; top: -3px; }
+.workshop-panel::after, .mentor-dialogue-card::after { right: -3px; bottom: -3px; transform: rotate(180deg); }
+.mentor-dialogue-card { position: relative; }
+.workshop-sidebar .save-status { position: static; justify-content: flex-end; align-self: start; width: 100%; max-width: none; min-width: 0; padding: 1px 4px; font-size: 9px; line-height: 14px; background: #13271e; }

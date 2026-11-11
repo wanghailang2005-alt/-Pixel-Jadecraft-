@@ -7,6 +7,53 @@ function storage(raw = null) {
   const data = new Map(raw === null ? [] : [[SAVE_KEY, raw]]);
   return { getItem: k => data.get(k) ?? null, setItem: (k,v) => data.set(k,v) };
 }
+
+test('opening practice is saved independently from the main quest and is idempotent', () => {
+  const disk = storage(), game = new GameStore(disk);
+  game.startNew();
+  assert.deepEqual(game.state.opening, { introduced: false, polished: false });
+  assert.equal(game.completeOpeningPolish(), false);
+  assert.equal(game.acknowledgeOpening(), true);
+  assert.equal(game.completeOpeningPolish(), true);
+  const saved = disk.getItem(SAVE_KEY);
+  assert.equal(game.completeOpeningPolish(), false);
+  assert.equal(disk.getItem(SAVE_KEY), saved);
+  assert.ok(tasks(game.state).every(task => !task.done));
+  assert.deepEqual(new GameStore(disk).state.opening, { introduced: true, polished: true });
+  game.startNew();
+  assert.deepEqual(game.state.opening, { introduced: false, polished: false });
+});
+
+test('legacy saves continue with normalized opening fields and malformed fields are rejected', () => {
+  const legacy = freshState();
+  delete legacy.opening;
+  const game = new GameStore(storage(JSON.stringify(legacy)));
+  game.resume();
+  assert.equal(game.active, true);
+  assert.deepEqual(game.state.opening, { introduced: true, polished: false });
+  for (const opening of [null, {}, { introduced: true }, { introduced: 'yes', polished: false }, { introduced: false, polished: true }]) {
+    assert.throws(() => validateState({ ...freshState(), opening }));
+  }
+});
+
+test('session replacement advances revision and practice save failures remain recoverable', () => {
+  const disk = storage(), game = new GameStore(disk);
+  const initialRevision = game.sessionRevision;
+  game.startNew();
+  assert.equal(game.sessionRevision, initialRevision + 1);
+  const beforeImport = game.sessionRevision;
+  assert.throws(() => game.importSave('broken'));
+  assert.equal(game.sessionRevision, beforeImport);
+  game.importSave(JSON.stringify(freshState()));
+  assert.equal(game.sessionRevision, beforeImport + 1);
+  game.acknowledgeOpening();
+  disk.setItem = () => { throw new Error('quota'); };
+  assert.equal(game.completeOpeningPolish(), true);
+  assert.equal(game.state.opening.polished, true);
+  assert.equal(game.dirty, true);
+  game.navigate('mine');
+  assert.equal(game.completeOpeningPolish(), false);
+});
 test('new game, movement, settings, inventory and refresh round-trip', () => {
   const disk = storage(), game = new GameStore(disk);
   assert.equal(game.hasSave, false);

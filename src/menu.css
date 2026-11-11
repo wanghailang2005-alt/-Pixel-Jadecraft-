@@ -1,0 +1,14 @@
+.landscape-menu { position: absolute; inset: 0; }
+.landscape-menu .menu-title { position: absolute; left: 130px; top: 104px; width: 700px; height: 165px; margin: 0; }
+.menu-logo { width: 700px; height: 165px; image-rendering: pixelated; }
+.screen-reader-text { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.menu-chinese-title { position: absolute; top: 269px; left: 0; right: 0; text-align: center; font: bold 17px SimSun, 'Songti SC', serif; letter-spacing: 6px; color: #e2ebce; text-shadow: 2px 2px #15362b, -1px -1px #254636; }
+.landscape-menu-actions { position: absolute; top: 303px; left: 340px; width: 280px; display: flex; flex-direction: column; align-items: stretch; }
+.landscape-menu-actions button { position: relative; height: 25px; padding: 0 25px; border: 0; background: transparent; box-shadow: none; color: #e8ecd6; font: bold 16px 'Microsoft YaHei', sans-serif; letter-spacing: 2px; text-align: center; text-shadow: 2px 2px #153226, -1px -1px #1c392d; transition: color .1s, transform .1s; }
+.landscape-menu-actions button:hover, .landscape-menu-actions button:focus-visible { color: #ffe79a; background: #13372a33; transform: scale(1.06); outline: none; }
+.landscape-menu-actions button:focus-visible { outline: 1px dashed #d8e5ae; outline-offset: -2px; }
+.landscape-menu-actions button:hover::before, .landscape-menu-actions button:focus-visible::before { content: '◆'; position: absolute; left: 32px; top: 5px; font-size: 10px; color: #d9eaa6; }
+.landscape-menu-actions button:disabled { opacity: .42; transform: none; color: #ccdac3; }
+.landscape-menu-actions button:disabled::before { display: none; }
+.menu-error { position: absolute; bottom: 42px; left: 250px; right: 250px; text-align: center; font-size: 11px; line-height: 1.5; color: #ffe1ad; background: #19332bea; padding: 5px 10px; border: 1px solid #a58d5a; }
+@media (prefers-reduced-motion: reduce) { .landscape-menu-actions button { transition: none; } }
