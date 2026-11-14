@@ -1,4 +1,134 @@
-import { CELL_SIZE } from './mining.js';
+import { CELL_SIZE, TILE, CATWALK_Y } from './mining.js';
+
+const ROCK_PATCH_SIZE = 256;
+const ROCK_PATCH_COLUMNS = ROCK_PATCH_SIZE / 16;
+
+/** A continuous geological face is cut into cells; cells never get brick borders. */
+export function createTerrainArt(scene) {
+  texture(scene, 'mine-terrain-source', 80, ROCK_PATCH_COLUMNS ** 2 * 16, ctx => {
+    for (let tile = 1; tile <= 4; tile++) {
+      const patch = document.createElement('canvas');
+      patch.width = patch.height = ROCK_PATCH_SIZE;
+      const rock = patch.getContext('2d');
+      const colors = tile === TILE.BEDROCK
+        ? ['#101C25', '#182A34', '#20353F', '#29424B', '#111F28']
+        : tile === TILE.DIRT
+          ? ['#25333A', '#344447', '#3D5150', '#50615A', '#202E35']
+          : ['#1D2F3B', '#2C4350', '#35505B', '#4B6469', '#172B36'];
+      rect(rock, 0, 0, ROCK_PATCH_SIZE, ROCK_PATCH_SIZE, colors[0]);
+      // Each face spans several collision cells. Sparse stepped fissures expose
+      // broad blue-grey planes instead of repeating a pebble in every cell.
+      for (let band = -1; band < 7; band++) for (let block = -1; block < 6; block++) {
+        const seed = (band * 31 + block * 17 + 97) >>> 0;
+        const x = block * 58 + (band % 2 ? 22 : -6);
+        const y = band * 45 + (seed % 3) * 4;
+        const width = 48 + seed % 17, height = 34 + seed % 11;
+        polygon(rock, [[x,y+13],[x+9,y+7],[x+15,y+7],[x+21,y], [x+width-9,y+2],
+          [x+width,y+14],[x+width-7,y+height-3],[x+width-19,y+height+3], [x+9,y+height-1],[x,y+height-10]], colors[1 + seed % 2]);
+        polygon(rock, [[x+7,y+16],[x+17,y+10],[x+24,y+4],[x+width-12,y+5],
+          [x+width-20,y+11],[x+21,y+12],[x+12,y+20]], colors[3]);
+        polygon(rock, [[x+width-5,y+16],[x+width-12,y+height-5],[x+width-21,y+height+1],
+          [x+14,y+height-2],[x+20,y+height-7],[x+width-22,y+height-8]], colors[4]);
+        if (seed % 3 === 0) polygon(rock, [[x+17,y+18],[x+20,y+15],[x+31,y+16],[x+29,y+18],
+          [x+22,y+18],[x+18,y+25],[x+14,y+27]], colors[0]);
+      }
+      for (let variant = 0; variant < ROCK_PATCH_COLUMNS ** 2; variant++) {
+        ctx.save(); ctx.translate(tile * 16, variant * 16);
+        ctx.drawImage(patch, variant % ROCK_PATCH_COLUMNS * 16, Math.floor(variant / ROCK_PATCH_COLUMNS) * 16, 16, 16, 0, 0, 16, 16);
+      if (tile === TILE.JADE_VEIN) {
+          polygon(ctx, [[1,10],[3,5],[8,1],[12,2],[15,8],[12,14],[6,16]], '#102F2B');
+          polygon(ctx, [[3,10],[5,5],[9,2],[12,4],[13,9],[10,13],[6,14]], '#287D5A');
+          polygon(ctx, [[4,9],[6,5],[9,3],[11,4],[7,10]], '#8CE8A9');
+          polygon(ctx, [[7,10],[12,6],[12,10],[9,13],[5,13]], '#42BE84');
+          rect(ctx, 6, 6, 2, 2, '#D2F4C9');
+        }
+        ctx.restore();
+      }
+    }
+  });
+  if (!scene.textures.exists('mine-terrain')) scene.textures.addSpriteSheet('mine-terrain', scene.textures.get('mine-terrain-source').getSourceImage(), { frameWidth: 16, frameHeight: 16 });
+  texture(scene, 'mine-pale-vein', 16, 16, ctx => {
+    polygon(ctx, [[1,10],[3,5],[8,1],[12,2],[15,8],[12,14],[6,16]], '#213E37');
+    polygon(ctx, [[3,10],[5,5],[9,2],[12,4],[13,9],[10,13],[6,14]], '#6B9D79');
+    polygon(ctx, [[4,9],[6,5],[9,3],[11,4],[7,10]], '#D4E7B7');
+    polygon(ctx, [[7,10],[12,6],[12,10],[9,13],[5,13]], '#A4C995');
+    rect(ctx, 6, 6, 2, 2, '#F0F1CE');
+  });
+}
+
+/** Only changed cells and neighboring exposed edges are redrawn. */
+export function drawRuntimeTerrain(scene, world, useFormalTiles = false) {
+  createTerrainArt(scene);
+  const key = useFormalTiles ? 'mine-tiles' : 'mine-terrain';
+  const cells = new Map(), edges = new Map(), oreFaces = new Map();
+  const veinAt = new Map(world.veins.map(vein => [`${vein.column},${vein.row}`, vein]));
+  function updateCell(column, row) {
+    const id = `${column},${row}`;
+    cells.get(id)?.destroy(); cells.delete(id);
+    edges.get(id)?.destroy(); edges.delete(id);
+    oreFaces.get(id)?.destroy(); oreFaces.delete(id);
+    const tile = world.map[row]?.[column];
+    if (tile === undefined || tile === TILE.AIR) return;
+    const variant = column % ROCK_PATCH_COLUMNS + row % ROCK_PATCH_COLUMNS * ROCK_PATCH_COLUMNS;
+    const frame = useFormalTiles ? world.frames[tile] : variant * 5 + tile;
+    cells.set(id, scene.add.image(column * 32, row * 32, key, frame).setOrigin(0).setScale(2).setDepth(1));
+    if (!useFormalTiles && tile === TILE.JADE_VEIN && veinAt.get(id)?.material === 'nephrite') {
+      oreFaces.set(id, scene.add.image(column * 32, row * 32, 'mine-pale-vein').setOrigin(0).setScale(2).setDepth(1.5));
+    }
+    const top = world.map[row - 1]?.[column] === TILE.AIR;
+    const left = world.map[row]?.[column - 1] === TILE.AIR;
+    const right = world.map[row]?.[column + 1] === TILE.AIR;
+    const bottom = world.map[row + 1]?.[column] === TILE.AIR;
+    if (!top && !left && !right && !bottom) return;
+    const edge = scene.add.graphics().setDepth(2);
+    const px = column * 32, py = row * 32;
+    // Every solid-air boundary stays visible and sits on the real collision edge.
+    if (left) { edge.fillStyle(0x49616a); edge.fillRect(px, py, 2, 32); edge.fillStyle(0x10222c); edge.fillRect(px + 2, py + 4, 2, 24); }
+    if (right) { edge.fillStyle(0x0c1b25); edge.fillRect(px + 28, py, 4, 32); }
+    if (bottom) { edge.fillStyle(0x0b1821); edge.fillRect(px, py + 28, 32, 4); }
+    if (top) {
+      edge.fillStyle(0x6a7974); edge.fillRect(px, py, 32, 2);
+      if (tile !== TILE.BEDROCK) {
+        edge.fillStyle(0x476443); edge.fillRect(px, py + 2, 32, 3);
+        edge.fillStyle(0x668350); edge.fillRect(px + column % 3 * 6, py, 14, 3);
+        edge.fillStyle(0x3c5840); edge.fillRect(px + 10, py + 4, 10, 4 + column % 3 * 2);
+      }
+    }
+    if (left && row % 4 === 1 && tile !== TILE.BEDROCK) {
+      edge.fillStyle(0x38523c); edge.fillRect(px + 3, py + 4, 5, 18);
+      edge.fillStyle(0x557346); edge.fillRect(px + 2, py + 7, 3, 8);
+    }
+    edges.set(id, edge);
+  }
+  world.map.forEach((row, y) => row.forEach((tile, x) => updateCell(x, y)));
+  drawMineTerrain(scene, world, false);
+  return { cells, update(column, row) {
+    for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) updateCell(column + dx, row + dy);
+  } };
+}
+
+export function createMiningEffects(scene) {
+  texture(scene, 'mine-cracks-source', 64, 16, ctx => {
+    for (let frame = 1; frame < 4; frame++) {
+      ctx.save(); ctx.translate(frame * 16, 0);
+      ctx.strokeStyle = '#101C1B'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(7, 1); ctx.lineTo(9, 6); ctx.lineTo(5, 10); ctx.lineTo(8, 15);
+      if (frame >= 2) { ctx.moveTo(9, 6); ctx.lineTo(14, 8); ctx.lineTo(12, 12); }
+      if (frame >= 3) { ctx.moveTo(5, 10); ctx.lineTo(1, 7); ctx.moveTo(8, 14); ctx.lineTo(14, 15); }
+      ctx.stroke(); ctx.restore();
+    }
+  });
+  if (!scene.textures.exists('mine-cracks')) scene.textures.addSpriteSheet('mine-cracks', scene.textures.get('mine-cracks-source').getSourceImage(), { frameWidth: 16, frameHeight: 16 });
+  texture(scene, 'mine-drop-source', 16, 8, ctx => {
+    for (let frame = 0; frame < 2; frame++) {
+      ctx.save(); ctx.translate(frame * 8, 0);
+      polygon(ctx, [[0,4],[3,0],[6,1],[8,4],[5,8],[2,7]], '#22684F');
+      polygon(ctx, [[1,4],[3,1],[6,2],[5,6],[2,6]], frame ? '#7FE3B0' : '#4FC98A');
+      rect(ctx, 3, 2, 2, 1, '#C4F1CE'); ctx.restore();
+    }
+  });
+  if (!scene.textures.exists('mine-drop')) scene.textures.addSpriteSheet('mine-drop', scene.textures.get('mine-drop-source').getSourceImage(), { frameWidth: 8, frameHeight: 8 });
+}
 
 const outline = '#10151e';
 
@@ -106,6 +236,18 @@ export function paintMineIcon(canvas, kind) {
 }
 
 export function createMineArt(scene) {
+  // One cached, low-resolution overlay follows the miner without per-frame uploads.
+  // At 4x scale it covers the full viewport even at the world edges.
+  texture(scene, 'mine-lamp-shade', 512, 288, ctx => {
+    ctx.fillStyle = 'rgba(0, 8, 16, 0.22)';
+    ctx.fillRect(0, 0, 512, 288);
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(256, 144, 32, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+  });
   if (!scene.textures.exists('mine-player')) {
     texture(scene, 'mine-player-source', 192, 144, ctx => {
       ['left', 'right', 'down'].forEach((direction, row) => {
@@ -115,11 +257,6 @@ export function createMineArt(scene) {
       });
     });
     scene.textures.addSpriteSheet('mine-player', scene.textures.get('mine-player-source').getSourceImage(), { frameWidth: 32, frameHeight: 48 });
-  }
-  for (const material of ['nephrite', 'jadeite']) {
-    for (const phase of ['full', 'cracked', 'ready', 'mining', 'empty', 'regrowing']) {
-      texture(scene, `mine-ore-${material}-${phase}`, 32, 32, ctx => paintOre(ctx, material, phase));
-    }
   }
   texture(scene, 'mine-glow', 64, 64, ctx => {
     const glow = ctx.createRadialGradient(32, 32, 5, 32, 32, 32);
@@ -140,32 +277,52 @@ export function createMineArt(scene) {
 }
 
 export function drawMineTerrain(scene, world, terrain = true) {
-  const g = scene.add.graphics().setDepth(1);
-  if (terrain) world.map.forEach((row, y) => row.forEach((tile, x) => {
-    if (!tile) return;
-    const px = x * CELL_SIZE, py = y * CELL_SIZE;
-    g.fillStyle(0x152129); g.fillRect(px, py, CELL_SIZE, CELL_SIZE);
-    for (let part = 0; part < 8; part++) {
-      const seed = (x * 73 + y * 41 + part * 19) % 97;
-      const rx = px + (seed % 7) * 4, ry = py + ((seed * 3) % 7) * 4;
-      g.fillStyle([0x2b3a42, 0x34454e, 0x4a5a62, 0x243139][part % 4]);
-      g.fillRect(rx, ry, 4 + (seed % 3) * 4, 4 + (seed % 2) * 4);
-    }
-    if (!world.map[y - 1]?.[x]) {
-      g.fillStyle(0x3e6b45); g.fillRect(px, py, CELL_SIZE, 4);
-      for (let moss = 0; moss < 4; moss++) {
-        g.fillStyle(moss % 2 ? 0x70925a : 0x526f43);
-        g.fillRect(px + moss * 8, py - (moss % 2) * 3, 6, 6 + ((x + moss) % 3) * 3);
-      }
-    }
-  }));
+  if (terrain) { drawRuntimeTerrain(scene, world); return; }
+  // The entrance view and pillars are distant scenery. Opaque terrain above them
+  // still describes every wall; only the existing air cells reveal this layer.
+  if (scene.textures.exists('mine-cavern')) scene.add.image(world.spawn.x + 36, 786, 'mine-cavern')
+    .setDisplaySize(560, 315).setDepth(-9);
+  const distance = scene.add.graphics().setDepth(-5);
   for (const ladder of world.ladders ?? []) {
-    g.fillStyle(0x231c1c); g.fillRect(ladder.x - 18, ladder.top - 8, 7, ladder.bottom - ladder.top + 8); g.fillRect(ladder.x + 11, ladder.top - 8, 7, ladder.bottom - ladder.top + 8);
-    g.fillStyle(0x8b5a2b); g.fillRect(ladder.x - 16, ladder.top - 8, 4, ladder.bottom - ladder.top + 8); g.fillRect(ladder.x + 12, ladder.top - 8, 4, ladder.bottom - ladder.top + 8);
+    distance.fillStyle(0x769c9b, .12); distance.fillRect(ladder.x - 45, ladder.top, 90, ladder.bottom - ladder.top);
+    distance.fillStyle(0x92b7ac, .08); distance.fillRect(ladder.x - 27, ladder.top, 18, ladder.bottom - ladder.top);
+  }
+  for (const [x, top, height] of [[77, 748, 114], [268, 766, 98]]) {
+    distance.fillStyle(0x2a444d, .85); distance.fillRect(x, top, 24, height);
+    distance.fillStyle(0x4b6a6b, .65); distance.fillRect(x + 3, top + 14, 4, height - 24);
+    distance.fillStyle(0x1b303a, .8); distance.fillRect(x + 18, top + 14, 4, height - 24);
+    distance.fillStyle(0x45616a, .85); distance.fillRect(x - 5, top, 34, 7);
+    distance.fillRect(x - 2, top + 9, 28, 4); distance.fillRect(x - 5, top + height - 5, 34, 5);
+  }
+  const g = scene.add.graphics().setDepth(2);
+  for (const ladder of world.ladders ?? []) {
+    g.fillStyle(0x182322); g.fillRect(ladder.x - 18, ladder.top - 8, 7, ladder.bottom - ladder.top + 8); g.fillRect(ladder.x + 11, ladder.top - 8, 7, ladder.bottom - ladder.top + 8);
+    g.fillStyle(0x77634b); g.fillRect(ladder.x - 16, ladder.top - 8, 4, ladder.bottom - ladder.top + 8); g.fillRect(ladder.x + 12, ladder.top - 8, 4, ladder.bottom - ladder.top + 8);
     for (let y = ladder.top; y < ladder.bottom; y += 20) {
-      g.fillStyle(0x4b3426); g.fillRect(ladder.x - 16, y + 3, 32, 5);
-      g.fillStyle(0xb08a53); g.fillRect(ladder.x - 16, y, 32, 4);
+      g.fillStyle(0x3e362e); g.fillRect(ladder.x - 16, y + 3, 32, 5);
+      g.fillStyle(0xa38b62); g.fillRect(ladder.x - 16, y, 32, 3);
+      g.fillStyle(0xc1ac79); g.fillRect(ladder.x - 13, y, 4, 2);
+    }
+    // These one-way planks are the real walking surface in moveMiner. W/S at
+    // the central ladder still goes through the hatch into the fixed shaft.
+    g.fillStyle(0x302d26); g.fillRect(ladder.x - 48, CATWALK_Y, 96, 6);
+    for (let x = ladder.x - 48; x < ladder.x + 48; x += 16) {
+      g.fillStyle(0xa28b62); g.fillRect(x, CATWALK_Y - 2, 14, 3);
+      g.fillStyle(0x635441); g.fillRect(x + 2, CATWALK_Y + 1, 12, 3);
     }
   }
-  if (world.ladders?.length) scene.add.image(768, 928, 'mine-cart').setOrigin(0.5, 1).setScale(2).setDepth(3);
+  if (world.ladders?.length) {
+    // Rails sit on the already solid entrance floor and do not add collision.
+    for (let x = 72; x < 270; x += 28) { g.fillStyle(0x564a3b); g.fillRect(x, 854, 12, 10); }
+    g.fillStyle(0x19282d); g.fillRect(66, 855, 208, 3); g.fillRect(66, 862, 208, 2);
+    g.fillStyle(0x778b88); g.fillRect(66, 854, 208, 1); g.fillRect(66, 861, 208, 1);
+    scene.add.image(world.spawn.x + 64, 864, 'mine-cart').setOrigin(0.5, 1).setScale(1.5).setDepth(3);
+    const glow = scene.add.image(63, 781, 'mine-glow').setScale(.65).setTint(0xffd6a0).setAlpha(.55).setDepth(2);
+    const lantern = scene.add.graphics().setDepth(3);
+    lantern.fillStyle(0x3b3529); lantern.fillRect(61, 752, 2, 21); lantern.fillRect(55, 772, 15, 21);
+    lantern.fillStyle(0xa88b51); lantern.fillRect(57, 773, 11, 3); lantern.fillRect(57, 788, 11, 3);
+    lantern.fillStyle(0xe4c77f); lantern.fillRect(59, 777, 7, 10);
+    lantern.fillStyle(0xffe6a6); lantern.fillRect(61, 778, 3, 7);
+    glow.setName('entrance-lantern-glow');
+  }
 }

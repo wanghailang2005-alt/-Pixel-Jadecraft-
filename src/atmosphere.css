@@ -1,0 +1,42 @@
+/* Warm wood, old brass and jade: shared chrome around the playable scenes. */
+:root {
+  --jade-ink: #14271e;
+  --jade-paper: #ecdfbc;
+  --jade-brass: #ad8853;
+  --jade-wood: #3c291b;
+}
+body { background: #111b17; color: var(--jade-paper); }
+.frame-heading { gap: 12px; align-items: flex-end; }
+body:has(#game.reference-mode) .frame-heading { display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: 12px; }
+body:has(#game.reference-mode) .frame-heading > span:first-child { align-self: center; font-size: 18px; line-height: 24px; letter-spacing: 2px; }
+.workshop-page-tools { display: flex; align-items: stretch; justify-content: flex-end; gap: 8px; }
+.workshop-tool-group { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 4px; padding: 6px 7px; border: 1px solid #675138; background: #1b251c; box-shadow: inset 0 0 0 1px #0e1611; }
+.workshop-tool-group > span { width: 100%; color: #b79e70; letter-spacing: 2px; font-size: 12px; line-height: 12px; padding: 0 2px 3px; }
+.workshop-page-tools button { min-height: 27px; padding: 5px 8px; color: #e3d6b2; background: #2c3b2b; border: 1px solid #806642; box-shadow: inset 0 1px #a5b17f22, 0 2px #0d1812; font-size: 12px; line-height: 14px; letter-spacing: 0; }
+.workshop-page-tools button:hover { border-color: #c0a261; background: #42573b; }
+.workshop-page-tools button:focus-visible { outline: 2px solid #d8bd77; outline-offset: 2px; }
+.workshop-page-tools button[data-action=make] { background: #35684d; border-color: #b9b16d; color: #fff0bd; }
+.workshop-page-tools button[data-action=menu] { background: #3d2b20; }
+.workshop-page-tools button[aria-current=page] { border-bottom: 3px solid #dbbf74; }
+.workshop-save-warning { padding: 8px 10px; border-left: 3px solid #bd8749; background: #38271b; }
+.toast { border: 2px solid #af9159; background: #1d3228f5; color: #f3e1b4; box-shadow: inset 0 0 0 1px #071b12, 3px 3px #091610; line-height: 1.6; }
+dialog { scrollbar-width: thin; scrollbar-color: #a1844a #281c15; }
+dialog header h2 { line-height: 1.4; }
+dialog button.primary { background: #37684d; border-color: #c2aa6b; color: #ffedbc; box-shadow: inset 0 0 0 1px #1e4533, 2px 2px #140f0a; }
+dialog button.primary:hover { background: #4d805d; border-color: #e2cd91; }
+dialog input[type=range] { accent-color: #93b58a; }
+dialog.settings-panel .setting { padding-block: 12px; }
+dialog.settings-panel .setting label { color: #e7d7ac; }
+dialog.settings-panel .setting output { color: #c3d9a2; min-width: 42px; text-align: right; }
+@media (max-width: 1050px) {
+  body:has(#game.reference-mode) .frame-heading { grid-template-columns: 1fr; }
+  .workshop-page-tools { justify-content: flex-start; }
+  .workshop-tool-group { flex: 1 1 auto; }
+}
+@media (max-width: 620px) {
+  .workshop-page-tools { display: grid; grid-template-columns: 1fr; }
+  .workshop-tool-group { padding: 5px 7px; }
+  .workshop-tool-group > span { width: 32px; flex-shrink: 0; padding: 0; letter-spacing: 0; }
+  .workshop-page-tools button { min-height: 30px; padding: 5px 8px; }
+  body:has(#game.reference-mode) footer { line-height: 1.7; gap: 8px; }
+}

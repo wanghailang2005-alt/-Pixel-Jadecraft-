@@ -100,9 +100,12 @@ kbd { font: 9px "Microsoft YaHei", sans-serif; display: inline-grid; place-items
 .save-status { position: absolute; bottom: 84px; right: 19px; max-width: 515px; font-size: 9px; line-height: 1.7; padding: 4px 8px; color: #d0cfb4; background: #17271fc9; display: flex; align-items: center; gap: 9px; }
 .save-status button { padding: 4px 8px; font-size: 10px; flex-shrink: 0; }
 .save-warning { color: #ffd2a3; border: 1px solid #a48153; }
-.location-note { position: absolute; left: 270px; top: 170px; padding: 15px 20px; background: #182d27dc; border-left: 2px solid #9caa79; }
+.location-note { position: absolute; right: 20px; top: 100px; width: 240px; padding: 12px 16px; background: #182d27dc; border-left: 2px solid #9caa79; }
 .location-note h2 { font-size: 25px; letter-spacing: 3px; }
 .location-note p { font-size: 10px; color: #b9c2a5; margin-top: 8px; }
+.location-note button { margin-top: 10px; }
+.gallery-case-button { position: absolute; width: 90px; height: 140px; padding: 0; background: transparent; border: 2px solid transparent; box-shadow: none; }
+.gallery-case-button:hover, .gallery-case-button:focus-visible { background: #7fe3b011; border-color: #b2d6a5; outline: none; }
 dialog { width: min(620px, calc(100vw - 28px)); max-height: min(90dvh, 850px); padding: 0; border: 4px double #b29d69; color: #e0dbc2; background: #2a352c; box-shadow: 0 0 0 2px #18221c, 0 24px 100px #0009; }
 dialog.wide { width: min(920px, calc(100vw - 28px)); }
 dialog[open] { display: flex; flex-direction: column; overflow: hidden; }
@@ -164,6 +167,7 @@ blockquote { margin: 0 0 18px; padding: 13px 16px; border-left: 2px solid #b19b6
 .toast { position: absolute; z-index: 20; left: 50%; bottom: 17%; transform: translateX(-50%); padding: 10px 22px; border: 1px solid #bbac77; background: #25382bef; color: #eee1b6; font-size: clamp(10px, 1.1vw, 14px); box-shadow: 3px 3px #0005; opacity: 0; pointer-events: none; transition: opacity .15s; }
 .toast.visible { opacity: 1; }
 .mine-interface {
+  pointer-events: none;
   --panel-bg: #1e120c;
   --wood: #6b4426;
   --gold: #c9a15a;

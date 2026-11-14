@@ -1,0 +1,11 @@
+# 展厅背景素材
+
+2026-11-14 使用内置 image_gen，参考 `docs/concept-art/04-digital-exhibition.png` 生成三展柜横屏背景。
+
+项目文件为 `src/assets/gallery-isometric-v1.png`。生成原件为 `C:/Users/Wang/.codex/generated_images/01a1d5d9-e0aa-7953-8915-953b9ec18c5a/exec-a7c882c8-7b66-464a-954b-ff4abf5c9022.png`，原件保留。人物、玉器、文字和操作层由游戏独立呈现，实际成品按 Store 展位数据绘制。
+
+## 最终提示词
+
+```text
+Create a production-ready game background asset for Pixel Jadecraft, a Chinese jade culture pixel-art game. Use the attached image as the authoritative visual reference for architecture, bold square pixel density, stone masonry, brown wood posts, green-grey tiled floor, cool tall windows and warm wall torches. Recompose it into a landscape 16:9 scene with exactly THREE EMPTY glass display cabinets. Preserve the original reference's dark museum atmosphere, clear isometric elevated viewpoint, stepped pixel outlines, restrained dither and blocky 16-bit material textures. Do not make a smooth painting. Full canvas is a 960x540 logical game screen, desired high quality output landscape. Room composition: back corner at (480,90), left and right walls meet there, tiled diamond floor begins around (480,170) and fills foreground. EXACTLY three display cabinet top surfaces at approximately (320,310), (480,380), (640,310) in 960x540 coordinates. Each top glass box is centered at that x, extends from y-60 to y, about 80 logical pixels wide. Cabinet wood/stone plinth extends from that y to y+80. Front center cabinet is lower in perspective. These three empty glass interiors must be dark and quiet so actual player-made jade artifacts can be independently overlaid at (320,281),(480,351),(640,281). Keep cabinets separate and clearly identifiable. Elegant dark wood frames, bronze fittings and small blank brass label plaques. Blank wooden wall plaques can decorate background. Windows with faint blue mountain silhouettes, warm amber torch pools, subtle shadows. Upper 90 pixels and lower 70 pixels relatively quiet/dark for separately rendered real HUD. Left upper quarter and right upper quarter quiet for real task and exhibition panels. NO people, NO jade artifacts inside cabinets, NO additional cabinets, NO UI, NO letters, NO logos, NO watermarks, NO arrows, NO title, NO readable text. Output the game background filling the canvas, without outer concept-sheet borders.
+```

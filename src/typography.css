@@ -1,0 +1,104 @@
+@font-face {
+  font-family: 'Fusion Pixel';
+  src: url('./assets/fonts/fusion-pixel-12px-zh-hans.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  --font-game: 'Fusion Pixel', 'Microsoft YaHei', sans-serif;
+  font-synthesis: none;
+}
+
+body,
+button,
+input,
+select,
+output,
+kbd,
+h1,
+h2,
+h3,
+.frame-heading > span:first-child,
+.place-name strong,
+.quest-strip strong,
+.item-detail h3,
+.scene-caption,
+.scene-caption span,
+.menu-chinese-title,
+.landscape-menu-actions button,
+.reference-workshop,
+.reference-workshop button,
+.reference-title,
+.reference-motto,
+.reference-panel-title,
+.reference-scene-tag h2,
+.reference-dialogue-line,
+.mine-status,
+.mine-status strong,
+.polish-heading h1,
+.polish-stages,
+.polish-panel h2,
+.polish-preview p,
+.polish-result h2,
+dialog.settings-panel header h2 {
+  font-family: var(--font-game);
+  font-weight: 400;
+}
+
+.menu-chinese-title {
+  font-size: 24px;
+  line-height: 24px;
+}
+.landscape-menu-actions button {
+  font-size: 24px;
+  height: 25px;
+  line-height: 25px;
+  letter-spacing: 0;
+}
+.reference-title,
+.reference-motto,
+.polish-heading h1,
+.polish-result h2 {
+  font-size: 24px;
+}
+.reference-panel-title,
+.reference-inventory .reference-panel-title,
+.reference-crafting .reference-panel-title {
+  font-size: 24px;
+  line-height: 24px;
+  letter-spacing: 0;
+}
+.reference-dialogue-line {
+  font-size: 24px;
+  line-height: 26px;
+  letter-spacing: 0;
+}
+.reference-scene-tag h2,
+.reference-jade-list button span,
+.reference-tabs button,
+.reference-patterns button,
+.reference-preview h3,
+.reference-preview p,
+.reference-vitals,
+.reference-level,
+.reference-craft-actions button,
+.mine-controls {
+  font-size: 12px;
+}
+.reference-workshop .reference-hearts b {
+  font-size: 0;
+}
+dialog header h2,
+dialog.settings-panel header h2 {
+  font-size: 24px;
+  letter-spacing: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .landscape-menu-actions button:hover,
+  .landscape-menu-actions button:focus-visible {
+    transform: translateX(2px);
+  }
+}

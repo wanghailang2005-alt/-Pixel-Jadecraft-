@@ -6,9 +6,9 @@
 .reference-workshop button:active { transform: translateY(1px); }
 .reference-workshop button:focus-visible { outline: 2px solid var(--select-ring); outline-offset: 2px; }
 .reference-workshop button:disabled { opacity: .55; filter: none; cursor: default; }
-.reference-title { position: absolute; left: 220px; top: 18px; width: 300px; height: 38px; display: grid; place-items: center; margin: 0; font: 400 30px 'KaiTi', 'STKaiti', 'SimSun', serif; letter-spacing: 8px; color: #f0d89d; line-height: 1; text-align: center; white-space: nowrap; }
+.reference-title { position: absolute; left: 220px; top: 18px; width: 300px; height: 38px; display: grid; place-items: center; margin: 0; border: 3px solid #76502d; background: repeating-linear-gradient(0deg, #362315 0 3px, #3c2919 3px 4px); box-shadow: 0 0 0 1px #1a100b, inset 0 0 0 1px #c59c59, inset 0 0 0 3px #24180f; font: 400 26px 'KaiTi', 'STKaiti', 'SimSun', serif; letter-spacing: 8px; color: #f0d89d; line-height: 1; text-align: center; white-space: nowrap; }
 .reference-motto { position: absolute; left: 295px; top: 80px; width: 145px; height: 37px; display: grid; place-items: center; border: 4px ridge #8e6437; background: #1b291b; box-shadow: 0 0 0 2px #182019, inset 0 0 0 1px #c59c59; font: bold 24px SimSun, serif; letter-spacing: 4px; color: #d4a45e; }
-.reference-panel { position: absolute; left: 750px; width: 240px; background: var(--panel-bg); border: 4px ridge var(--wood-hi); box-shadow: inset 0 0 0 1px #d0a86a, inset 0 0 0 8px #160e09, inset 0 0 0 9px #74502e; }
+.reference-panel { position: absolute; left: 750px; width: 240px; background: var(--panel-bg); border: 4px solid #795331; box-shadow: 0 0 0 1px #160e09, inset 0 0 0 1px #c7a06a, inset 0 0 0 3px #322115, inset 0 0 0 8px #160e09, inset 0 0 0 9px #74502e; }
 .reference-panel-title { position: absolute; z-index: 1; left: 50%; top: -12px; transform: translateX(-50%); height: 26px; min-width: 140px; padding: 2px 10px; border: 2px solid #9e7341; background: #3c2516; box-shadow: inset 0 0 0 2px #1d130e; clip-path: polygon(9px 0, calc(100% - 9px) 0, 100% 9px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 9px); color: #ecd59c; font: 400 18px 'KaiTi', 'STKaiti', 'SimSun', serif; line-height: 18px; white-space: nowrap; text-align: center; }
 .reference-inventory .reference-panel-title, .reference-crafting .reference-panel-title { min-width: 140px; padding-left: 6px; padding-right: 6px; font-size: 18px; }
 .ornate-corner { position: absolute; z-index: 1; width: 17px; height: 17px; pointer-events: none; border: 2px solid #b28a50; background: #362417; box-shadow: inset 0 0 0 2px #22160e, inset 0 0 0 3px #a77c44; }
@@ -21,8 +21,10 @@
 .reference-vitals { position: absolute; left: 10px; top: 17px; font-size: 13px; line-height: 18px; letter-spacing: 0; }
 .reference-vitals > div { height: 18px; display: flex; align-items: center; gap: 3px; }
 .reference-hearts { display: flex; gap: 2px; }
-.reference-hearts b { color: #d0403c; font-family: 'Courier New', monospace; font-size: 16px; line-height: 16px; -webkit-text-stroke: 1px #681f21; }
-.reference-hearts .empty-heart { color: #261914; -webkit-text-stroke: 1px #765544; }
+.reference-hearts b { position: relative; display: inline-block; width: 12px; height: 12px; font-size: 0; background: #681f21; clip-path: polygon(8% 8%, 42% 8%, 50% 25%, 58% 8%, 92% 8%, 100% 25%, 100% 50%, 50% 100%, 0 50%, 0 25%); }
+.reference-hearts b::after { content: ''; position: absolute; inset: 1px 1px 2px; background: linear-gradient(135deg, #e17862 0 30%, #d0403c 30% 65%, #9b2c2b 65%); clip-path: inherit; }
+.reference-hearts .empty-heart { background: #765544; }
+.reference-hearts .empty-heart::after { background: #261914; }
 .reference-coin { display: inline-block; width: 11px; height: 13px; background: #e8d25a; border: 2px solid #ad8b32; clip-path: polygon(3px 0, 8px 0, 11px 3px, 11px 10px, 8px 13px, 3px 13px, 0 10px, 0 3px); }
 .reference-dust { color: #7fcda2; font-size: 18px; font-style: normal; }
 .reference-master-portrait { position: absolute; right: 11px; top: 15px; width: 44px; height: 44px; border: 3px double #c69b59; background-color: #27362a; background-size: cover; background-position: center 8%; image-rendering: pixelated; }
@@ -91,3 +93,43 @@ body:has(#game.reference-mode) .frame-heading > span:last-of-type { display: non
 .workshop-save-warning { color: #efd19d; font-size: 12px; margin-top: 8px; }
 .workshop-save-warning button { padding: 3px 8px; font-size: 11px; }
 .reference-workshop .master-portrait { background-image: url('./assets/master-carver-v1.png'); background-size: 200% auto; background-position: center 8%; }
+
+/* Keep concept 09's three-panel silhouette, with distinct reading/action rows. */
+.reference-workshop { --text-dim: #b7a17c; --select-ring: #afd187; }
+.reference-panel-title { height: 30px; min-width: 140px; top: -12px; padding: 1px 6px; }
+.reference-vitals { left: 14px; top: 19px; line-height: 19px; }
+.reference-vitals > div { height: 19px; }
+.reference-vitals b { color: #d5e1a8; }
+.reference-inventory { top: 122px; height: 196px; }
+.reference-tabs { top: 18px; height: 22px; gap: 5px; }
+.reference-tabs button { height: 22px; line-height: 18px; }
+.reference-tabs button[aria-selected=true] { color: #f5dfac; border-color: #ba9354; background: #4c3c25; }
+.reference-jade-list, .reference-codex-list { top: 44px; height: 78px; }
+.reference-jade-list button { height: 25px; gap: 7px; padding-inline: 5px; }
+.reference-jade-list button canvas { width: 24px; height: 24px; }
+.reference-jade-list button[aria-pressed=true] { background: #34422a; }
+.reference-codex-list { grid-template-rows: repeat(2, 37px); }
+.reference-codex-list .item-icon { width: 24px; height: 24px; }
+.reference-tools { left: 10px; right: 10px; bottom: 9px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px 8px; }
+.reference-tools button { width: auto; height: 25px; display: flex; justify-content: center; align-items: center; gap: 7px; border: 1px solid #a17b47; background: #32291b; }
+.reference-tools canvas { width: 22px; height: 22px; }
+.reference-tools span { font-size: 12px; line-height: 16px; color: #eedbb0; }
+.reference-tools button[aria-pressed=true] { border-color: #a9c37b; background: #35452c; box-shadow: none; }
+.reference-crafting { top: 330px; height: 210px; }
+.reference-preview { top: 20px; height: 66px; background: #1b2114; }
+.reference-preview h3 { background: #1b2114; color: #cbb780; top: -8px; }
+.reference-preview > canvas { width: 40px; height: 40px; margin-top: 7px; border-color: #827d4e; background: #2c3320; }
+.reference-preview p { line-height: 14px; }
+.reference-patterns { top: 92px; }
+.reference-patterns button { width: 58px; height: 46px; gap: 2px; color: #bcaa81; }
+.reference-patterns button[aria-pressed=true] { color: #f5e0a3; }
+.reference-patterns button[aria-pressed=true] canvas { border-color: #c3d48c; }
+.reference-progress { top: 145px; height: 16px; border: 1px solid #a48a50; background: #30291a; }
+.reference-progress > div { background: #4d8961; box-shadow: inset 0 2px #91ae72; }
+.reference-progress > span { font-size: 12px; line-height: 14px; }
+.reference-craft-actions { bottom: 8px; grid-template-columns: 1.6fr 1fr; gap: 7px; }
+.reference-craft-actions button { height: 28px; border: 2px solid #aa8a51; padding: 4px 2px; }
+.reference-craft-actions .reference-generate { background: #35684d; color: #ffedb4; box-shadow: inset 0 1px #80a56b, 0 2px #110e08; }
+.reference-craft-actions .reference-back { background: #40331f; color: #d8c497; }
+.reference-dialogue { background: #20170ff7; border-style: solid; border-color: #a8834e; box-shadow: inset 0 0 0 2px #38291a, 2px 3px #0b110c; }
+.reference-dialogue-line > b { color: #dbb16c; }

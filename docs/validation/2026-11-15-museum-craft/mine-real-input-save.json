@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "location": "mine",
+  "stamina": 100,
+  "inventory": [
+    {
+      "id": "C1-L",
+      "material": "nephrite"
+    },
+    {
+      "id": "C1-R",
+      "material": "nephrite"
+    }
+  ],
+  "pieces": [],
+  "discoveries": [],
+  "observations": 0,
+  "inspectionAnswers": [],
+  "exhibits": [
+    null,
+    null,
+    null
+  ],
+  "crafting": null,
+  "opening": {
+    "introduced": false,
+    "polished": false
+  },
+  "mineVeins": [
+    [
+      true,
+      true
+    ],
+    [
+      false,
+      false
+    ],
+    [
+      false,
+      false
+    ],
+    [
+      false,
+      false
+    ],
+    [
+      false,
+      false
+    ],
+    [
+      false,
+      false
+    ]
+  ],
+  "mineClusters": [
+    true,
+    false,
+    false,
+    false,
+    false,
+    false
+  ],
+  "settings": {
+    "muted": false,
+    "volume": 0.35
+  },
+  "updatedAt": "2026-11-14T16:28:03.115Z",
+  "museum": {
+    "observations": {},
+    "inspirations": [],
+    "theme": "craft",
+    "lighting": "warm"
+  },
+  "pendingDrops": []
+}

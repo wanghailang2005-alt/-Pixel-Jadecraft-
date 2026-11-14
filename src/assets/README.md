@@ -1,5 +1,20 @@
 # 基础框架素材
 
+## gallery-isometric-v1.png
+
+- 2026-11-14 使用内置 image_gen，以概念图 04 的石墙、木柱、拱窗、火把、玻璃展柜与等距地砖为参考，生成三展位横屏背景。
+- 游戏按 960×540 显示。实际玉器与展签独立绘制，依照保存的展位状态更新，支持陈列、移动和撤展。
+- 文件原样复制到 `src/assets/gallery-isometric-v1.png`。来源、原件位置与最终提示词见 `docs/validation/2026-11-14-round2/gallery-background-prompt.md`。
+
+## Fusion Pixel 中文像素字体
+
+- 接入日期为 2026-11-14，依据用户提出的字体与像素风格不协调反馈。
+- 字体为 Fusion Pixel 12px proportional 简体中文版，官方发布版本 2026.11.10。源项目 https://github.com/TakWolf/fusion-pixel-font ，发布包为 `fusion-pixel-font-12px-proportional-ttf.woff2-v2026.11.10.zip`。
+- 本地文件为 `src/assets/fonts/fusion-pixel-12px-zh-hans.woff2`，958,664 bytes，保持官方字形文件原样。SHA-256 为 `36af87a9bfee40173d7eff551558f02258a98304b1ec74dab4773e9931682fc7`。
+- 采用 SIL Open Font License 1.1。发行包主许可与 Ark Pixel、Cubic 11、Galmuri 来源许可保存于 `public/licenses/fusion-pixel/`，构建时随静态文件分发。
+- `src/typography.css` 定义游戏字体。标题、对白采用 24px，紧凑标签采用 12px。启动时等待字体加载，Phaser 文本使用同一字体；加载失败时使用系统中文字体。
+- 当前尺寸适配已在主菜单、工坊和设置截图核对。任意浏览器缩放及非整数场景缩放仍可能产生字体栅格重采样。
+
 ## workshop-v2.png
 
 - 用途：历史工坊背景，不包含界面文字和角色。当前工坊使用下述等距版本。

@@ -1,0 +1,269 @@
+/* reference-ui.css — Concept Art 08: Dialogs & Menus
+   Scope: dialog element only — workshop canvas and mine scene unaffected */
+
+/* ─── Panel: deep red-brown with gold-copper double-line border ─── */
+dialog {
+  background: #3b1810;
+  border: 3px solid #c89640;
+  outline: 2px solid #8a5420;
+  outline-offset: -7px;
+  box-shadow: 0 0 0 1px #5a2808, 0 24px 80px #000a;
+  color: #f0e2c0;
+  position: relative;
+}
+
+dialog::backdrop {
+  background: #160a08d8;
+}
+
+/* ─── Header ─── */
+dialog header {
+  background: #2a1008;
+  border-bottom: 3px solid #c89640;
+}
+
+dialog header h2 {
+  color: #f0e2c0;
+  letter-spacing: 4px;
+}
+
+/* ─── Buttons inside dialog: pixel style with gold border ─── */
+dialog button {
+  background: #4e2016;
+  border: 2px solid #c89640;
+  color: #f0e2c0;
+  box-shadow: inset 0 1px #ffffff14, inset 0 -2px #0004, 2px 2px 0 #1a0808;
+  transition: background .1s, border-color .1s;
+  letter-spacing: 0.5px;
+}
+
+dialog button:hover {
+  background: #6a2c1c;
+  border-color: #d4b050;
+}
+
+dialog button:active {
+  background: #2a1008;
+  box-shadow: inset 0 2px 4px #0006, 1px 1px 0 #1a0808;
+  transform: translate(1px, 1px);
+}
+
+dialog button:focus-visible {
+  outline: 2px solid #d4b050;
+  outline-offset: 2px;
+}
+
+dialog button:disabled {
+  opacity: .35;
+  cursor: default;
+}
+
+dialog button.primary {
+  background: #7a3c20;
+  border: 2px solid #d4b050;
+  color: #fcecd8;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px #c89640, 2px 2px 0 #1a0808;
+}
+
+dialog button.primary:hover {
+  background: #9a4c28;
+}
+
+dialog button.quiet {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: #d4c098;
+  transform: none;
+}
+
+dialog button.quiet:hover {
+  background: #ffffff0a;
+  color: #f0e2c0;
+}
+
+/* ─── Inventory grid cells ─── */
+dialog .inventory-grid > * {
+  border: 2px solid #8a5420;
+  background: #2a1008;
+  box-shadow: inset 1px 1px #ffffff08, inset -1px -1px #0004;
+}
+
+dialog .inventory-grid > *:hover {
+  border-color: #c89640;
+  background: #3e1810;
+}
+
+dialog .inventory-grid > *[aria-selected="true"],
+dialog .inventory-grid > *.selected {
+  border-color: #d4b050;
+  background: #5a2010;
+  box-shadow: inset 0 0 0 1px #d4b050;
+}
+
+dialog .inventory-tabs button[aria-pressed="true"] {
+  border-color: #d4b050;
+  background: #7a3c20;
+  color: #fcecd8;
+}
+
+/* ─── Task list ─── */
+dialog .task-list li {
+  border-bottom-color: #6a3418;
+}
+
+dialog .task-list h3 {
+  color: #f0e2c0;
+}
+
+dialog .task-list p {
+  color: #c8a888;
+}
+
+dialog .task-mark {
+  color: #c89640;
+}
+
+dialog .done .task-mark {
+  color: #d4b050;
+}
+
+/* ─── Settings: vertical layout, scrollable ─── */
+dialog .setting-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid #6a3418;
+}
+
+dialog .setting-row:last-child {
+  border-bottom: none;
+}
+
+dialog .setting-row input[type="range"] {
+  width: 100%;
+  accent-color: #c89640;
+}
+
+dialog .setting-row input[type="checkbox"] {
+  accent-color: #c89640;
+  width: 18px;
+  height: 18px;
+}
+
+dialog .dialog-body {
+  /* scrollable when settings content overflows */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+dialog .backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* ─── Error / muted text inside dialog ─── */
+dialog .error {
+  color: #e09070;
+}
+
+dialog .muted {
+  color: #c8a888;
+}
+
+/* Original corner and lantern artwork, clipped to each ornament's own box. */
+dialog .reference-dialog-corner {
+  position: absolute;
+  z-index: 3;
+  width: 20px;
+  height: 20px;
+  background: url('../docs/concept-art/08-dialogs-and-menus.png') -82px -177px / 1024px 559px no-repeat;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+dialog .reference-dialog-corner.tl { left: 2px; top: 2px; }
+dialog .reference-dialog-corner.tr { right: 2px; top: 2px; transform: rotate(90deg); }
+dialog .reference-dialog-corner.bl { left: 2px; bottom: 2px; transform: rotate(-90deg); }
+dialog .reference-dialog-corner.br { right: 2px; bottom: 2px; transform: rotate(180deg); }
+
+dialog.settings-panel {
+  width: min(410px, calc(100vw - 28px));
+  background-color: #300e10;
+}
+dialog.settings-panel header {
+  position: relative;
+  padding: 24px 44px 19px;
+  justify-content: center;
+  background: #300e10;
+  border-bottom: 3px double #9b6841;
+}
+dialog.settings-panel header h2 {
+  padding: 4px 14px;
+  border: 3px double #9b6841;
+  background: #ecdcb4;
+  color: #3b2119;
+  font: 700 21px 'KaiTi', 'STKaiti', serif;
+  letter-spacing: 2px;
+  text-shadow: none;
+  white-space: nowrap;
+}
+dialog.settings-panel header::before,
+dialog.settings-panel header::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  width: 25px;
+  height: 34px;
+  background: url('../docs/concept-art/08-dialogs-and-menus.png') -713px -187px / 1024px 559px no-repeat;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+dialog.settings-panel header::before { left: 16px; }
+dialog.settings-panel header::after { right: 16px; }
+dialog.settings-panel header button {
+  position: absolute;
+  right: 27px;
+  top: 6px;
+  padding: 1px 5px;
+  font-size: 10px;
+}
+dialog.settings-panel .setting-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 12px;
+  padding: 7px 9px;
+  border: 3px double #91633f;
+  background: #24100e;
+}
+dialog.settings-panel input[type='range'] {
+  width: 100%;
+  height: 14px;
+  margin: 0 0 16px;
+  accent-color: #e4c387;
+  cursor: pointer;
+}
+dialog.settings-panel input[type='checkbox'] {
+  accent-color: #d4b578;
+}
+dialog.settings-panel .backup-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+dialog.settings-panel .backup-actions button {
+  padding: 9px 4px;
+  background: #e4d3aa;
+  color: #382017;
+  text-shadow: none;
+}
+dialog.settings-panel .save-summary {
+  flex-wrap: wrap;
+  background: #24100e;
+  border-color: #91633f;
+}
+dialog.settings-panel hr { border-color: #91633f; }
+dialog.settings-panel .error:empty { display: none; }

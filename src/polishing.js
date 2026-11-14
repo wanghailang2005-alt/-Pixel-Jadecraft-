@@ -2,16 +2,33 @@
 export const SURFACE_SIZE = 240;
 export const FINISH_THRESHOLD = 0.75;
 
+const SHAPE_MASKS = {
+  bi: (x, y) => {
+    const radius = Math.hypot(x - 120, y - 120);
+    return radius >= 39 && radius <= 106;
+  },
+  fish: (x, y) => {
+    const body = ((x - 100) / 74) ** 2 + ((y - 120) / 55) ** 2 <= 1;
+    const tail = x >= 157 && x <= 220 && Math.abs(y - 120) <= (x - 157) * 55 / 63;
+    return body || tail;
+  },
+  seal: (x, y) => {
+    const base = x >= 45 && x <= 195 && y >= 128 && y <= 205;
+    const knob = x >= 85 && x <= 155 && y >= 55 && y <= 130;
+    return base || knob;
+  },
+};
+
 export class PolishingSurface {
-  constructor() {
+  constructor(shape = 'bi') {
+    this.shape = Object.hasOwn(SHAPE_MASKS, shape) ? shape : 'bi';
     this.valid = new Uint8Array(SURFACE_SIZE * SURFACE_SIZE);
     this.covered = new Uint8Array(this.valid.length);
     this.total = 0;
     this.count = 0;
     for (let y = 0; y < SURFACE_SIZE; y++) {
       for (let x = 0; x < SURFACE_SIZE; x++) {
-        const radius = Math.hypot(x + 0.5 - 120, y + 0.5 - 120);
-        if (radius >= 39 && radius <= 106) {
+        if (SHAPE_MASKS[this.shape](x + 0.5, y + 0.5)) {
           this.valid[y * SURFACE_SIZE + x] = 1;
           this.total++;
         }

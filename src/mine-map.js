@@ -1,65 +1,46 @@
-import { TILE_SCALE, TILE_SIZE, MAP_COLUMNS, MAP_ROWS, CELL_SIZE, MINE_MAP, MINE_NODES, MINE_LADDERS, PLAYER_START, WORLD_WIDTH, WORLD_HEIGHT, canStand } from './mining.js';
+import { TILE_SIZE, TILE_SCALE, MAP_COLUMNS, MAP_ROWS, TILE_RULES, generateMine } from './mining.js';
 
-export function placeholderMineWorld() {
-  return { map: MINE_MAP, nodes: MINE_NODES, spawn: PLAYER_START, ladders: MINE_LADDERS, canStand };
+export function placeholderMineWorld(options) {
+  return { ...generateMine(options), frames: [0, 1, 2, 3, 4],
+    assetNotice: '使用程序像素素材 · 正式 PNG / TMJ 尚未接入' };
 }
 
-/** Adapt Tiled data to the same collision, node and spawn interfaces as MINE_MAP. */
-export function readTiledMine(data) {
-  const fail = message => { throw new Error(`Tiled 矿洞地图无效：${message}`); };
-  if (data?.tilewidth !== TILE_SIZE || data.tileheight !== TILE_SIZE || data.width !== MAP_COLUMNS || data.height !== MAP_ROWS || data.orientation !== 'orthogonal' || data.infinite) fail('需要有限的 60×32 正交地图和 16×16 tile。');
-  if (!Array.isArray(data.layers) || !Array.isArray(data.tilesets) || !data.tilesets.length) fail('缺少图层或图块集。');
-  const colliding = new Set();
-  const validTiles = new Set([0]);
-  for (const tileset of data.tilesets) {
-    // Phaser's native Tiled JSON parser consumes embedded tileset definitions.
-    if (tileset.source || tileset.tilewidth !== TILE_SIZE || tileset.tileheight !== TILE_SIZE || !Number.isInteger(tileset.firstgid) || tileset.firstgid < 1 || !Number.isInteger(tileset.tilecount) || tileset.tilecount < 1 || !Number.isInteger(tileset.columns) || tileset.columns < 1 || (tileset.margin ?? 0) !== 0 || (tileset.spacing ?? 0) !== 0) fail('请嵌入 16×16、margin/spacing=0 的图块集定义。');
-    for (let index = 0; index < tileset.tilecount; index++) validTiles.add(tileset.firstgid + index);
-    for (const tile of tileset.tiles ?? []) {
-      if (tile.properties?.some(property => property.name === 'collides' && property.value === true)) colliding.add(tileset.firstgid + tile.id);
-    }
+/** TMJ describes frames and a feet-anchored point, never the runtime terrain. */
+export function readTiledMine(data, options = {}) {
+  const fail = message => { throw new Error(`Tiled 矿洞元数据无效：${message}`); };
+  if (data?.tilewidth !== TILE_SIZE || data.tileheight !== TILE_SIZE || data.width !== MAP_COLUMNS
+    || data.height !== MAP_ROWS || data.orientation !== 'orthogonal' || data.infinite) fail('需要有限的 60×32 正交地图和 16×16 tile。');
+  if (!Array.isArray(data.tilesets) || data.tilesets.length !== 1 || !Array.isArray(data.layers)) fail('需要一个嵌入图块集及 spawn 对象层。');
+  const set = data.tilesets[0];
+  if (set.source || set.tilewidth !== 16 || set.tileheight !== 16 || set.firstgid !== 1
+    || !Number.isInteger(set.tilecount) || set.tilecount < 5 || !Number.isInteger(set.columns) || set.columns < 1
+    || (set.margin ?? 0) !== 0 || (set.spacing ?? 0) !== 0) fail('图块集应嵌入，至少五帧，firstgid=1，margin/spacing=0。');
+  if (!Array.isArray(set.tiles)) fail('缺少 kind / hardness 属性。');
+  const frames = Array(5).fill(null), ids = new Set();
+  for (const tile of set.tiles) {
+    if (!Number.isInteger(tile.id) || tile.id < 0 || tile.id >= set.tilecount || ids.has(tile.id)) fail('帧 ID 无效或重复。');
+    ids.add(tile.id);
+    const properties = tile.properties ?? [];
+    const kind = properties.find(property => property.name === 'kind')?.value;
+    const hardness = properties.find(property => property.name === 'hardness')?.value;
+    const index = TILE_RULES.findIndex(rule => rule.kind === kind);
+    if (index < 0 || frames[index] !== null || hardness !== TILE_RULES[index].hardness
+      || properties.filter(property => property.name === 'kind').length !== 1
+      || properties.filter(property => property.name === 'hardness').length !== 1) fail('五类 kind 必须唯一，hardness 必须与规则表一致。');
+    frames[index] = tile.id;
   }
-  const layers = {};
-  for (const name of ['ground', 'walls', 'decor']) {
-    const layer = data.layers.find(layer => layer.name === name && layer.type === 'tilelayer');
-    if (!layer || layer.width !== MAP_COLUMNS || layer.height !== MAP_ROWS || !Array.isArray(layer.data) || layer.data.length !== MAP_COLUMNS * MAP_ROWS) fail(`图层 ${name} 需要未压缩的 60×32 数组。`);
-    if (layer.x || layer.y || layer.offsetx || layer.offsety) fail(`图层 ${name} 需要对齐地图原点。`);
-    if (layer.data.some(gid => !Number.isInteger(gid) || !validTiles.has((gid >>> 0) & 0x0fffffff))) fail(`图层 ${name} 存在无效 tile。`);
-    layers[name] = layer;
-  }
-  const map = Array.from({ length: MAP_ROWS }, (_, row) => Array.from({ length: MAP_COLUMNS }, (_, column) => colliding.has((layers.walls.data[row * MAP_COLUMNS + column] >>> 0) & 0x0fffffff) ? 1 : 0));
-  const objectLayer = name => {
-    const layer = data.layers.find(layer => layer.name === name && layer.type === 'objectgroup');
-    if (!Array.isArray(layer?.objects)) fail(`缺少对象层 ${name}。`);
-    return layer;
-  };
-  const position = (object, layer) => {
-    const x = (object.x + (object.width ?? 0) / 2 + (layer.offsetx ?? 0)) * TILE_SCALE;
-    const y = (object.y + (object.height ?? 0) / 2 + (layer.offsety ?? 0)) * TILE_SCALE;
-    if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || y < 0 || x >= WORLD_WIDTH || y >= WORLD_HEIGHT) fail('对象坐标超出世界范围。');
-    return { x, y };
-  };
-  const oreLayer = objectLayer('oreNodes');
-  const ores = oreLayer.objects.filter(object => (object.type || object.class) === 'Ore');
-  if (ores.length !== MINE_NODES.length) fail('需要六个 Ore 对象。');
-  const ids = new Set();
-  const nodes = ores.map(object => {
-    const properties = Object.fromEntries((object.properties ?? []).map(property => [property.name, property.value]));
-    const original = MINE_NODES.find(node => node.id === properties.nodeId);
-    if (!original || ids.has(original.id) || properties.material !== original.material) fail('矿点 nodeId / material 必须与六个 MINE_NODES 对应。');
-    ids.add(original.id);
-    const { x, y } = position(object, oreLayer);
-    return { ...original, x, y, column: Math.floor(x / CELL_SIZE), row: Math.floor(y / CELL_SIZE) };
-  });
-  const spawnLayer = objectLayer('spawn');
-  const spawns = spawnLayer.objects.filter(object => (object.type || object.class || object.name) === 'PlayerSpawn');
-  if (spawns.length !== 1) fail('需要一个 PlayerSpawn 对象。');
-  const spawn = position(spawns[0], spawnLayer);
-  if (!canStand(spawn.x, spawn.y, map)) fail('出生点与碰撞 tile 重叠。');
-  const ladders = (data.layers.find(layer => layer.name === 'ladders')?.objects ?? []).map(object => ({
-    x: (object.x + (object.width ?? 0) / 2) * TILE_SCALE,
-    top: object.y * TILE_SCALE,
-    bottom: (object.y + object.height) * TILE_SCALE,
-  }));
-  return { map, nodes, spawn, ladders, canStand: (x, y) => canStand(x, y, map) };
+  if (frames.some(frame => frame === null)) fail('需要 AIR / DIRT / STONE / JADE_VEIN / BEDROCK 五类。');
+  if (data.layers.some(layer => layer.type === 'tilelayer' || ['ground', 'walls', 'decor', 'oreNodes', 'ladders'].includes(layer.name))) fail('旧布局图层不再支持；地形与梯子由运行时生成。');
+  const layers = data.layers.filter(layer => layer.type === 'objectgroup' && layer.name === 'spawn');
+  if (layers.length !== 1 || layers[0].offsetx || layers[0].offsety) fail('需要原点对齐的 spawn 对象层。');
+  const objects = layers[0].objects;
+  if (!Array.isArray(objects) || objects.length !== 1) fail('spawn 只能包含一个 PlayerSpawn 点对象。');
+  const object = objects[0];
+  if ((object.class || object.type || object.name) !== 'PlayerSpawn' || object.point !== true
+    || (object.width ?? 0) !== 0 || (object.height ?? 0) !== 0
+    || !Number.isFinite(object.x) || !Number.isFinite(object.y)) fail('PlayerSpawn 必须是脚底点坐标。');
+  const spawn = { x: object.x * TILE_SCALE, y: object.y * TILE_SCALE };
+  const world = generateMine({ ...options, spawn });
+  if (!world.canStand(spawn.x, spawn.y)) fail('出生点身体与实体重叠或越界。');
+  return { ...world, frames, assetNotice: 'Tiled 元数据已校验 · 地形由运行时生成' };
 }

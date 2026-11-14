@@ -1,0 +1,153 @@
+{
+  "route": {
+    "done": [
+      {
+        "column": 10,
+        "row": 11,
+        "inventory": 2
+      },
+      {
+        "column": 28,
+        "row": 13,
+        "inventory": 4
+      },
+      {
+        "column": 20,
+        "row": 21,
+        "inventory": 6
+      },
+      {
+        "column": 38,
+        "row": 27,
+        "inventory": 8
+      },
+      {
+        "column": 45,
+        "row": 18,
+        "inventory": 10
+      },
+      {
+        "column": 52,
+        "row": 29,
+        "inventory": 12
+      }
+    ],
+    "finished": true,
+    "error": null
+  },
+  "state": {
+    "version": 1,
+    "location": "mine",
+    "stamina": 100,
+    "inventory": [
+      {
+        "id": "C1-L",
+        "material": "nephrite"
+      },
+      {
+        "id": "C1-R",
+        "material": "nephrite"
+      },
+      {
+        "id": "C2-L",
+        "material": "jadeite"
+      },
+      {
+        "id": "C2-R",
+        "material": "jadeite"
+      },
+      {
+        "id": "C4-L",
+        "material": "jadeite"
+      },
+      {
+        "id": "C4-R",
+        "material": "jadeite"
+      },
+      {
+        "id": "C5-L",
+        "material": "nephrite"
+      },
+      {
+        "id": "C5-R",
+        "material": "nephrite"
+      },
+      {
+        "id": "C3-L",
+        "material": "nephrite"
+      },
+      {
+        "id": "C3-R",
+        "material": "nephrite"
+      },
+      {
+        "id": "C6-L",
+        "material": "jadeite"
+      },
+      {
+        "id": "C6-R",
+        "material": "jadeite"
+      }
+    ],
+    "pieces": [],
+    "discoveries": [],
+    "observations": 0,
+    "inspectionAnswers": [],
+    "exhibits": [
+      null,
+      null,
+      null
+    ],
+    "crafting": null,
+    "opening": {
+      "introduced": false,
+      "polished": false
+    },
+    "mineVeins": [
+      [
+        true,
+        true
+      ],
+      [
+        true,
+        true
+      ],
+      [
+        true,
+        true
+      ],
+      [
+        true,
+        true
+      ],
+      [
+        true,
+        true
+      ],
+      [
+        true,
+        true
+      ]
+    ],
+    "mineClusters": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "settings": {
+      "muted": false,
+      "volume": 0.35
+    },
+    "updatedAt": "2026-11-13T17:53:47.183Z"
+  },
+  "body": {
+    "x": 176,
+    "y": 863.8719730516779,
+    "velocityY": 0,
+    "climbing": true,
+    "grounded": false
+  }
+}

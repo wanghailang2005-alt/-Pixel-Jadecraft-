@@ -3,13 +3,23 @@ import { GameStore, MATERIALS, tasks } from './state.js';
 import { createInterface } from './ui.js';
 import { createRuntime } from './runtime.js';
 import { createPolishingDemo } from './polishing-view.js';
+import './typography.css';
+import './atmosphere.css';
+import { createAudioDirector } from './audio.js';
+
+await document.fonts.load('12px "Fusion Pixel"').catch(() => []);
 
 const store = new GameStore();
+const audio = createAudioDirector();
+let audioPaused = false;
+const syncAudio=()=>audio.update({active:store.active,location:store.state.location,settings:store.state.settings,paused:audioPaused});
 let runtime;
 let polishing;
 let polishingSession = null;
 let polishingSource = null;
 const ui = createInterface(store, MATERIALS, tasks, {
+  onSound: name => audio.play(name),
+  onPauseAudio: paused => { audioPaused=paused;syncAudio(); },
   onOverlayChange: open => {
     runtime?.setPaused('overlay', open);
     polishing?.setPaused('overlay', open);
@@ -38,6 +48,7 @@ polishing = createPolishingDemo({
 });
 let sessionRevision = store.sessionRevision;
 store.addEventListener('change', () => {
+  syncAudio();
   if (sessionRevision !== store.sessionRevision) {
     polishing.close();
     polishing.reset();
@@ -51,3 +62,4 @@ window.addEventListener('beforeunload', event => {
   if (store.dirty) { event.preventDefault(); event.returnValue = ''; }
 });
 ui.render();
+syncAudio();

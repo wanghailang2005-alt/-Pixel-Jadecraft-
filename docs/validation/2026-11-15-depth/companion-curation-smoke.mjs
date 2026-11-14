@@ -1,0 +1,38 @@
+import fs from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import { connect, sleep } from '../2026-11-15-museum-craft/browser-driver.mjs';
+const qa=await connect(Number(process.argv[2]??50460));
+const dir=new URL('.',import.meta.url);
+// Reuse the earlier UI-crafted fish fixture in this isolated browser only.
+// This verifies migration and the new commission, not a fresh mining/crafting run.
+const fixture=JSON.parse(await fs.readFile(new URL('../2026-11-15-museum-craft/finished-ui-save.json',import.meta.url),'utf8'));
+delete fixture.story;fixture.location='workshop';
+await qa.evaluate(`localStorage.setItem('pixel-jadecraft.save.v1',${JSON.stringify(JSON.stringify(fixture))})`);
+await qa.send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
+await qa.send('Page.reload');await sleep(1300);
+await qa.click('[data-action="continue"]');await qa.click('.workshop-page-tools [data-action="story"]');
+for(const id of ['cord','scar','letter'])await qa.click(`[data-clue="${id}"]`);
+await qa.click('[data-route="companion"]');
+assert.equal(await qa.evaluate(`document.querySelector('[data-deliver]').disabled`),false);
+await qa.click('[data-deliver]');await qa.click('[data-return]');
+assert.match(await qa.evaluate(`document.querySelector('.story-outcome').textContent`),/新鱼陪我出门/);
+await qa.screenshot(new URL('story-companion-return.png',dir));
+await qa.click('.story-outcome [data-action="gallery"]');await qa.click('[data-action="exhibit"]');
+await qa.click('[data-collection-place="0"]');
+const before=await qa.evaluate(`document.querySelector('.story-visitors').textContent`);
+await qa.click('[data-order="2"]');await qa.click('[data-order="1"]');
+const after=await qa.evaluate(`document.querySelector('.story-visitors').textContent`);
+assert.notEqual(before,after);assert.match(after,/先读信，再看作品/);
+await qa.evaluate(`document.querySelector('.story-curation').scrollIntoView({block:'start'})`);
+await qa.screenshot(new URL('curation-letter-first.png',dir));
+await qa.evaluate(`(()=>{const s=document.querySelector('[data-caption]');s.value='craft';s.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+assert.match(await qa.evaluate(`document.querySelector('.story-visitors').textContent`),/为什么留住/);
+const state=await qa.evaluate(`JSON.parse(localStorage.getItem('pixel-jadecraft.save.v1'))`);
+assert.deepEqual(state.story.order,['letter','material','process']);assert.equal(state.story.caption,'craft');
+await fs.writeFile(new URL('story-companion-curation-save.json',dir),JSON.stringify(state,null,2));
+await qa.send('Page.reload');await sleep(1200);await qa.click('[data-action="continue"]');await qa.click('[data-action="exhibit"]');
+assert.equal(await qa.evaluate(`document.querySelector('[data-caption]').value`),'craft');
+await qa.send('Emulation.setDeviceMetricsOverride',{width:800,height:700,deviceScaleFactor:1,mobile:false});
+assert.equal(await qa.evaluate(`document.documentElement.scrollWidth<=innerWidth`),true);
+console.log('PASS: prior UI-created fish migrates → companion commission → unique reply → actual placement → reorder/label alter three visitors → saved after reload.');
+qa.close();

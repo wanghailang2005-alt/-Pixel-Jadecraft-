@@ -2,11 +2,105 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { GameStore, SAVE_KEY, BACKUP_KEY, PREV_BACKUP_KEY, freshState, validateState, tasks } from './state.js';
 import { PauseGate } from './pause.js';
+import { INSPECTION_QUESTIONS } from './inspection.js';
 
 function storage(raw = null) {
   const data = new Map(raw === null ? [] : [[SAVE_KEY, raw]]);
   return { getItem: k => data.get(k) ?? null, setItem: (k,v) => data.set(k,v) };
 }
+
+test('inspection answers migrate old saves while preserving existing observation progress', () => {
+  const legacy = freshState();
+  delete legacy.inspectionAnswers;
+  legacy.observations = 3;
+  legacy.inventory.push({ id: 'legacy-ore', material: 'nephrite' });
+  const game = new GameStore(storage(JSON.stringify(legacy)));
+  game.resume();
+  assert.deepEqual(game.state.inspectionAnswers, []);
+  assert.equal(game.state.observations, 3);
+  const question = INSPECTION_QUESTIONS[0];
+  assert.deepEqual(game.answerInspection(question.id, question.answer), { correct: true, alreadyAnswered: false });
+  assert.equal(game.state.observations, 4);
+  assert.equal(game.state.inventory.length, 1);
+});
+
+test('inspection requires an active workshop and material; wrong and illegal choices preserve state', () => {
+  const game = new GameStore(storage());
+  const question = INSPECTION_QUESTIONS[0];
+  const rejected = { correct: false, alreadyAnswered: false };
+  assert.deepEqual(game.answerInspection(question.id, question.answer), rejected);
+  game.startNew();
+  assert.deepEqual(game.answerInspection(question.id, question.answer), rejected);
+  game.addMaterial('jadeite', 'inspection-ore');
+  game.navigate('mine');
+  assert.deepEqual(game.answerInspection(question.id, question.answer), rejected);
+  game.navigate('workshop');
+  const before = game.exportSave();
+  for (const index of [-1, 3, 0.5, NaN, Infinity, '1', null, undefined]) {
+    assert.deepEqual(game.answerInspection(question.id, index), rejected);
+  }
+  assert.deepEqual(game.answerInspection('unknown', 0), rejected);
+  assert.deepEqual(game.answerInspection(question.id, (question.answer + 1) % 3), rejected);
+  assert.equal(game.exportSave(), before);
+});
+
+test('inspection correct answers count once across repeated clicks, reload and save export/import', () => {
+  const disk = storage();
+  const game = new GameStore(disk);
+  game.startNew();
+  game.addMaterial('nephrite', 'inspection-ore');
+  for (const question of INSPECTION_QUESTIONS.slice(0, 3)) {
+    assert.deepEqual(game.answerInspection(question.id, question.answer), { correct: true, alreadyAnswered: false });
+    const saved = disk.getItem(SAVE_KEY);
+    assert.deepEqual(game.answerInspection(question.id, question.answer), { correct: true, alreadyAnswered: true });
+    assert.equal(disk.getItem(SAVE_KEY), saved);
+  }
+  assert.equal(game.state.observations, 3);
+  assert.equal(tasks(game.state)[1].done, true);
+  assert.equal(game.state.inventory.length, 1);
+  const restored = new GameStore(disk);
+  restored.resume();
+  const question = INSPECTION_QUESTIONS[0];
+  assert.deepEqual(restored.answerInspection(question.id, question.answer), { correct: true, alreadyAnswered: true });
+  assert.equal(restored.state.observations, 3);
+  restored.importSave(game.exportSave());
+  assert.deepEqual(restored.state.inspectionAnswers, game.state.inspectionAnswers);
+  assert.deepEqual(restored.answerInspection(question.id, question.answer), { correct: true, alreadyAnswered: true });
+  restored.startNew();
+  assert.deepEqual(restored.state.inspectionAnswers, []);
+  assert.equal(restored.state.observations, 0);
+});
+
+test('inspection schema rejects malformed or repeated answer IDs without replacing an imported save', () => {
+  const game = new GameStore(storage());
+  game.startNew();
+  const before = game.exportSave();
+  const questionId = INSPECTION_QUESTIONS[0].id;
+  for (const inspectionAnswers of [null, {}, 'done', [questionId, questionId], ['unknown'], [1], [undefined], Array(1)]) {
+    assert.throws(() => validateState({ ...freshState(), inspectionAnswers }));
+    assert.throws(() => game.importSave(JSON.stringify({ ...freshState(), inspectionAnswers })));
+    assert.equal(game.exportSave(), before);
+  }
+});
+
+test('inspection save failure retains a deduplicated session and retry persists the answer', () => {
+  const disk = storage();
+  const game = new GameStore(disk);
+  game.startNew();
+  game.addMaterial('nephrite', 'inspection-ore');
+  const write = disk.setItem;
+  disk.setItem = () => { throw new Error('quota'); };
+  const question = INSPECTION_QUESTIONS[0];
+  assert.deepEqual(game.answerInspection(question.id, question.answer), { correct: true, alreadyAnswered: false });
+  assert.equal(game.dirty, true);
+  assert.ok(game.error);
+  assert.equal(game.state.observations, 1);
+  assert.deepEqual(game.answerInspection(question.id, question.answer), { correct: true, alreadyAnswered: true });
+  disk.setItem = write;
+  assert.equal(game.retrySave(), true);
+  assert.equal(game.dirty, false);
+  assert.deepEqual(new GameStore(disk).state.inspectionAnswers, [question.id]);
+});
 
 test('opening practice is saved independently from the main quest and is idempotent', () => {
   const disk = storage(), game = new GameStore(disk);
@@ -256,4 +350,39 @@ test('material IDs fall back when crypto or randomUUID is unavailable', () => {
     if (descriptor) Object.defineProperty(globalThis, 'crypto', descriptor);
     else delete globalThis.crypto;
   }
+});
+
+test('mine save migration preserves legacy inventory, expands clusters and rejects inconsistent flags', () => {
+  const legacy = freshState(); delete legacy.mineVeins; delete legacy.mineClusters;
+  legacy.inventory.push({ id: 'legacy-material', material: 'jadeite' });
+  const normalized = validateState(legacy);
+  assert.deepEqual(normalized.mineVeins, Array.from({ length: 6 }, () => [false, false]));
+  assert.deepEqual(normalized.inventory, legacy.inventory);
+  const clusters = { ...legacy, mineClusters: [true, false, false, false, false, true] };
+  assert.deepEqual(validateState(clusters).mineVeins[0], [true, true]);
+  assert.deepEqual(validateState(clusters).mineVeins[1], [false, false]);
+  const malformed = [
+    { mineVeins: Array(6) }, { mineClusters: Array(6) },
+    { mineVeins: [] }, { mineVeins: Array(6).fill([true]) },
+    { mineVeins: Array(6).fill([0, false]) },
+    { mineClusters: Array(6).fill(0) }, { mineClusters: null },
+    { mineVeins: Array(6).fill([true, true]), mineClusters: Array(6).fill(false) },
+  ];
+  for (const change of malformed) assert.throws(() => validateState({ ...freshState(), ...change }));
+});
+
+test('mine consumption is idempotent and save failures remain recoverable', () => {
+  const disk = storage(), game = new GameStore(disk);game.startNew();game.navigate('mine');
+  const write = disk.setItem;disk.setItem = () => { throw new Error('quota'); };
+  assert.equal(game.consumeMineVein('C1-L'), true);
+  assert.equal(game.consumeMineVein('C1-L'), false);
+  assert.equal(game.consumeMineVein('C9-L'), false);
+  assert.equal(game.state.mineClusters[0], false);
+  assert.equal(game.dirty, true);
+  assert.match(game.error, /保存失败/);
+  disk.setItem = write;assert.equal(game.retrySave(), true);
+  assert.deepEqual(new GameStore(disk).state.mineVeins[0], [true, false]);
+  assert.equal(game.consumeMineVein('C1-R'), true);
+  assert.equal(new GameStore(disk).state.mineClusters[0], true);
+  game.navigate('workshop');assert.equal(game.consumeMineVein('C2-L'), false);
 });
