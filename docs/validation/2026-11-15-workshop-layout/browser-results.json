@@ -1,0 +1,37 @@
+{
+  "panels": [
+    {
+      "left": 750,
+      "top": 20,
+      "width": 240,
+      "height": 95,
+      "titleClipped": false
+    },
+    {
+      "left": 750,
+      "top": 120,
+      "width": 240,
+      "height": 180,
+      "titleClipped": false
+    },
+    {
+      "left": 750,
+      "top": 310,
+      "width": 240,
+      "height": 230,
+      "titleClipped": false
+    }
+  ],
+  "emptyBench": true,
+  "dialogPauses": true,
+  "keyboardTabs": true,
+  "importThroughSettings": true,
+  "materialAndPatternPassed": true,
+  "benchResumesDraft": true,
+  "reloadResumesDraft": true,
+  "smallViewport": [
+    800,
+    700
+  ],
+  "reducedMotion": true
+}

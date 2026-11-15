@@ -78,6 +78,36 @@ dialog .museum-story-tabs button[aria-pressed=true] { background:#725235;color:#
 .museum-scroll-reading { min-height:120px; }
 .museum-scroll-reading p { color:#4c3925;line-height:1.85;font-size:12px;margin-bottom:8px; }
 .museum-scroll-reading .museum-summary { color:#35271b; }
+.museum-chapter {min-height:145px;}
+.museum-chapter-index {font-size:12px;color:#80613b;}
+.museum-chapter h4 {font-size:20px;color:#50351d;margin:8px 0 12px;line-height:1.5;}
+.museum-chapter p {font-size:14px;line-height:2;max-width:34em;}
+.museum-chapter-nav {display:flex;align-items:center;justify-content:space-between;gap:6px;padding:8px 0 12px;}
+.museum-chapter-nav>span {display:flex;gap:4px;}
+dialog .museum-chapter-nav button {font-size:12px;padding:4px 7px;background:#dac28d;border:1px solid #9f7943;color:#593f25;box-shadow:none;}
+dialog .museum-chapter-nav button[aria-current=page] {background:#4d6142;color:#f3dfac;border-color:#435538;}
+dialog .museum-chapter-nav button:disabled {opacity:.4;}
+.museum-references {font-size:12px;margin-top:14px;padding-top:8px;border-top:1px solid #ae8d54;color:#75552e;}
+.museum-references summary {cursor:pointer;}
+.museum-related {display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid #b89a61;}
+.museum-related>span {flex-basis:100%;font-size:12px;color:#715332;}
+dialog .museum-related button {font-size:12px;padding:5px 7px;background:#d2bb87;color:#385a3b;border:1px solid #9e8c59;box-shadow:none;}
+.museum-references .museum-source {margin-top:7px;}
+.museum-learning {margin:20px;display:grid;grid-template-columns:minmax(180px,1fr) minmax(0,2.4fr);border:6px double #987446;background:#e0c99b;color:#533d26;box-shadow:5px 6px #07120e;}
+.museum-learning-title {padding:32px 24px;background:repeating-linear-gradient(0deg,#c4ac7d 0 2px,#ceb587 2px 5px);border-right:4px double #a88451;}
+.museum-learning-title>span {display:block;width:64px;margin:0 auto 20px;text-align:center;border:5px double #be9b60;background:#3a5940;color:#e3c995;font:48px/1.4 var(--font-game);}
+.museum-learning h3 {font-size:24px;color:#4d3821;line-height:1.6;margin:0 0 12px;}
+.museum-learning p {font-size:14px;line-height:1.9;max-width:40em;}
+.museum-learning-pages {padding:24px 30px;}
+.museum-learning-pages section {padding:0 0 18px;margin-bottom:18px;border-bottom:1px solid #b99b67;}
+.museum-learning-pages h4 {font-size:20px;color:#3d5b3b;margin:0 0 6px;}
+.museum-learning-route {display:flex;flex-wrap:wrap;gap:8px;}
+dialog .museum-learning-route button {padding:8px 12px;background:#455d3f;border-color:#8f8c58;}
+.museum-observation {position:sticky;top:16px;}
+.museum-scroll-paper {background:repeating-linear-gradient(0deg,#dec68e 0 3px,#dfc791 3px 5px);}
+.museum-hall-footer {flex-wrap:wrap;}
+.museum-hall-footer>div {flex-wrap:wrap;}
+@media(max-width:780px){.museum-learning{grid-template-columns:1fr;}.museum-learning-title{padding:16px;border-right:0;border-bottom:4px double #a88451;}.museum-learning-title>span{float:left;margin:0 16px 8px 0;width:44px;font-size:30px;}.museum-learning-pages{padding:18px;}.museum-learning p,.museum-chapter p{font-size:12px;}.museum-observation{position:static;}}
 .museum-observation-list { padding:0;margin:0;list-style:none; }
 dialog .museum-observation-list button { display:flex;align-items:start;gap:8px;width:100%;text-align:left;padding:7px 2px;background:transparent;color:#57432c;border:0;border-bottom:1px solid #b4965b;box-shadow:none; }
 .museum-observation-list button span { color:#456b3c; }

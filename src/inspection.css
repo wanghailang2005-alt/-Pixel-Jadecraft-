@@ -125,3 +125,85 @@
   .inspection-scroll { padding: 17px 13px; }
   .inspection-knowledge > summary > span { display: block; }
 }
+
+/* Reference 05: a large instrument and a real rolled paper, in a stone surround. */
+dialog:has(.inspection-view) { width: min(1040px, calc(100vw - 28px)); border-color: #aa8453; background: #302d22; }
+dialog:has(.inspection-view) > header {
+  position: relative;
+  justify-content: center;
+  min-height: 75px;
+  padding-inline: 75px;
+  background: #153d2e;
+  border-bottom: 5px ridge #a77b47;
+  box-shadow: inset 0 3px #b79c66, inset 0 -3px #33281c;
+}
+dialog:has(.inspection-view) > header::before,
+dialog:has(.inspection-view) > header::after {
+  content: '';
+  position: absolute;
+  width: 53px;
+  height: 61px;
+  top: 2px;
+  background: url('../docs/concept-art/05-jade-inspection.png') -23px -17px / 450px 512px no-repeat;
+  image-rendering: pixelated;
+  clip-path: polygon(44% 0, 57% 0, 57% 17%, 77% 22%, 91% 34%, 100% 49%, 100% 73%, 85% 91%, 63% 100%, 36% 100%, 14% 89%, 0 72%, 0 48%, 12% 32%, 33% 20%, 44% 17%);
+  pointer-events: none;
+}
+dialog:has(.inspection-view) > header::before { left: 17px; }
+dialog:has(.inspection-view) > header::after { right: 17px; }
+dialog:has(.inspection-view) > header h2 { color: #b9d7a4; text-shadow: 2px 2px #0a1d17; }
+dialog:has(.inspection-view) > header button { position: absolute; right: 76px; padding: 5px 8px; }
+dialog:has(.inspection-view) > .dialog-body { padding: 13px 16px; background: repeating-linear-gradient(0deg, #4c4e3d 0 28px, #242b23 28px 31px, #62624a 31px 32px); }
+.inspection-view { padding: 12px 14px; background: #122b24; border: 3px solid #997545; box-shadow: 0 0 0 2px #172219, inset 0 0 0 1px #cfad70; }
+.inspection-heading { padding: 0 3px 13px; }
+.inspection-layout { grid-template-columns: minmax(0, 1.25fr) minmax(300px, .9fr); gap: 22px; align-items: start; }
+.inspection-observe { padding: 9px; border: 4px ridge #9e7c50; background: #101b22; box-shadow: inset 0 0 0 2px #080f13, 2px 3px #0b1613; }
+.inspection-lens { width: 100%; max-width: min(100%, clamp(340px, calc(100dvh - 490px), 480px)); margin: 0 auto; }
+.inspection-tools { grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; padding: 10px 7px 8px; border-top: 3px double #a17c49; background: #152c2b; }
+.inspection-tools button { padding: 6px; border: 3px double #748174; background: #172627; box-shadow: inset 0 0 0 2px #0a1b1d; }
+.inspection-tools button > span { width: 32px; height: 32px; border: 0; box-shadow: none; font-size: 0; background-image: url('./assets/workshop-reference/workshop-icons.png'); background-size: 224px 64px; image-rendering: pixelated; }
+.inspection-tools button[data-inspect-mode='normal'] > span { background-position: -96px 0; }
+.inspection-tools button[data-inspect-mode='side'] > span { width: 25px; background-image: url('../docs/concept-art/08-dialogs-and-menus.png'); background-size: 1024px 559px; background-position: -713px -187px; }
+.inspection-tools button[data-inspect-mode='translucent'] > span { background-position: -32px 0; }
+.inspection-tools button[aria-pressed='true'] { border-color: #e2c36d; background: #354b35; box-shadow: inset 0 0 0 1px #fff0b3, 0 0 0 1px #6c5633; }
+.inspection-adjustments { padding: 5px 7px; background: #152c2b; }
+.inspection-lens-footer { padding: 7px; background: #152c2b; }
+.inspection-scroll {
+  margin: 14px 0 13px;
+  padding: 20px 19px 17px;
+  border-inline: 5px double #a77f47;
+  background: repeating-linear-gradient(0deg, #e8ce93 0 3px, #e7cc90 3px 4px, #e8ce93 4px 10px);
+  box-shadow: inset 4px 0 #f5e0b0, inset -4px 0 #c3a162, 3px 3px #0b2119;
+}
+.inspection-scroll::before, .inspection-scroll::after {
+  left: -16px;
+  right: -16px;
+  height: 22px;
+  border: 3px solid #9b6c3e;
+  background: linear-gradient(#bb8e52 0 2px, #f6dfa6 2px 5px, #ead092 5px 12px, #ccaa6c 12px 16px);
+  box-shadow: -7px 4px 0 -2px #694629, 7px 4px 0 -2px #694629, 0 3px #4b3720;
+}
+.inspection-scroll::before { top: -15px; }
+.inspection-scroll::after { bottom: -14px; }
+.inspection-scroll > h3 { color: #614026; border-bottom: 3px double #b08a4f; padding-bottom: 10px; }
+.inspection-previews { gap: 9px; }
+.inspection-previews button { border: 3px double #ad8850; background: #ddc18a; }
+.inspection-previews canvas { width: 100%; max-width: 125px; align-self: center; }
+.inspection-hotspots button { border: 2px solid #a98247; box-shadow: inset 0 0 0 1px #f0daa5; }
+.inspection-scroll .inspection-create { border: 3px double #a98142; background: #dbad55; color: #3f2d20; box-shadow: inset 0 1px #f7d991, 0 2px #795327; }
+.inspection-scroll .inspection-create:hover { background: #ecc270; color: #3f2d20; border-color: #b38b49; }
+.inspection-knowledge { background: #13352b; border: 3px double #ac8a53; }
+@media (max-width: 900px) {
+  .inspection-layout { grid-template-columns: minmax(0, 1fr) minmax(270px, .9fr); gap: 20px; }
+  .inspection-scroll { padding-inline: 13px; }
+  .inspection-scroll > h3 { font-size: 24px; }
+}
+@media (max-width: 780px) {
+  dialog:has(.inspection-view) > header { justify-content: flex-start; padding-left: 65px; padding-right: 110px; }
+  dialog:has(.inspection-view) > header h2 { font-size: 18px; line-height: 24px; }
+  dialog:has(.inspection-view) > header button { right: 66px; }
+  dialog:has(.inspection-view) > .dialog-body { padding: 12px; }
+  .inspection-layout { grid-template-columns: 1fr; }
+  .inspection-observe { width: min(100%, 480px); }
+  .inspection-scroll { margin-inline: 12px; }
+}

@@ -146,9 +146,9 @@ test('empty and legacy exhibitions show their actual limits without invented tec
   assert.doesNotMatch(result.observations[0], /\d+%/);
 });
 
-test('museum expansion has sixteen sourced exhibits and all commission inspirations resolve', () => {
-  assert.equal(MUSEUM_EXHIBITS.length, 16);
-  assert.equal(new Set(MUSEUM_EXHIBITS.map(exhibit => exhibit.id)).size, 16);
+test('expanded museum preserves commission references and sourced stories for every exhibit', () => {
+  assert.equal(MUSEUM_EXHIBITS.length, 28);
+  assert.equal(new Set(MUSEUM_EXHIBITS.map(exhibit => exhibit.id)).size, MUSEUM_EXHIBITS.length);
   for (const shape of ['bi', 'huang', 'cong', 'dragon']) assert.ok(MUSEUM_EXHIBITS.some(exhibit => exhibit.shape === shape));
   for (const commission of CREATIVE_COMMISSIONS) {
     assert.ok(commission.story && commission.goal);
@@ -158,5 +158,7 @@ test('museum expansion has sixteen sourced exhibits and all commission inspirati
     assert.equal(exhibit.lookFor.length, 3);
     assert.ok(exhibit.technique.hint.startsWith('创作练习：'));
     assert.equal(new URL(exhibit.source.url).protocol, 'https:');
+    assert.ok(exhibit.storySections.length >= 2, exhibit.id);
+    for (const relatedId of exhibit.relatedIds ?? []) assert.ok(MUSEUM_EXHIBITS.some(item => item.id === relatedId), relatedId);
   }
 });

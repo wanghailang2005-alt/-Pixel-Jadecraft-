@@ -1,4 +1,5 @@
-import { MUSEUM_ROOMS, MUSEUM_EXHIBITS } from './museum-content.js';
+import * as museumContent from './museum-content.js';
+const { MUSEUM_ROOMS, MUSEUM_EXHIBITS } = museumContent;
 import { drawMuseumArtifact, drawMuseumRoom, museumCasePositions } from './museum-art.js';
 import { drawCollectionPiece } from './collection-view.js';
 import { createDraft } from './craft-model.js';
@@ -23,6 +24,7 @@ export function createMuseumView({ store, show, button, notify = () => {}, onCre
   let page = 0;
   let exhibitId = null;
   let section = 'story';
+  let storyPage = 0;
   let activeClue = -1;
   let enlarged = false;
   let lit = false;
@@ -77,35 +79,61 @@ export function createMuseumView({ store, show, button, notify = () => {}, onCre
       <div class="museum-hall" style="--museum-height-offset:${roomId==='studio'?350:310}px"><canvas width="960" height="560" aria-hidden="true"></canvas><div class="museum-hall-sign">${roomId==='studio'?(studioTab==='raw'?'一石一来处':'一器一故事'):'请近看，听玉说话'}</div>
       ${items.map((item,index)=>{const {x,y}=museumCasePositions(items.length)[index];return `<button class="museum-case" data-museum-exhibit="${escape(item.id)}" style="--case-x:${x/480*100}%;--case-y:${(y-65)/280*100}%" aria-label="近看${escape(item.title)}" title="${escape(item.title)}"><span class="museum-case-focus" aria-hidden="true"></span><span class="museum-case-label">${escape(item.label??item.title.split(' · ')[0])}${collected(item.id)?'<i aria-label="已收藏灵感">✦</i>':''}</span></button>`;}).join('')}
       ${!items.length?`<div class="museum-empty"><h4>${roomId==='studio'&&studioTab==='raw'?'这里等待你带回的原石':'这里等待你的第一件作品'}</h4><p>${studioTab==='raw'?'前往青岚矿洞采集玉料，带回的原石会出现在这里。':'从名作中收下一点灵感，回工坊把它变成自己的玉器。'}</p><button data-museum-create>回到工坊</button></div>`:''}</div>
-      <div class="museum-hall-footer"><p>${roomId==='studio'?(studioTab==='raw'?'选择一块原石，看看它的色带与来处，再决定是否动手。':'你的作品保留自己的纹样、玉色与祝福。'):'选择展柜近看，观察形制、玉色与雕工，再把灵感带回工作台。'}</p><div>${pages>1?`<button data-museum-page="-1" ${page===0?'disabled':''}>前一组</button><span>${page+1} / ${pages}</span><button data-museum-page="1" ${page===pages-1?'disabled':''}>后一组</button>`:''}<button data-museum-notebook>灵感册 <b>${store.state.museum?.inspirations?.length??0}</b></button></div></div>`);
+      <div class="museum-hall-footer"><p>${roomId==='studio'?(studioTab==='raw'?'选择一块原石，看看它的色带与来处，再决定是否动手。':'你的作品保留自己的纹样、玉色与祝福。'):'看玉色，也读器物的来处、人的选择和流传的故事。'}</p><div>${pages>1?`<button data-museum-page="-1" ${page===0?'disabled':''}>前一组</button><span>${page+1} / ${pages}</span><button data-museum-page="1" ${page===pages-1?'disabled':''}>后一组</button>`:''}<button data-museum-guide>读玉入门</button><button data-museum-notebook>灵感册 <b>${store.state.museum?.inspirations?.length??0}</b></button></div></div>`);
     drawMuseumRoom(root.querySelector('.museum-hall canvas'),items,roomId);
     root.querySelectorAll('[data-museum-exhibit]').forEach(control=>listen(control,'click',()=>{
       const id=control.dataset.museumExhibit;
       if(id.startsWith('raw:'))renderRaw(items.find(item=>item.id===id));
       else if(id.startsWith('player:'))renderPlayer(items.find(item=>item.id===id));
-      else {exhibitId=id;section='story';activeClue=-1;enlarged=false;lit=false;renderExhibit();}
+      else {exhibitId=id;section='story';storyPage=0;activeClue=-1;enlarged=false;lit=false;renderExhibit();}
     }));
     root.querySelectorAll('[data-museum-page]').forEach(control=>listen(control,'click',()=>{page+=Number(control.dataset.museumPage);renderHall();}));
     root.querySelectorAll('[data-museum-studio]').forEach(control=>listen(control,'click',()=>{studioTab=control.dataset.museumStudio;page=0;renderHall();}));
     listen(root.querySelector('[data-museum-create]'),'click',()=>onCreate({}));
     listen(root.querySelector('[data-museum-notebook]'),'click',renderNotebook);
+    listen(root.querySelector('[data-museum-guide]'),'click',renderGuide);
+  }
+  function sourcesMarkup(sources) {
+    return sources.filter(source=>safeUrl(source?.url)).map(source=>`<a class="museum-source" href="${escape(source.url)}" target="_blank" rel="noopener noreferrer">${escape(source.title)} ↗</a>`).join('');
+  }
+  function refreshExhibit(focusSelector) {
+    const scrollTop=document.querySelector('dialog .dialog-body')?.scrollTop??0;
+    renderExhibit();
+    const body=document.querySelector('dialog .dialog-body');
+    if(body)body.scrollTop=scrollTop;
+    const target=document.querySelector(focusSelector);
+    (target&&!target.disabled?target:document.querySelector('[data-story-index][aria-current="page"]'))?.focus({preventScroll:true});
+  }
+  function renderGuide() {
+    const guide=museumContent.MUSEUM_LEARNING_GUIDE;
+    if(!guide)return;
+    const root=mount(`<div class="museum-study-heading"><button data-museum-back>返回展厅</button><span>从一块石头，读到一段人生</span></div><article class="museum-learning"><div class="museum-learning-title"><span aria-hidden="true">玉</span><h3>${escape(guide.title)}</h3><p>${escape(guide.intro)}</p></div><div class="museum-learning-pages">${guide.lenses.map(lens=>`<section><h4>${escape(lens.title)}</h4><p>${escape(lens.text)}</p></section>`).join('')}<div class="museum-learning-route"><button data-guide-room="materials">先认识玉材</button><button data-guide-room="heritage">去听名玉故事</button><button data-guide-room="masters">看匠人的选择</button></div><details class="museum-references"><summary>延伸阅读与课程参考</summary><p>${escape(guide.attribution)}</p>${sourcesMarkup(guide.sources)}</details></div></article>`);
+    listen(root.querySelector('[data-museum-back]'),'click',renderHall);
+    root.querySelectorAll('[data-guide-room]').forEach(control=>listen(control,'click',()=>{roomId=control.dataset.guideRoom;page=0;renderHall();}));
   }
   function renderExhibit() {
     const exhibit=MUSEUM_EXHIBITS.find(item=>item.id===exhibitId);
     if(!exhibit){renderHall();return;}
     roomId=exhibit.room;
+    const chapters=exhibit.storySections?.length?exhibit.storySections:[{title:'器物背后的故事',text:exhibit.story}];
+    storyPage=Math.min(storyPage,chapters.length-1);
+    const chapter=chapters[storyPage];
     const seen=observed(exhibit.id),saved=collected(exhibit.id),positions=cluePositions[exhibit.shape]??cluePositions.stone;
     const root=mount(`<div class="museum-study-heading"><button data-museum-back>返回${escape(room().title)}</button><span>${escape(exhibit.period)}</span><span>像素艺术转绘 · 原作资料见展签</span></div>
       <div class="museum-study"><section class="museum-observation" aria-label="${escape(exhibit.title)}观察台"><div class="museum-lens ${enlarged?'is-enlarged':''} ${lit?'is-lit':''}"><div class="museum-lens-rim"></div><div class="museum-art-window"><canvas width="480" height="480" aria-label="${escape(exhibit.title)}的像素示意"></canvas></div>${exhibit.lookFor.map((clue,index)=>`<button class="museum-clue ${seen.includes(index)?'is-seen':''} ${activeClue===index?'is-active':''}" data-museum-clue="${index}" style="left:${positions[index%positions.length][0]}%;top:${positions[index%positions.length][1]}%" aria-label="观察：${escape(clue)}" title="${escape(clue)}">${index+1}</button>`).join('')}<span class="museum-lens-tick tick-top"></span><span class="museum-lens-tick tick-left"></span><span class="museum-lens-tick tick-right"></span><span class="museum-lens-tick tick-bottom"></span></div>
       <div class="museum-tools" aria-label="观察工具"><button data-museum-zoom aria-pressed="${enlarged}"><span aria-hidden="true">⌕</span>${enlarged?'完整器形':'放大细看'}</button><button data-museum-light aria-pressed="${lit}"><span aria-hidden="true">☼</span>${lit?'柔和照明':'提亮观察'}</button><span class="museum-clue-count">观察 ${seen.length} / ${exhibit.lookFor.length}</span></div>
       <p class="museum-observation-note" role="status">${activeClue>=0?escape(exhibit.lookFor[activeClue]):'轻点玉器上的观察点，留意轮廓、颜色与细纹。'}</p></section>
-      <section class="museum-scroll" aria-label="展品故事与观察记录"><div class="museum-scroll-roller top"></div><div class="museum-scroll-paper"><p class="museum-scroll-origin">${escape(exhibit.museum)}</p><h3>${escape(exhibit.title)}</h3><dl class="museum-facts"><div><dt>玉材</dt><dd>${escape(exhibit.material)}</dd></div><div><dt>作者</dt><dd>${escape(exhibit.creator)}</dd></div></dl><div class="museum-story-tabs"><button data-museum-section="story" aria-pressed="${section==='story'}">器物故事</button><button data-museum-section="notes" aria-pressed="${section==='notes'}">观察笔记</button></div>
-      <div class="museum-scroll-reading">${section==='story'?`<p class="museum-summary">${escape(exhibit.summary)}</p><p>${escape(exhibit.story)}</p>`:`<ul class="museum-observation-list">${exhibit.lookFor.map((clue,index)=>`<li><button data-museum-clue="${index}" ${activeClue===index?'aria-current="true"':''}><span>${seen.includes(index)?'✓':'○'}</span>${escape(clue)}</button></li>`).join('')}</ul><p class="museum-note-hint">看见一个细节，就能收下一条创作灵感。</p>`}</div>
+      <section class="museum-scroll" aria-label="展品故事与观察记录"><div class="museum-scroll-roller top"></div><div class="museum-scroll-paper"><p class="museum-scroll-origin">${escape(exhibit.museum)}</p><h3>${escape(exhibit.title)}</h3><dl class="museum-facts"><div><dt>玉材</dt><dd>${escape(exhibit.material)}</dd></div><div><dt>作者</dt><dd>${escape(exhibit.creator)}</dd></div></dl><div class="museum-story-tabs" aria-label="阅读内容"><button data-museum-section="material" aria-pressed="${section==='material'}">识玉看器</button><button data-museum-section="story" aria-pressed="${section==='story'}">背后故事</button><button data-museum-section="notes" aria-pressed="${section==='notes'}">观察笔记</button></div>
+      <div class="museum-scroll-reading">${section==='material'?`<p class="museum-summary">${escape(exhibit.summary)}</p><p>${escape(exhibit.story)}</p>`:section==='story'?`<div class="museum-chapter"><span class="museum-chapter-index">故事 ${storyPage+1} / ${chapters.length}</span><h4>${escape(chapter.title)}</h4><p>${escape(chapter.text)}</p></div><nav class="museum-chapter-nav" aria-label="故事翻页"><button data-story-page="-1" ${storyPage===0?'disabled':''}>前一页</button><span>${chapters.map((_,index)=>`<button data-story-index="${index}" aria-label="故事第${index+1}页" aria-current="${storyPage===index?'page':'false'}">${index+1}</button>`).join('')}</span><button data-story-page="1" ${storyPage===chapters.length-1?'disabled':''}>继续读</button></nav>`:`<ul class="museum-observation-list">${exhibit.lookFor.map((clue,index)=>`<li><button data-museum-clue="${index}" ${activeClue===index?'aria-current="true"':''}><span>${seen.includes(index)?'✓':'○'}</span>${escape(clue)}</button></li>`).join('')}</ul><p class="museum-note-hint">看见一个细节，就能收下一条创作灵感。</p>`}</div>
       <div class="museum-inspiration"><span>带回工坊的灵感</span><h4>${escape(exhibit.technique.name)}</h4><p>${escape(exhibit.technique.hint)}</p><div><button data-museum-collect ${saved?'disabled':''}>${saved?'灵感已收入册中':'收藏这条灵感'}</button><button data-museum-create class="museum-create">带着灵感创作</button></div><p class="museum-save-feedback" role="status"></p></div>
-      <a class="museum-source" href="${escape(safeUrl(exhibit.source?.url))}" target="_blank" rel="noopener noreferrer">原作资料：${escape(exhibit.source?.title??'馆藏来源')} ↗</a></div><div class="museum-scroll-roller bottom"></div></section></div>`);
+      ${(exhibit.relatedIds??[]).length?`<nav class="museum-related" aria-label="循着故事继续看"><span>循着故事继续看</span>${exhibit.relatedIds.map(id=>MUSEUM_EXHIBITS.find(item=>item.id===id)).filter(Boolean).map(item=>`<button data-museum-related="${escape(item.id)}">${escape(item.title.split(' · ')[0])}</button>`).join('')}</nav>`:''}
+      <details class="museum-references"><summary>馆藏资料与故事出处</summary>${sourcesMarkup(exhibit.sources?.length?exhibit.sources:[exhibit.source])}</details></div><div class="museum-scroll-roller bottom"></div></section></div>`);
     drawMuseumArtifact(root.querySelector('.museum-art-window canvas'),exhibit);
     listen(root.querySelector('[data-museum-back]'),'click',renderHall);
-    root.querySelectorAll('[data-museum-section]').forEach(control=>listen(control,'click',()=>{section=control.dataset.museumSection;renderExhibit();}));
+    root.querySelectorAll('[data-museum-section]').forEach(control=>listen(control,'click',()=>{section=control.dataset.museumSection;refreshExhibit(`[data-museum-section="${section}"]`);}));
+    root.querySelectorAll('[data-story-page]').forEach(control=>listen(control,'click',()=>{storyPage=Math.max(0,Math.min(chapters.length-1,storyPage+Number(control.dataset.storyPage)));refreshExhibit('[data-story-index][aria-current="page"]');}));
+    root.querySelectorAll('[data-story-index]').forEach(control=>listen(control,'click',()=>{storyPage=Number(control.dataset.storyIndex);refreshExhibit('[data-story-index][aria-current="page"]');}));
+    root.querySelectorAll('[data-museum-related]').forEach(control=>listen(control,'click',()=>{exhibitId=control.dataset.museumRelated;section='story';storyPage=0;activeClue=-1;enlarged=false;lit=false;page=Math.floor(MUSEUM_EXHIBITS.filter(item=>item.room===MUSEUM_EXHIBITS.find(item=>item.id===exhibitId).room).findIndex(item=>item.id===exhibitId)/6);renderExhibit();}));
     root.querySelectorAll('[data-museum-clue]').forEach(control=>listen(control,'click',()=>{
       activeClue=Number(control.dataset.museumClue);
       if(!store.active){
@@ -113,12 +141,11 @@ export function createMuseumView({ store, show, button, notify = () => {}, onCre
         return;
       }
       if(store.recordMuseumObservation(exhibit.id,activeClue)){
-        renderExhibit();
-        document.querySelector(`.museum-lens [data-museum-clue="${activeClue}"]`)?.focus({preventScroll:true});
+        refreshExhibit(`.museum-lens [data-museum-clue="${activeClue}"]`);
       }else notify('观察记录未能保存，请继续游戏后再试。');
     }));
-    listen(root.querySelector('[data-museum-zoom]'),'click',()=>{enlarged=!enlarged;renderExhibit();});
-    listen(root.querySelector('[data-museum-light]'),'click',()=>{lit=!lit;renderExhibit();});
+    listen(root.querySelector('[data-museum-zoom]'),'click',()=>{enlarged=!enlarged;refreshExhibit('[data-museum-zoom]');});
+    listen(root.querySelector('[data-museum-light]'),'click',()=>{lit=!lit;refreshExhibit('[data-museum-light]');});
     listen(root.querySelector('[data-museum-collect]'),'click',()=>{
       if(!store.active){root.querySelector('.museum-save-feedback').textContent='先在主菜单开启或继续旅程，再收藏灵感。';return;}
       if(!seen.length){section='notes';renderExhibit();document.querySelector('.museum-save-feedback').textContent='先选择一个观察点，记下你看见的细节。';return;}
@@ -133,7 +160,7 @@ export function createMuseumView({ store, show, button, notify = () => {}, onCre
     const root=mount(`<div class="museum-study-heading"><button data-museum-back>返回展厅</button><span>把看见的细节，变成自己的选择</span></div><section class="museum-notebook"><div class="museum-notebook-title"><span>玉</span><h3>我的灵感册</h3><p>${items.length?'每一页都来自一次认真观察。':'册页还是空的。去看一件玉器，找出让你停下来的细节。'}</p></div><div class="museum-notebook-pages">${items.map(item=>`<button class="museum-notebook-entry" data-museum-note="${escape(item.id)}"><canvas width="160" height="160" data-note-art="${escape(item.id)}" aria-hidden="true"></canvas><span><strong>${escape(item.technique.name)}</strong><small>${escape(item.title)}</small><p>${escape(item.technique.hint)}</p></span><b>翻看</b></button>`).join('')}${!items.length?'<button data-museum-back>去展厅寻找灵感</button>':''}</div></section>`);
     root.querySelectorAll('[data-museum-back]').forEach(control=>listen(control,'click',renderHall));
     root.querySelectorAll('[data-note-art]').forEach(canvas=>drawMuseumArtifact(canvas,items.find(item=>item.id===canvas.dataset.noteArt)));
-    root.querySelectorAll('[data-museum-note]').forEach(control=>listen(control,'click',()=>{exhibitId=control.dataset.museumNote;section='notes';activeClue=-1;renderExhibit();}));
+    root.querySelectorAll('[data-museum-note]').forEach(control=>listen(control,'click',()=>{exhibitId=control.dataset.museumNote;section='notes';storyPage=0;activeClue=-1;renderExhibit();}));
   }
   function renderPlayer(item) {
     if(!item){renderHall();return;}
@@ -163,7 +190,7 @@ export function createMuseumView({ store, show, button, notify = () => {}, onCre
     listen(root.querySelector('[data-museum-raw-light]'),'click',event=>{sideLight=!sideLight;event.currentTarget.setAttribute('aria-pressed',String(sideLight));paint();});
   }
   function open(nextRoom='heritage',nextExhibit=null) {
-    roomId=MUSEUM_ROOMS.some(item=>item.id===nextRoom)?nextRoom:'heritage';page=0;exhibitId=nextExhibit;section='story';activeClue=-1;enlarged=false;lit=false;
+    roomId=MUSEUM_ROOMS.some(item=>item.id===nextRoom)?nextRoom:'heritage';page=0;exhibitId=nextExhibit;section='story';storyPage=0;activeClue=-1;enlarged=false;lit=false;
     if(exhibitId)renderExhibit();else renderHall();
   }
   return { open,dispose };

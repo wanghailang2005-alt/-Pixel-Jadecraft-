@@ -1,7 +1,9 @@
 import './collection.css';
 import { drawArtisanPiece } from './piece-renderer.js';
+import { getCraftSurface } from './craft-model.js';
 import { evaluateExhibition, evaluateCommission } from './commissions.js';
 import { mountStoryCuration } from './story-view.js';
+import { MOTIFS } from './motifs.js';
 
 const SHAPES = { bi: '玉璧', fish: '玉鱼佩', seal: '玉印' };
 const MATERIALS = { nephrite: '和田玉', jadeite: '翡翠' };
@@ -11,6 +13,11 @@ const escape = value => String(value).replace(/[&<>"']/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 })[character]);
 const pieceName = piece => `${MATERIALS[piece.material] ?? '玉材'} · ${SHAPES[piece.shape] ?? '玉器'}`;
+// A composed design keeps a legacy pattern key for save compatibility. Show
+// its actual design components instead of presenting that key as the artwork.
+const patternLabel = piece => piece.artisan?.motifs?.length
+  ? `组合玉稿 · ${[...new Set(piece.artisan.motifs.map(motif => MOTIFS[motif.kind].name))].join('、')}`
+  : PATTERNS[piece.pattern] ?? '云纹';
 const options = (entries, selected) => Object.entries(entries).map(([id, label]) => `<option value="${id}" ${id === selected ? 'selected' : ''}>${label}</option>`).join('');
 
 function piecePath(context, shape) {
@@ -31,12 +38,82 @@ function piecePath(context, shape) {
   }
 }
 
-/** Draws an original pixel-style export from the stored piece and its customization. */
-export function drawCollectionPiece(canvas, piece, { artifactOnly = false } = {}) {
+// Concept 06's lantern, night window and physical display table, drawn without
+// a fixed specimen: the only jade on the table is the player's stored surface.
+function drawCollectionWorkbench(context) {
+  const rect = (x, y, w, h, color) => { context.fillStyle = color; context.fillRect(x, y, w, h); };
+  const polygon = (points, color) => {
+    context.fillStyle = color; context.beginPath();
+    points.forEach(([x, y], index) => index ? context.lineTo(x, y) : context.moveTo(x, y));
+    context.closePath(); context.fill();
+  };
+  rect(0, 0, 480, 480, '#4c3b2e');
+  // Plaster wall and dark timber posts.
+  rect(12, 12, 456, 308, '#8c7855');
+  for (let y = 68; y < 310; y += 43) for (let x = 16 + y % 29; x < 460; x += 71) rect(x, y, 24, 2, '#7d694b');
+  for (const x of [16, 438]) {
+    rect(x, 12, 26, 337, '#483022'); rect(x + 4, 12, 5, 335, '#a47749'); rect(x + 13, 12, 3, 335, '#67472e');
+  }
+  rect(160, 58, 204, 138, '#39291f'); rect(168, 66, 188, 122, '#1a3040');
+  rect(172, 70, 180, 59, '#172837');
+  for (const [x, y] of [[185, 81], [214, 97], [245, 79], [299, 90], [330, 76], [340, 112]]) rect(x, y, 2, 2, '#b2b9a0');
+  rect(301, 72, 15, 15, '#d6cda7'); rect(307, 70, 12, 14, '#172837');
+  polygon([[172, 153], [194, 130], [223, 144], [251, 112], [281, 138], [318, 117], [352, 144], [352, 187], [172, 187]], '#37504d');
+  polygon([[172, 174], [206, 153], [241, 173], [269, 144], [308, 171], [338, 151], [352, 161], [352, 187], [172, 187]], '#536657');
+  rect(166, 184, 191, 8, '#b3915a'); rect(171, 184, 181, 2, '#d0b179');
+  rect(258, 66, 6, 120, '#5f422d'); rect(168, 121, 188, 5, '#5f422d');
+  // Rolled papers and a hanging scroll flank the window.
+  rect(73, 64, 52, 105, '#443523'); rect(78, 68, 42, 96, '#ddc28d');
+  rect(70, 63, 59, 5, '#ab7b49'); rect(70, 162, 59, 5, '#ab7b49');
+  context.font = '24px "Fusion Pixel", sans-serif'; context.fillStyle = '#496249'; context.textAlign = 'center';
+  context.fillText('心', 99, 105); context.fillText('意', 99, 136);
+  // Stone floor under the table.
+  rect(0, 320, 480, 160, '#363a30');
+  for (let y = 327; y < 480; y += 32) {
+    rect(0, y, 480, 2, '#72735b');
+    for (let x = (y % 64 ? -24 : 20); x < 480; x += 84) { rect(x, y + 3, 2, 29, '#555b49'); rect(x + 3, y + 3, 65, 1, '#252c25'); }
+  }
+  // Legs, apron, warm tabletop and wood grain.
+  polygon([[66, 343], [91, 348], [86, 444], [63, 444]], '#422a1d');
+  polygon([[389, 348], [414, 343], [419, 444], [396, 444]], '#422a1d');
+  rect(69, 370, 5, 66, '#9a663b'); rect(403, 370, 5, 66, '#9a663b');
+  polygon([[46, 346], [432, 346], [426, 376], [52, 376]], '#5e3a24');
+  polygon([[77, 250], [398, 250], [438, 347], [35, 347]], '#5a3823');
+  polygon([[83, 257], [391, 257], [426, 337], [49, 337]], '#ac7540');
+  polygon([[91, 262], [388, 262], [416, 329], [60, 329]], '#986236');
+  for (const [x, y, w] of [[100, 273, 95], [214, 267, 128], [76, 309, 77], [302, 313, 91], [169, 322, 119]]) {
+    rect(x, y, w, 2, '#bc8a4a'); rect(x + 13, y + 4, Math.floor(w * .55), 1, '#704a2e');
+  }
+  rect(49, 338, 377, 4, '#d4a364'); rect(52, 348, 374, 3, '#bf8951');
+  // Lamp, with squared glow steps and an opaque amber glass body.
+  rect(54, 166, 79, 112, '#b9894c22'); rect(65, 175, 57, 92, '#e0ab6033');
+  rect(74, 201, 40, 60, '#4d3021'); rect(81, 206, 27, 49, '#df993e');
+  rect(87, 211, 15, 38, '#ffe8a1'); rect(89, 216, 10, 28, '#fff1bc');
+  polygon([[70, 201], [96, 187], [119, 201]], '#563422'); rect(70, 201, 49, 5, '#ad7943');
+  rect(72, 260, 46, 6, '#543322'); rect(77, 267, 36, 4, '#c18c4b');
+  // A stick of incense stays outside the jade display area.
+  rect(384, 290, 29, 6, '#4a3225'); rect(389, 283, 19, 8, '#9d8051');
+  rect(397, 235, 2, 50, '#58341e'); rect(397, 233, 2, 3, '#e1b473');
+  for (const [x, y, w] of [[395, 222, 5], [399, 213, 7], [396, 204, 6]]) rect(x, y, w, 4, '#c7c5aa88');
+  // Low display cradle aligns with the actual jade's lower edge.
+  polygon([[135, 326], [343, 326], [352, 340], [127, 340]], '#352a20');
+  rect(140, 322, 199, 6, '#695034'); rect(144, 322, 191, 2, '#ba985f');
+  // Writing plaque and lower paper for the saved blessing.
+  rect(54, 16, 373, 39, '#4e3424'); rect(58, 20, 365, 31, '#1e372b');
+  rect(57, 19, 367, 2, '#b58b52'); rect(57, 51, 367, 2, '#b58b52');
+  rect(103, 354, 274, 23, '#2b241a'); rect(107, 357, 266, 1, '#a58550');
+  rect(58, 385, 365, 70, '#e0c38d'); rect(58, 385, 365, 3, '#f1dba7'); rect(58, 453, 365, 3, '#b29361');
+  for (const x of [51, 423]) { rect(x, 383, 7, 74, '#755033'); rect(x + 1, 384, 3, 72, '#bd945d'); }
+}
+
+/** Draws the stored surface. Only the customization view uses the room setting. */
+export function drawCollectionPiece(canvas, piece, { artifactOnly = false, presentation = 'card' } = {}) {
   const context = canvas.getContext('2d');
   canvas.width = canvas.height = 480;
   context.imageSmoothingEnabled = false;
-  if (!artifactOnly) {
+  const workbench = presentation === 'workbench' && !artifactOnly;
+  if (workbench) drawCollectionWorkbench(context);
+  else if (!artifactOnly) {
     context.fillStyle = '#11291f'; context.fillRect(0, 0, 480, 480);
     context.strokeStyle = '#ad8950'; context.lineWidth = 4;
     context.strokeRect(12, 12, 456, 456);
@@ -47,7 +124,15 @@ export function drawCollectionPiece(canvas, piece, { artifactOnly = false } = {}
     }
   }
   if (piece.artisan) {
-    drawArtisanPiece(context,piece.artisan,{x:70,y:70,size:340,light:piece.displayLight??-.65});
+    let position = { x: 70, y: 70, size: 340 };
+    if (workbench) {
+      const surface = getCraftSurface(piece.artisan), n = surface.size;
+      let left=n, right=0, top=n, bottom=0;
+      surface.base.forEach((value,index) => { if(value){const x=index%n,y=Math.floor(index/n);left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);} });
+      const size = Math.min(270 * n / Math.max(1, right-left+1), 220 * n / Math.max(1, bottom-top+1));
+      position = { x:240-(left+right+1)*size/n/2, y:322-(bottom+1)*size/n, size };
+    }
+    drawArtisanPiece(context,piece.artisan,{...position,light:piece.displayLight??-.65});
   } else {
   const natural = piece.material === 'nephrite' ? ['#c0d3a7', '#8ba97d', '#516e4f'] : ['#8ad3a1', '#389970', '#1d6149'];
   const palette = piece.color === 'celadon' ? ['#c0e0cf', '#70b3a0', '#396e63']
@@ -87,16 +172,16 @@ export function drawCollectionPiece(canvas, piece, { artifactOnly = false } = {}
   if (artifactOnly) return;
   context.textAlign = 'center'; context.textBaseline = 'middle';
   context.font = '24px "Fusion Pixel", sans-serif';
-  context.fillStyle = '#e8d6ad'; context.fillText(pieceName(piece), 240, 65);
+  context.fillStyle = '#e8d6ad'; context.fillText(pieceName(piece), 240, workbench ? 36 : 65);
   context.font = '12px "Fusion Pixel", sans-serif';
   context.fillStyle = '#b5cba5';
-  context.fillText(`${PATTERNS[piece.pattern] ?? '云纹'} · ${COLORS[piece.color] ?? '本色'}`, 240, 346);
+  context.fillText(`${patternLabel(piece)} · ${COLORS[piece.color] ?? '本色'}`, 240, workbench ? 367 : 346);
   const blessing = [...(piece.blessing ?? '')];
-  context.font = '24px "Fusion Pixel", sans-serif'; context.fillStyle = '#e8d6ad';
-  context.fillText(blessing.slice(0, 12).join(''), 240, 386);
-  context.fillText(blessing.slice(12, 24).join(''), 240, 418);
+  context.font = '24px "Fusion Pixel", sans-serif'; context.fillStyle = workbench ? '#513b28' : '#e8d6ad';
+  context.fillText(blessing.slice(0, 12).join(''), 240, workbench ? 407 : 386);
+  context.fillText(blessing.slice(12, 24).join(''), 240, workbench ? 436 : 418);
   context.font = '12px "Fusion Pixel", sans-serif'; context.fillStyle = '#a98e61';
-  context.fillText('PIXEL JADECRAFT · 像素琢玉', 240, 451);
+  context.fillText('PIXEL JADECRAFT · 像素琢玉', 240, workbench ? 469 : 451);
 }
 
 export function createCollectionView({ store, show, button, notify = () => {}, onRework = () => {}, onSeal = () => {} }) {
@@ -118,7 +203,9 @@ export function createCollectionView({ store, show, button, notify = () => {}, o
     blessingInput.value = draft.blessing;
     const feedback = root.querySelector('.collection-feedback');
     if (piece.artisan) {
-      root.querySelector('#collection-pattern').disabled=true;
+      const patternSelect = root.querySelector('#collection-pattern');
+      patternSelect.innerHTML = options({ [draft.pattern]: patternLabel(piece) }, draft.pattern);
+      patternSelect.disabled=true;
       root.querySelector('#collection-color').disabled=true;
       root.querySelector('.collection-preview p').textContent='天然色带、亲手刻线与局部光泽已保留。改变器型或纹样请返工。';
       feedback.textContent=evaluateCommission(piece,store.state).find(item=>item.fulfilled)?.feedback ?? '这件玉里保留了你的每一笔。';
@@ -138,7 +225,7 @@ export function createCollectionView({ store, show, button, notify = () => {}, o
       root.querySelector('[data-collection-export]').disabled = count > 24;
       blessingInput.setAttribute('aria-invalid', String(count > 24));
       feedback.textContent = count > 24 ? '祝福语超过 24 个字，请缩短后保存。' : piece.artisan ? evaluateCommission(piece,store.state).find(item=>item.fulfilled)?.feedback ?? '这件玉里保留了你的每一笔。' : '';
-      drawCollectionPiece(canvas, draft);
+      drawCollectionPiece(canvas, draft, { presentation: 'workbench' });
     }
     root.querySelector('#collection-piece').onchange = event => { selectedId = event.target.value; customize(); };
     root.querySelector('#collection-pattern').onchange = preview;
@@ -150,7 +237,11 @@ export function createCollectionView({ store, show, button, notify = () => {}, o
       if (ok) notify('玉器定制已更新。');
     };
     root.querySelector('[data-collection-export]').onclick = () => {
-      canvas.toBlob(blob => {
+      // The room is a display setting; keep the existing 480×480 artwork card
+      // for download, including the real carved surface and the saved wording.
+      const exportCanvas = document.createElement('canvas');
+      drawCollectionPiece(exportCanvas, draft);
+      exportCanvas.toBlob(blob => {
         if (!blob) { feedback.textContent = '图片未能生成，请重试。'; return; }
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');

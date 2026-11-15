@@ -1,0 +1,48 @@
+/* Compact wood-and-brass field notes; the cavern remains the main picture. */
+.mine-guide {
+  position: absolute;
+  z-index: 6;
+  top: 78px;
+  right: 20px;
+  width: 344px;
+  max-width: calc(100% - 40px);
+  padding: 7px 10px;
+  border: 3px double #9b8052;
+  background: #182826ed;
+  box-shadow: 3px 3px 0 #0c1719b3, inset 0 0 0 1px #34453a;
+  color: #e8dcc0;
+  font: 12px / 1.6 'Fusion Pixel', 'Microsoft YaHei', sans-serif;
+  pointer-events: none;
+}
+.mine-guide[hidden], .mine-guide [hidden] { display: none !important; }
+.mine-guide.is-expanded { max-height: calc(100% - 100px); overflow-y: auto; pointer-events: auto; }
+.mine-guide-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mine-guide-heading strong { font-weight: normal; white-space: nowrap; color: #e6d49b; }
+.mine-guide button {
+  pointer-events: auto;
+  min-height: 28px;
+  padding: 3px 7px;
+  border: 2px double #99814f;
+  border-radius: 0;
+  background: #293e35;
+  color: #efe0b8;
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.mine-guide button:hover { background: #3a5040; border-color: #c9ad73; }
+.mine-guide button:focus-visible { outline: 2px solid #eee0a8; outline-offset: 2px; }
+.mine-guide button[aria-pressed='true'] { background: #586b48; border-color: #e1cd83; }
+.mine-guide p { margin: 5px 0; }
+.mine-guide kbd { border: 0; padding: 0; color: #d6c797; font: inherit; }
+.mine-guide-keys { color: #a9baaa; font-size: 12px; }
+.mine-guide-route { color: #e3cd8e; padding-top: 5px; border-top: 1px solid #706443; }
+.mine-guide-movement { color: #bdc8b5; }
+.mine-guide-tool { color: #9cc9b9; }
+.mine-guide-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; }
+#game[data-paused='true'] .mine-guide { visibility: hidden; }
+@media (max-width: 700px) {
+  .mine-guide { top: 68px; right: 10px; max-width: calc(100% - 20px); width: 320px; padding: 4px 7px; }
+  .mine-guide-heading { gap: 4px; }
+  .mine-guide.is-expanded { max-height: calc(100% - 86px); overflow-y: auto; pointer-events: auto; }
+}

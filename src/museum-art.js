@@ -75,13 +75,71 @@ function artCanvas(exhibit) {
   if(colors.length===3)colors=[colors[0],mix(colors[0],colors[1]),colors[1],mix(colors[1],colors[2]),colors[2]];
   while (colors.length < 5) colors.push(colors.at(-1));
   const [dark, mid, light, high, cream] = colors;
-  if (shape === 'stone') {
+  if (shape === 'plaque') {
+    const outline=[[34,28],[125,28],[132,114],[107,138],[54,138],[27,114]];
+    jade(c,(x,y)=>inside(x,y,outline),['#243f39','#467569','#67a99a','#8bc8b3','#c7dec1']);
+    line(c,[...outline,outline[0]],'#997947',4);
+    for(let y=38;y<128;y+=7)for(let x=39;x<120;x+=7)if(inside(x,y,outline)){
+      c.fillStyle=(x+y)%3?'#88c3ae':'#4d8e84';c.fillRect(x,y,5,5);
+    }
+    line(c,[[40,58],[57,49],[71,59],[80,76],[89,59],[104,49],[120,58]],'#a78b52',5);
+    line(c,[[42,84],[56,74],[69,85],[56,97],[42,84]],'#223f38',5);
+    line(c,[[91,85],[105,74],[120,84],[106,97],[91,85]],'#223f38',5);
+    line(c,[[80,77],[80,113],[60,123],[42,110]],'#a78b52',4);
+    line(c,[[80,113],[101,123],[119,110]],'#a78b52',4);
+  } else if (shape === 'pig-dragon') {
+    const mask=(x,y)=>(ellipse(x,y,80,89,49,54)&&!ellipse(x,y,80,88,18,24))||inside(x,y,[[49,60],[43,30],[56,17],[69,29],[91,24],[110,38],[119,58],[108,73],[84,65]]);
+    jade(c,mask,colors);
+    line(c,[[50,41],[60,31],[66,45]],dark,2);
+    line(c,[[91,43],[102,42],[107,48],[99,51],[91,47]],dark,2);
+    line(c,[[107,59],[92,58]],dark,2);line(c,[[103,68],[99,91]],dark,2);
+    line(c,[[44,89],[48,113],[66,130],[87,135]],high,3);
+    c.fillStyle=dark;c.fillRect(70,38,3,4);
+  } else if (shape === 'horn-cup'||shape === 'rhyton') {
+    const horn=shape==='horn-cup';
+    const outline=horn?[[31,25],[114,25],[107,66],[96,98],[74,126],[51,139],[36,129],[40,111],[54,103],[62,110],[57,121],[69,114],[78,90],[67,59],[40,45]]:[[27,26],[72,33],[96,63],[105,91],[133,95],[143,110],[135,126],[106,129],[88,115],[71,91],[59,69],[33,56]];
+    jade(c,(x,y)=>inside(x,y,outline),colors,(x,y)=>Math.sin((x+y)/16)*.7);
+    if(horn){
+      for(let y=22;y<38;y++)for(let x=29;x<117;x++)if(ellipse(x,y,73,29,43,9)){c.fillStyle=ellipse(x,y,73,27,35,5)?dark:high;c.fillRect(x,y,1,1);}
+      for(let y=48;y<100;y+=13)line(c,[[50+y*.1,y],[73,y+7],[99-y*.1,y]],dark,2);
+      line(c,[[49,116],[48,128],[59,130],[70,121]],high,2);
+    }else{
+      line(c,[[30,30],[61,37],[83,63],[90,86]],high,3);
+      line(c,[[107,100],[119,89],[126,96],[122,106]],dark,3);
+      c.fillStyle=dark;c.fillRect(121,109,5,4);c.fillStyle='#c4a359';c.fillRect(133,119,10,8);
+      line(c,[[94,107],[84,118],[78,113],[84,101]],light,4);
+    }
+  } else if (shape === 'garden-jade') {
+    const outline=[[22,127],[19,76],[29,43],[51,25],[95,20],[126,40],[140,78],[132,129],[100,142],[51,140]];
+    jade(c,(x,y)=>inside(x,y,outline)&&!ellipse(x,y,81,82,27,36),colors);
+    for(const side of [-1,1]){
+      const x=81+side*18;
+      c.fillStyle=dark;c.fillRect(x-5,66,9,9);c.fillStyle=cream;c.fillRect(x-4,72,8,9);
+      polygon(c,[[x-5,81],[x+5,81],[x+10,112],[x-11,112]],light);
+      line(c,[[x-5,85],[x-side*14,92],[x-side*19,85]],high,3);
+    }
+    line(c,[[34,125],[41,94],[38,64],[51,37]],dark,4);
+    for(const [x,y] of [[41,53],[53,42],[49,71],[113,47],[120,66]])polygon(c,[[x,y],[x-12,y-7],[x-6,y-13],[x+8,y-10],[x+13,y-3]],high);
+    line(c,[[38,124],[115,124]],mid,3);
+  } else if (shape === 'stone') {
     const outline = [[32,47],[57,23],[105,29],[133,55],[139,100],[112,132],[61,139],[23,107],[19,77]];
     jade(c, (x,y) => inside(x,y,outline), colors, (x,y) => Math.sin((x-y)/31)*.4);
     polygon(c, [[34,48],[57,27],[105,33],[78,54],[48,83],[27,77]], high);
     polygon(c, [[99,64],[130,58],[135,99],[109,127],[83,130]], mid);
     line(c, [[43,91],[64,69],[95,58],[108,43]], cream, 2);
     line(c, [[40,101],[58,111],[85,107],[107,89]], light, 3);
+    // Mineral families get visible, distinct structures instead of recoloured copies.
+    if(/agate|chalcedony|malachite|jasper|lapis|turquoise/.test(exhibit.id??'')){
+      for(let y=28;y<137;y++)for(let x=23;x<137;x++)if(inside(x,y,outline)){
+        const id=exhibit.id;
+        if(/agate/.test(id)&&Math.floor(Math.hypot((x-50)*.8,y-72)/7)%3===0){c.fillStyle=high;c.fillRect(x,y,1,1);}
+        if(/malachite/.test(id)&&Math.floor(Math.hypot(x-60,(y-82)*.8)/6)%2===0){c.fillStyle=dark;c.fillRect(x,y,1,1);}
+        if(/lapis/.test(id)&&(x*71+y*43)%293<3){c.fillStyle='#cfac62';c.fillRect(x,y,2,1);}
+        if(/turquoise/.test(id)&&Math.abs(Math.sin(x/17)+Math.cos(y/19+x/37))<.035){c.fillStyle=dark;c.fillRect(x,y,1,2);}
+        if(/jasper/.test(id)&&Math.sin(x/13+y/19)+Math.cos(y/11)>1.4){c.fillStyle=mid;c.fillRect(x,y,1,1);}
+        if(/chalcedony/.test(id)&&x<65&&y<67&&(x+y)%17===0){c.fillStyle=high;c.fillRect(x,y,2,1);}
+      }
+    }
   } else if (shape === 'cong') {
     const outline = [[43,32],[92,18],[124,39],[124,124],[76,143],[35,120],[35,43]];
     jade(c,(x,y)=>inside(x,y,outline),colors);
@@ -217,51 +275,82 @@ export function drawMuseumRoom(canvas, exhibits, roomId='heritage') {
   const c=layer.getContext('2d');c.imageSmoothingEnabled=false;
   c.fillStyle='#101817';c.fillRect(0,0,480,280);
   polygon(c,[[8,47],[240,5],[472,47],[472,174],[240,268],[8,174]],'#2a2e2b');
-  polygon(c,[[8,47],[240,5],[240,111],[8,181]],'#41423a');
-  polygon(c,[[240,5],[472,47],[472,181],[240,111]],'#303630');
+  polygon(c,[[8,47],[240,5],[240,111],[8,181]],'#42423e');
+  polygon(c,[[240,5],[472,47],[472,181],[240,111]],'#34343a');
   for(let y=18;y<171;y+=16) {
     line(c,[[10,y+35],[238,y-7]],'#1c2623',2);line(c,[[242,y-7],[470,y+35]],'#192320',2);
     for(let x=12+(Math.floor(y/16)%2)*22;x<239;x+=44)line(c,[[x,y+33-x*.18],[x,y+47-x*.18]],'#232e29');
     for(let x=242+(Math.floor(y/16)%2)*22;x<470;x+=44)line(c,[[x,y-51+x*.18],[x,y-37+x*.18]],'#17231f');
   }
+  // Irregular highlights and mortar give the reference's stone masonry depth.
+  for(let y=42;y<160;y+=16)for(let x=21;x<455;x+=38){
+    const wallY=x<238?y+32-x*.18:y-51+x*.18;
+    if(wallY<50||wallY>159)continue;
+    c.fillStyle=(x+y)%3?'#626055':'#50514c';c.fillRect(x,Math.round(wallY)+1,23,1);
+    c.fillStyle='#252b2c';c.fillRect(x+4,Math.round(wallY)+11,17,2);
+  }
   const tile=(a,b)=>[240+(a-b)*27,106+(a+b)*11];
   for(let a=0;a<9;a++)for(let b=0;b<9;b++){
-    const p=tile(a,b);polygon(c,[p,tile(a+1,b),tile(a+1,b+1),tile(a,b+1)],['#4b5140','#555944','#454c3c','#626044'][(a*3+b*7)%4]);
+    const p=tile(a,b);polygon(c,[p,tile(a+1,b),tile(a+1,b+1),tile(a,b+1)],['#4b5344','#666143','#3d4f46','#6f674a'][(a*3+b*7)%4]);
     line(c,[p,tile(a+1,b),tile(a+1,b+1)],'#28362d');
+    line(c,[[p[0]+2,p[1]+3],[p[0]+23,p[1]+11]],'#788067');
+    if((a+b)%3===0)line(c,[[p[0]-9,p[1]+14],[p[0]+2,p[1]+16],[p[0]+9,p[1]+13]],'#424e40');
   }
   polygon(c,[[4,43],[240,0],[476,43],[470,51],[240,11],[10,52]],'#704b31');
   line(c,[[10,45],[240,3],[470,45]],'#b18551',2);
   for(const [x,y] of [[10,48],[233,9],[465,48]]) {
     c.fillStyle='#4d3528';c.fillRect(x,y,10,128);c.fillStyle='#9b7044';c.fillRect(x+2,y,3,123);c.fillStyle='#68492f';c.fillRect(x-2,y+118,15,10);
   }
-  for(const [x,y] of [[64,49],[151,33]]) {
-    polygon(c,[[x,y],[x+43,y-8],[x+43,y+54],[x,y+67]],'#182a2b');
-    polygon(c,[[x+4,y+3],[x+39,y-3],[x+39,y+49],[x+4,y+59]],'#7faaa5');
-    polygon(c,[[x+4,y+39],[x+15,y+20],[x+24,y+37],[x+39,y+19],[x+39,y+49],[x+4,y+59]],'#527e7c');
-    line(c,[[x+20,y],[x+20,y+54]],'#392f25',3);line(c,[[x+2,y+25],[x+40,y+17]],'#392f25',3);
-    line(c,[[x-2,y+68],[x+44,y+55]],'#9d9270',3);
+  for(const [x,y] of [[39,71],[102,51],[166,31]]) {
+    const arch=[[x,y+10],[x+4,y],[x+11,y-9],[x+22,y-16],[x+32,y-14],[x+41,y-7],[x+44,y+4],[x+44,y+58],[x,y+72]];
+    polygon(c,arch,'#929789');line(c,[...arch,arch[0]],'#1b2528',2);
+    const pane=[[x+5,y+13],[x+8,y+3],[x+15,y-5],[x+23,y-10],[x+31,y-9],[x+37,y-4],[x+39,y+5],[x+39,y+54],[x+5,y+65]];
+    polygon(c,pane,'#b7d8cf');
+    polygon(c,[[x+5,y+36],[x+17,y+24],[x+25,y+31],[x+39,y+19],[x+39,y+54],[x+5,y+65]],'#537e89');
+    polygon(c,[[x+5,y+48],[x+17,y+43],[x+29,y+48],[x+39,y+36],[x+39,y+54],[x+5,y+65]],'#395465');
+    line(c,[[x+22,y-10],[x+22,y+58]],'#352923',3);line(c,[[x+6,y+22],[x+39,y+12]],'#352923',3);
+    line(c,[[x+2,y+73],[x+45,y+59]],'#9d9270',4);
+    for(let n=0;n<4;n++)line(c,[[x+1,y+18+n*13],[x+5,y+17+n*13]],'#303b3c',2);
   }
   for(const [x,y] of [[299,35],[399,55]]){
     polygon(c,[[x,y],[x+49,y+10],[x+49,y+37],[x,y+28]],'#513925');
     line(c,[[x+3,y+3],[x+46,y+12],[x+46,y+33],[x+3,y+25],[x+3,y+3]],'#ae8250');
-    for(let i=0;i<4;i++){c.fillStyle='#c7ad71';c.fillRect(x+10+i*8,y+11+i,3,10);}
+    c.save();c.translate(x+6,y+7);c.transform(1,.2,0,1,0,0);c.font='10px "Fusion Pixel",monospace';c.fillStyle='#ecd6a0';c.fillText(x===299?'玉文化':'听玉说',0,13);c.restore();
   }
   for(const [x,y] of [[36,111],[214,81],[432,119]]){
-    c.fillStyle='#392c20';c.fillRect(x-2,y,5,13);c.fillStyle='#9f6935';c.fillRect(x-5,y-10,11,13);c.fillStyle='#dfad53';c.fillRect(x-3,y-8,7,9);c.fillStyle='#ffe3a0';c.fillRect(x-1,y-7,3,7);
+    c.fillStyle='#262422';c.fillRect(x-2,y,5,13);c.fillRect(x-4,y+7,9,3);
+    c.fillStyle='#b46932';c.fillRect(x-5,y-8,11,11);c.fillStyle='#dfad53';c.fillRect(x-3,y-12,7,12);c.fillStyle='#ffe3a0';c.fillRect(x-1,y-14,3,12);
   }
   const positions=museumCasePositions(exhibits.length);
   exhibits.slice(0,6).forEach((exhibit,index)=>{
     const {x,y}=positions[index];
     polygon(c,[[x-34,y+15],[x,y+28],[x+38,y+13],[x+4,y]],'#28382c');
-    polygon(c,[[x-26,y-3],[x,y+6],[x+28,y-4],[x+28,y+17],[x,y+27],[x-26,y+17]],'#5a3e2d');
+    polygon(c,[[x-26,y-3],[x,y+6],[x+28,y-4],[x+28,y+17],[x,y+27],[x-26,y+17]],'#513930');
     polygon(c,[[x-26,y-3],[x,y-14],[x+28,y-4],[x,y+7]],'#a17e50');
     line(c,[[x-26,y+1],[x,y+11],[x+27,y+1]],'#c6a16a');
+    line(c,[[x-24,y+5],[x-2,y+14],[x-2,y+22],[x-24,y+13],[x-24,y+5]],'#86634a');
+    line(c,[[x+3,y+14],[x+24,y+6],[x+24,y+13],[x+3,y+21]],'#71523f');
     c.fillStyle='#c7ab69';c.fillRect(x-13,y+12,12,4);
     c.drawImage(exhibit.artworkCanvas ?? artCanvas(exhibit),x-27,y-61,54,58);
     line(c,[[x-28,y-58],[x,y-70],[x+29,y-59],[x+29,y-5],[x,y+6],[x-28,y-5],[x-28,y-58],[x,y-46],[x+29,y-59]],'#9bbdb0');
-    line(c,[[x,y-46],[x,y+6]],'#789b90');
+    line(c,[[x,y-46],[x,y+6]],'#b0dfd1');
     c.fillStyle='#b6e4ce18';polygon(c,[[x-26,y-55],[x-16,y-51],[x-16,y-11],[x-26,y-7]],'#779d8b33');
   });
+  if(exhibits.length){
+    // Visitors stand in the aisles, leaving every showcase hit target clear.
+    for(const [x,y,coat] of [[176,196,'#bd9c6c'],[300,251,'#73969b']]){
+      polygon(c,[[x-11,y+1],[x,y-3],[x+12,y+1],[x,y+6]],'#263b36');
+      c.fillStyle='#282625';c.fillRect(x-6,y-13,5,15);c.fillRect(x+3,y-13,5,15);
+      c.fillStyle='#4b3828';c.fillRect(x-8,y,7,3);c.fillRect(x+2,y+1,8,3);
+      c.fillStyle='#302d29';c.fillRect(x-9,y-34,18,25);
+      c.fillStyle=coat;c.fillRect(x-7,y-33,14,21);c.fillRect(x-11,y-29,5,14);
+      c.fillStyle='#d7b082';c.fillRect(x-5,y-47,12,13);c.fillRect(x-13,y-17,5,5);
+      c.fillStyle='#362c28';c.fillRect(x-7,y-50,14,7);c.fillRect(x-8,y-45,5,9);
+      c.fillStyle='#e2be90';c.fillRect(x+5,y-43,4,5);
+      line(c,[[x+8,y-29],[x+14,y-35],[x+16,y-42]],'#d7b082',4);
+      c.fillStyle='#725b3a';c.fillRect(x-7,y-17,14,3);
+    }
+  }
   if(roomId==='studio'&&!exhibits.length){
     polygon(c,[[181,165],[239,145],[300,165],[240,187]],'#9b794e');polygon(c,[[181,165],[240,187],[300,165],[300,179],[240,202],[181,181]],'#63472f');
     c.fillStyle='#3b3025';c.fillRect(188,180,7,27);c.fillRect(287,180,7,27);

@@ -130,17 +130,28 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
   function settings() {
     const { muted, musicVolume, sfxVolume } = store.state.settings;
     show('声音与存档', `
-      <label class="setting-row"><span>静音</span><input id="muted" type="checkbox" ${muted ? 'checked' : ''}></label>
-      <label class="setting-row" for="music-volume">场景音乐 <output id="music-label">${Math.round(musicVolume * 100)}%</output></label>
-      <input id="music-volume" type="range" min="0" max="100" value="${Math.round(musicVolume * 100)}">
-      <label class="setting-row" for="volume">手作与交互音效 <output id="volume-label">${Math.round(sfxVolume * 100)}%</output></label>
-      <input id="volume" type="range" min="0" max="100" value="${Math.round(sfxVolume * 100)}">
-      <p class="muted">工坊拨弦、矿洞回声、展厅缓奏。切到其他标签页或暂停时，声音会停下。</p>
-      <hr><h3>本地单档</h3><p>进度保存在当前浏览器。清理浏览器数据前，请导出备份。</p>
+      <div class="settings-controls">
+        <div class="setting-row"><label for="music-volume">场景音乐</label><div class="setting-control"><input id="music-volume" type="range" min="0" max="100" value="${Math.round(musicVolume * 100)}"><output id="music-label" for="music-volume">${Math.round(musicVolume * 100)}%</output></div></div>
+        <div class="setting-row"><label for="volume">手作音效</label><div class="setting-control"><input id="volume" type="range" min="0" max="100" value="${Math.round(sfxVolume * 100)}"><output id="volume-label" for="volume">${Math.round(sfxVolume * 100)}%</output></div></div>
+        <div class="setting-row"><label for="muted">暂歇声音</label><input id="muted" class="reference-toggle" type="checkbox" ${muted ? 'checked' : ''} aria-label="静音"></div>
+        <div class="setting-row"><span>全屏观赏</span>${button(document.fullscreenElement ? '退出全屏' : '进入全屏', 'fullscreen', 'setting-switch')}</div>
+        <div class="setting-row"><span>行旅存档</span><button class="setting-switch" data-settings-backup aria-expanded="false" aria-controls="settings-backup">管理备份</button></div>
+      </div>
+      <p class="settings-caption">音量自动保存。暂停或离开页面时，乐声暂歇。</p>
+      <details id="settings-backup" class="settings-backup"><summary>本地单档与备份</summary><p>进度保存在当前浏览器。清理浏览器数据前，请导出备份。</p>
       <div class="save-summary"><span>${store.dirty ? '有未保存的进度' : store.hasSave ? '本地已有存档' : '尚未开始旅程'}</span><small>${store.state.updatedAt ? escape(new Date(store.state.updatedAt).toLocaleString('zh-CN')) : '开始旅程后自动保存'}</small></div>
       <div class="backup-actions">${button('导出存档', 'export', '', !store.hasSession)}${button('导入备份', 'import')}${store.error ? button('导出原始数据', 'raw') : ''}${store.hasSession ? button('立即保存', 'save') : ''}${store.recovery() ? button('恢复上一份存档', 'recover') : ''}${store.recovery(PREV_BACKUP_KEY) ? button('恢复更早存档', 'recoverEarlier') : ''}</div>
       <p class="muted">${store.active ? '切换地点与调整设置后自动保存。' : '开始或继续游戏后，声音设置随进度保存。'}</p>
-      <p id="settings-error" class="error">${escape(store.error)}</p>`);
+      </details><p id="settings-error" class="error">${escape(store.error)}</p>`, button('保存进度', 'save', 'primary', !store.hasSession) + button('返回', 'close'));
+    const backup = dialog.querySelector('#settings-backup');
+    const backupButton = dialog.querySelector('[data-settings-backup]');
+    backupButton.onclick = () => { backup.open = !backup.open; if (backup.open) backup.scrollIntoView({ block: 'nearest' }); };
+    backup.addEventListener('toggle', () => backupButton.setAttribute('aria-expanded', String(backup.open)));
+    dialog.querySelector('[data-action="fullscreen"]').addEventListener('click', event => {
+      const control = event.currentTarget;
+      // The existing action owns the native full-screen request. Read its result afterward.
+      document.addEventListener('fullscreenchange', () => { if (control.isConnected) control.textContent = document.fullscreenElement ? '退出全屏' : '进入全屏'; }, { once: true });
+    });
     const update = () => {
       const volume=Number(dialog.querySelector('#volume').value)/100;
       store.configure({ muted: dialog.querySelector('#muted').checked, volume, sfxVolume: volume, musicVolume: Number(dialog.querySelector('#music-volume').value)/100 });
@@ -303,9 +314,8 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
       return;
     }
     if (state.location === 'mine') {
-      root.innerHTML = `<header class="mine-status"><span class="mine-hearts" aria-label="体力 ${state.stamina}/100">♥ ♥ ♥ ♥ ♥</span><span>JADE <b>${String(state.inventory.length).padStart(2, '0')}</b> / 12</span><strong>青岚矿洞</strong>${button('Ⅱ', 'pause', 'mine-pause')}</header>
+      root.innerHTML = `<header class="mine-status"><span aria-label="已观察矿脉 ${state.mineSurvey.length}/6">观脉 <b>${state.mineSurvey.length}</b> / 6</span><span>原石 <b>${String(state.inventory.length).padStart(2, '0')}</b> / 12</span><strong>青岚矿洞</strong>${button('Ⅱ', 'pause', 'mine-pause')}</header>
         <nav class="mine-tools" aria-label="矿洞工具">${button('<canvas data-mine-icon="pick"></canvas><kbd>E</kbd>', 'pickaxe')}${button('<canvas data-mine-icon="white"></canvas><kbd>B</kbd>', 'inventory')}${button('<canvas data-mine-icon="green"></canvas><kbd>G</kbd>', 'codex')}</nav>
-        <p class="mine-controls">A D 行走　W S 爬梯　空格跳跃　鼠标 / E 挖掘<br><small>R 观察岩壁　1 细凿 / 2 重镐　Q 追踪同源玉</small></p>
         ${store.error ? `<div class="save-status save-warning">${escape(store.error)}${button('重试保存', 'save')}</div>` : ''}`;
       root.querySelectorAll('[data-mine-icon]').forEach(canvas => paintMineIcon(canvas, canvas.dataset.mineIcon));
       root.querySelector('[data-action="pickaxe"]').setAttribute('aria-label', '挥镐采集');
@@ -317,7 +327,8 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
     const location = state.location;
     const objectives = taskList(state);
     const complete = objectives.filter(task => task.done).length;
-    root.innerHTML = `<header class="hud"><div class="place-name"><span class="seal">玉</span><div><strong>${NAMES[location]}</strong><small>玉作学徒 · 首展之约</small></div></div><div class="stamina"><div><span>体力</span><strong>${state.stamina}<small> / 100</small></strong></div><meter min="0" max="100" value="${state.stamina}" aria-label="体力">${state.stamina}/100</meter></div><div class="hud-tools">${button(state.settings.muted ? '声音：关' : '声音：开', 'mute')}${button('全屏', 'fullscreen')}${button('设置', 'settings')}${button('暂停', 'pause')}</div></header>
+    const exhibited = state.exhibits.filter(Boolean).length;
+    root.innerHTML = `<header class="hud"><div class="place-name"><span class="seal">玉</span><div><strong>${NAMES[location]}</strong><small>玉作学徒 · 首展之约</small></div></div><div class="stamina"><div><span>已展作品</span><strong>${exhibited}<small> / 3</small></strong></div><meter min="0" max="3" value="${exhibited}" aria-label="已展作品">${exhibited}/3</meter></div><div class="hud-tools">${button(state.settings.muted ? '声音：关' : '声音：开', 'mute')}${button('全屏', 'fullscreen')}${button('设置', 'settings')}${button('暂停', 'pause')}</div></header>
       <aside class="quest-strip"><div><span>师傅的首展委托</span><small>${complete} / 4</small></div><strong>${objectives.find(task => !task.done)?.name ?? '首展完成'}</strong><p>${objectives.find(task => !task.done)?.detail ?? '三器齐备，温润成展。'}</p><progress max="4" value="${complete}" aria-label="委托完成度"></progress>${button('查看委托 <kbd>J</kbd>', 'tasks', 'quiet')}</aside>
       <div class="location-note"><h2>一器一故事</h2><p>我的首展 · ${state.exhibits.filter(Boolean).length} / 3 件作品</p>${button('布置展位', 'exhibit', 'primary')}${button('走进玉文化馆', 'museum')}</div>
       ${[[320,310],[480,380],[640,310]].map(([x,y], index) => `<button class="gallery-case-button" style="left:${x-45}px;top:${y-60}px" data-action="exhibit" aria-label="管理展位 ${index+1}"><span class="screen-reader-text">管理展位 ${index+1}</span></button>`).join('')}

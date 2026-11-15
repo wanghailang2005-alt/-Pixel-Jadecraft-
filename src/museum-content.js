@@ -1,3 +1,6 @@
+import { ADDITIONAL_MUSEUM_EXHIBITS, MUSEUM_NARRATIVES } from './museum-narratives.js';
+export { MUSEUM_LEARNING_GUIDE } from './museum-narratives.js';
+
 // Sources checked on 2026-11-14–15. Historical summaries are original paraphrases.
 // lookFor and technique describe game observation/creation exercises, not events
 // known to have occurred in the objects' histories. Pixel images are interpretive
@@ -12,7 +15,7 @@ export const MUSEUM_ROOMS = Object.freeze([
   { id: 'studio', title: '我的玉展', subtitle: '你的原石与作品', description: '收藏亲手采集的原石，陈列自己的作品，为每一次取舍写下展签。' },
 ]);
 
-export const MUSEUM_EXHIBITS = Object.freeze([
+const ORIGINAL_MUSEUM_EXHIBITS = [
   {
     id: 'material-nephrite', room: 'materials', title: '和田玉 · 温润的色阶',
     period: '玉材知识', material: '软玉', creator: '天然形成 · 游戏示意样本', museum: '玉材知识展',
@@ -189,4 +192,14 @@ export const MUSEUM_EXHIBITS = Object.freeze([
     source: { title: '中国工艺美术馆 · 翡翠插屏《四海腾欢》', url: 'https://old.gmfyg.org.cn/cloud/daguojiangzuo/collection-04.html' },
     sourceStatus: '已核对馆方原文；采用机构确认的集体署名',
   },
-]);
+];
+
+export const MUSEUM_EXHIBITS = Object.freeze([
+  ...ORIGINAL_MUSEUM_EXHIBITS,
+  ...ADDITIONAL_MUSEUM_EXHIBITS,
+].map(exhibit => {
+  const narrative = MUSEUM_NARRATIVES[exhibit.id] ?? {};
+  const references = [exhibit.source, ...(exhibit.sources ?? []), ...(narrative.sources ?? [])];
+  const sources = references.filter((item, index) => references.findIndex(other => other.url === item.url) === index);
+  return Object.freeze({ ...exhibit, ...narrative, sources: Object.freeze(sources) });
+}));

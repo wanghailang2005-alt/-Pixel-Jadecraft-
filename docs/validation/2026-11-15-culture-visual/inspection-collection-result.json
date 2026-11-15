@@ -1,0 +1,16 @@
+{
+  "pageOverflow": false,
+  "bodyOverflow": false,
+  "translucent": "true",
+  "paper": "true",
+  "width": 800,
+  "height": 700,
+  "storedSurfaceUnchanged": true,
+  "savedBlessing": "温润有光，心意长存",
+  "cardPng": {
+    "width": 480,
+    "height": 480,
+    "bytes": 15192
+  },
+  "nativeDownload": "not confirmed; isolated browser reported canceled"
+}

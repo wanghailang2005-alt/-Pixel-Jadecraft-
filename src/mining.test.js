@@ -68,12 +68,14 @@ test('terrain: deterministic seed, independent mutable arrays, exact twelve stab
   assert.notDeepEqual(generateMine({ seed: 1 }).map, second.map);
 });
 
-test('terrain: bedrock wins, spawn falls one cell, and all cluster rings survive carving', () => {
+test('terrain: bedrock wins, new and legacy spawns are safe, and source rings survive cavern carving', () => {
   const world = generateMine();
   for (let row = 0; row < 32; row++) for (let column = 0; column < 60; column++) {
     if (row === 0 || row === 31 || column === 0 || column === 59) assert.equal(world.map[row][column], TILE.BEDROCK);
   }
-  assert.deepEqual(world.spawn, { x: 160, y: 832 });
+  assert.deepEqual(world.spawn, { x: 384, y: 864 });
+  assert.equal(world.canStand(world.spawn.x, world.spawn.y), true);
+  assert.equal(world.canStand(world.spawn.x, world.spawn.y + .1), false);
   assert.equal(world.canStand(160, 832), true);
   assert.equal(world.canStand(160, 864), true);
   assert.equal(world.canStand(160, 865), false);

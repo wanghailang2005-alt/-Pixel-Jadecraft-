@@ -14,7 +14,8 @@ export const TILE_RULES = Object.freeze([
   { kind: 'STONE', hardness: 3 }, { kind: 'JADE_VEIN', hardness: 3 },
   { kind: 'BEDROCK', hardness: 0 },
 ].map(Object.freeze));
-export const MINE_SPAWN = Object.freeze({ x: 160, y: 832 });
+export const MINE_SPAWN = Object.freeze({ x: 384, y: 864 });
+export const ENTRANCE_CHAMBER = Object.freeze({ left: 32, right: 928, top: 512, floor: 864 });
 export const MINER_BOX = Object.freeze({ width: 24, height: 56 });
 export const MINE_CLUSTERS = Object.freeze([
   [10, 11, 'nephrite'], [28, 13, 'jadeite'], [45, 18, 'nephrite'],
@@ -33,6 +34,16 @@ export function generateMine({ seed = MINE_SEED, mineVeins, spawn = MINE_SPAWN }
   const fill = (left, right, top, bottom, tile) => {
     for (let row = top; row <= bottom; row++) for (let column = left; column <= right; column++) map[row][column] = tile;
   };
+  // A broad, stepped entrance vault. Carve before placing source rock and
+  // landings: all twelve old source coordinates and pending drops stay valid.
+  for (const [row, left, right] of [[16,7,15],[17,5,17],
+    [18,3,24],[19,2,26],[20,2,27],[21,1,28],[22,1,28],
+    [23,1,28],[24,1,28],[25,1,28],[26,1,28]]) fill(left,right,row,row,TILE.AIR);
+  fill(1, 28, 27, 30, TILE.STONE);
+  // C4 is the elevated right-hand buttress of this room, not a floating rock.
+  fill(19, 22, 23, 26, TILE.STONE);
+  fill(19,19,23,23,TILE.AIR);
+  for (let row=24;row<=26;row++) fill(23,23+row-24,row,row,TILE.STONE);
   fill(1, 8, 23, 26, TILE.AIR);
   fill(1, 8, 27, 27, TILE.STONE);
   const veins = [];
@@ -61,7 +72,7 @@ export function generateMine({ seed = MINE_SEED, mineVeins, spawn = MINE_SPAWN }
   fill(0, 0, 0, MAP_ROWS - 1, TILE.BEDROCK);
   fill(MAP_COLUMNS - 1, MAP_COLUMNS - 1, 0, MAP_ROWS - 1, TILE.BEDROCK);
   for (const vein of veins) if (mineVeins?.[vein.cluster]?.[vein.side] === true) map[vein.row][vein.column] = TILE.STONE;
-  return { seed, map, veins, clusters: MINE_CLUSTERS, spawn: { ...spawn }, ladders,
+  return { seed, map, veins, clusters: MINE_CLUSTERS, spawn: { ...spawn }, ladders, entrance: ENTRANCE_CHAMBER,
     canStand: (x, y) => canStand(x, y, map) };
 }
 

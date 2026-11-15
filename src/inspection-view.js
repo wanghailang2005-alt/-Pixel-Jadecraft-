@@ -90,8 +90,13 @@ export function createInspectionView({ store, show, button, onCreate = () => {} 
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.imageSmoothingEnabled = false;
       context.fillStyle = '#0c1520'; context.fillRect(0, 0, 420, 420);
-      for (const [radius, color] of [[200, '#0a1119'], [194, '#526762'], [186, '#243d3b'], [180, '#152429']]) {
-        context.beginPath(); context.arc(center, center, radius, 0, Math.PI * 2); context.fillStyle = color; context.fill();
+      // Two-pixel steps keep the instrument rim at the reference's pixel scale.
+      for (const [radius, color] of [[203, '#080f13'], [199, '#677b6e'], [194, '#31494a'], [186, '#1d3338'], [180, '#0b191f']]) {
+        context.fillStyle = color;
+        for (let dy = -radius; dy <= radius; dy += 2) {
+          const halfWidth = Math.floor(Math.sqrt(Math.max(0, radius * radius - dy * dy)) / 2) * 2;
+          context.fillRect(center - halfWidth, center + dy, halfWidth * 2, 2);
+        }
       }
       context.save(); context.beginPath(); context.arc(center, center, 176, 0, Math.PI * 2); context.clip();
       context.fillStyle = mode === 'translucent' ? '#253d30' : '#101e21'; context.fillRect(0, 0, 420, 420);
@@ -116,13 +121,25 @@ export function createInspectionView({ store, show, button, onCreate = () => {} 
       context.strokeStyle = '#eee0a9'; context.lineWidth = 1;
       context.beginPath(); context.arc(mx, my, 13, 0, Math.PI * 2); context.stroke();
       context.beginPath(); context.moveTo(mx - 21, my); context.lineTo(mx - 7, my); context.moveTo(mx + 7, my); context.lineTo(mx + 21, my); context.moveTo(mx, my - 21); context.lineTo(mx, my - 7); context.moveTo(mx, my + 7); context.lineTo(mx, my + 21); context.stroke();
-      context.strokeStyle = '#101e1a88'; context.beginPath(); context.moveTo(40, center); context.lineTo(380, center); context.moveTo(center, 40); context.lineTo(center, 380); context.stroke();
+      context.strokeStyle = '#14251dde'; context.beginPath(); context.moveTo(34, center); context.lineTo(386, center); context.moveTo(center, 34); context.lineTo(center, 386); context.stroke();
+      context.fillStyle = '#15291ed9';
+      for (let offset = -84; offset <= 84; offset += 14) {
+        const tick = offset % 28 === 0 ? 12 : 7;
+        context.fillRect(center + offset, center - tick / 2, 1, tick);
+        context.fillRect(center - tick / 2, center + offset, tick, 1);
+      }
       context.restore();
       context.strokeStyle = '#c7b98a'; context.lineWidth = 1;
       for (let index = 0; index < 40; index++) {
         const angle = index / 40 * Math.PI * 2, inner = index % 5 === 0 ? 182 : 186;
         context.beginPath(); context.moveTo(center + Math.cos(angle) * inner, center + Math.sin(angle) * inner);
         context.lineTo(center + Math.cos(angle) * 190, center + Math.sin(angle) * 190); context.stroke();
+      }
+      for (const angle of [Math.PI / 4, Math.PI * 3 / 4, Math.PI * 5 / 4, Math.PI * 7 / 4]) {
+        const x = Math.round(center + Math.cos(angle) * 196), y = Math.round(center + Math.sin(angle) * 196);
+        context.fillStyle = '#17262a'; context.fillRect(x-3,y-3,7,7);
+        context.fillStyle = '#ac9b70'; context.fillRect(x-2,y-2,5,5);
+        context.fillStyle = '#4d5b4d'; context.fillRect(x-2,y,5,1);
       }
       root.querySelector('[data-lens-label]').textContent = `${mode === 'translucent' ? '透光观察' : mode === 'side' ? '侧光观察' : '本色观察'} · ${zoom.toFixed(1)}×`;
       root.querySelector('[data-zoom]').textContent = `${zoom.toFixed(1)}×`;

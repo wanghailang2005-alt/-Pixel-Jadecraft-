@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>工坊构图 · 原图与前后对照</title>
+<style>
+body{margin:0;padding:28px;background:#101d17;color:#eddfbc;font:16px/1.7 system-ui,sans-serif}main{max-width:1280px;margin:auto}h1{font-size:28px}h2{font-size:20px;color:#d7b56d}p{max-width:950px}img{display:block;width:100%;height:auto;image-rendering:pixelated;border:1px solid #846a3e;box-sizing:border-box}figure{margin:24px 0}figcaption{padding:8px 0;color:#c3b695}.reference{max-width:1024px}.comparison{position:relative}.comparison img{width:100%}.comparison .before{position:absolute;inset:0;clip-path:inset(0 50% 0 0)}input{width:min(600px,100%);accent-color:#87ac72}a{color:#b7dca8}.small{max-width:800px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #675637;padding:10px;text-align:left}
+</style><main>
+<h1>工坊构图 · 首轮校正</h1>
+<p>2026-11-15 · 对照原概念图 09，校正人物比例、袖口与刀尖位置、侧栏标题及对白边距。下方为运行截图，没有替换原图或给出相似度分数。</p>
+<figure class="reference"><img src="../../concept-art/09-workshop-interface.png" alt="原概念图09"><figcaption>原概念图。英文和演示生命/金币数值在游戏里替换为中文及实际材料、作品、灵感进度。</figcaption></figure>
+<h2>相同窗口的前后对照</h2><p>拖动滑块：左侧显示调整前，右侧显示调整后。重点观察人物的宽高比例、右侧标题和对白框左边距。</p>
+<label>前图显示比例 <input id="reveal" type="range" min="0" max="100" value="50"></label>
+<div class="comparison"><img src="after.png" alt="调整后的工坊"><img class="before" id="before" src="before.png" alt="调整前的工坊"></div>
+<h2>本轮结果与待办</h2>
+<table><tr><th>对象</th><th>本轮结果</th><th>剩余差距</th></tr><tr><td>师傅</td><td>主体约73×89，贴近规格中的70×90；下刀点保持在玉料上</td><td>仍需俯身作业姿态和左手扶玉动作</td></tr><tr><td>工作台</td><td>人物比例与接触位置重新对齐</td><td>背景中的桌面未重绘，位置偏左、透视未配准</td></tr><tr><td>侧栏与对白</td><td>三级面板尺寸不变，标题12px，底部留白回归规格</td><td>小窗口缩放后文字较小</td></tr></table>
+<h2>800×700 操作检查</h2><figure class="small"><img src="small.png" alt="800乘700工坊截图"><figcaption>工作台和右侧续作均经过实际点击；加工弹窗可纵向滚动保存。</figcaption></figure>
+<p><a href="REVIEW.md">验收记录</a> · <a href="browser-results.json">浏览器结果</a> · 137项测试与生产构建通过。95%视觉目标未验收。</p>
+</main><script>document.querySelector('#reveal').addEventListener('input',e=>{document.querySelector('#before').style.clipPath=`inset(0 ${100-e.target.value}% 0 0)`;});</script></html>

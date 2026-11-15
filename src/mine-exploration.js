@@ -66,6 +66,10 @@ export function mineRouteHint(world, body, cluster) {
   const ladder = world.ladders.find(item => item.id === cluster.id);
   if (!ladder) return '沿木梯寻找这一处矿脉。';
   if (nearbySurveyCluster(world, body)?.id === cluster.id) return '已到岩壁 · R 侧灯观察 → 重镐开路 → 细凿点金色缝口';
+  const entrance = world.ladders.find(item => item.id === 'entrance');
+  if (world.entrance && entrance && body.y > 736 && body.x < 608 && Math.abs(body.x - entrance.x) > 24) {
+    return `${body.x > entrance.x ? '← 向左' : '→ 向右'}回到入口木梯，再按 W ↑ 到上层矿道`;
+  }
   if (body.y > 300 && Math.abs(body.x - ladder.x) > 48) return '↑ 沿身边木梯回到上方横向矿道';
   if (Math.abs(body.x - ladder.x) > 24) return `${body.x < ladder.x ? '→ 向右' : '← 向左'}沿上方矿道，寻找 ${cluster.id.slice(1)} 号木梯`;
   return '↓ 沿这一架木梯下行，到平台后向右观察岩壁';

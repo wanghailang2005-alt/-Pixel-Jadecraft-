@@ -62,23 +62,43 @@ export function createRuntime(store, feedback) {
         decorateMenuScene(this);
       } else if (key === 'workshop' && this.textures.exists('workshop')) {
         this.add.image(512, 279.5, 'workshop').setDisplaySize(1024, 559);
-        this.add.image(350, 254, 'master-carver').setDisplaySize(112, 104).setDepth(2);
+        // Alpha >= 128 occupies (288,22)-(946,1240) in the 1254px source.
+        // Visible silhouette: x317–391, y218–307, beside the jade at (355,307).
+        const master = this.add.image(355, 262, 'master-carver').setDisplaySize(140, 92).setDepth(2);
         const tool = this.add.graphics().setDepth(3);
-        tool.lineStyle(2, 0xb9c1b0); tool.lineBetween(360, 286, 355, 302);
         const glow = this.add.graphics().setDepth(1);
-        glow.fillStyle(0xffb347, 0.12);
-        for (const [x, y] of [[254, 150], [105, 218], [477, 150], [635, 218]]) glow.fillCircle(x, y, 22);
-        const sparkles = this.add.graphics().setDepth(3);
-        sparkles.fillStyle(0xe5f2c4, 0.9);
-        for (const [x, y] of [[330, 291], [367, 294], [380, 313], [343, 324]]) {
-          sparkles.fillRect(x - 3, y, 7, 1); sparkles.fillRect(x, y - 3, 1, 7);
+        for (const [x, y] of [[254, 150], [105, 218], [477, 150], [635, 218]]) {
+          glow.fillStyle(0xffb347, .05); glow.fillRect(x - 25, y - 20, 50, 40);
+          glow.fillStyle(0xffc66c, .07); glow.fillRect(x - 17, y - 25, 34, 50);
+          glow.fillStyle(0xffd483, .08); glow.fillRect(x - 12, y - 15, 24, 30);
         }
+        const sparkles = this.add.graphics().setDepth(3);
+        const drawCraftContact = phase => {
+          // Four hand-cut poses. The tip meets the visible jade at (355, 307).
+          const lift = [0, -2, -4, -1][phase];
+          tool.clear();
+          tool.fillStyle(0x243b29); tool.fillRect(354, 286 + lift, 9, 7);
+          tool.fillStyle(0x587447); tool.fillRect(354, 286 + lift, 7, 3);
+          tool.fillStyle(0xd1a06b); tool.fillRect(357, 290 + lift, 6, 6);
+          tool.fillStyle(0x6b492e); tool.fillRect(359, 293 + lift, 3, 5);
+          tool.fillStyle(0xbabfac); tool.fillRect(358, 297 + lift, 2, 3);
+          tool.fillRect(356, 299 + lift, 2, 5); tool.fillRect(355, 303 + lift, 2, 4);
+          tool.fillStyle(0xe4dfbc); tool.fillRect(358, 297 + lift, 1, 3);
+          sparkles.clear();
+          if (phase === 0) {
+            sparkles.fillStyle(0xd4e7ad, .9);
+            for (const [x, y] of [[350, 305], [361, 307], [358, 312]]) sparkles.fillRect(x, y, 2, 1);
+            sparkles.fillStyle(0x6eab77, .8); sparkles.fillRect(347, 310, 2, 2);
+          }
+          master.setY(262 + (phase === 0 ? 1 : 0));
+        };
+        drawCraftContact(0);
         if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          let bright = true;
-          this.time.addEvent({ delay: 650, loop: true, callback: () => {
-            bright = !bright;
-            glow.setAlpha(bright ? 1 : 0.75);
-            sparkles.setVisible(bright);
+          let phase = 0;
+          this.time.addEvent({ delay: 220, loop: true, callback: () => {
+            phase = (phase + 1) % 4;
+            drawCraftContact(phase);
+            glow.setAlpha([1, .88, .94, .88][phase]);
           } });
         }
       } else if (key === 'gallery' && this.textures.exists('gallery-room')) {

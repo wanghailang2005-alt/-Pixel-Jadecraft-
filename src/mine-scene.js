@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import caveUrl from './assets/mine-cavern-v1.png';
+import './mine-hud.css';
 import { createMineArt, createMiningEffects, drawRuntimeTerrain } from './mine-art.js';
 import { SWING_MS, WORLD_WIDTH, WORLD_HEIGHT, TILE, TILE_RULES, cellKey, moveMiner, keyboardDigTarget, validDigTarget } from './mining.js';
 import { placeholderMineWorld, readTiledMine } from './mine-map.js';
@@ -10,7 +11,6 @@ const playerAssets = import.meta.glob('./assets/player-32x48.png', { eager: true
 const mapAssets = import.meta.glob('/public/maps/mine.tmj', { eager: true, query: '?raw', import: 'default' });
 
 const VEIN_STORIES = MINE_LORE;
-const HUD = Object.freeze({ x: 16, y: 81, width: 420, height: 130 });
 const mineSound = name => window.dispatchEvent(new CustomEvent('jade:sound', { detail: { name } }));
 
 export function preloadMine(scene) {
@@ -61,6 +61,9 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
           .setScale(1.12).setAlpha(.7).setDepth(2));
       }
       this.player = this.add.sprite(this.world.spawn.x, this.world.spawn.y, 'mine-player', 6).setOrigin(.5, 1).setScale(1.5).setDepth(4);
+      this.footShadow = this.add.ellipse(this.world.spawn.x, this.world.spawn.y - 1, 35, 8, 0x0b1820, .45).setDepth(3.5);
+      this.strikeTool = this.add.graphics().setDepth(5);
+      this.lastToolContact = null;
       this.lampShade = this.add.image(this.player.x, this.player.y - 56, 'mine-lamp-shade').setScale(4).setDepth(8);
       this.body = { ...this.world.spawn, velocityY: 0, climbing: false };
       this.direction = 'right';
@@ -84,37 +87,12 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       }
       this.syncDrops();
       this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-      this.cameras.main.startFollow(this.player, true, .12, .12);
+      // Keep the miner's feet near the lower fifth of the screen so the vault,
+      // ceiling and route ahead remain visible instead of filling half with floor.
+      this.cameras.main.startFollow(this.player, true, .12, .12, 0, 150);
       this.cameras.main.setRoundPixels(true);
-      this.cameras.main.centerOn(this.player.x, this.player.y);
-      this.add.rectangle(HUD.x, HUD.y, HUD.width, HUD.height, 0x101e24, .94).setOrigin(0).setScrollFactor(0).setDepth(99)
-        .setStrokeStyle(1, 0x637365, .7);
-      this.placeTitle = this.add.text(25, 88, '旧矿道入口 · 六处玉脉 / 十二块玉', {
-        fontFamily: 'Fusion Pixel, Microsoft YaHei', fontSize: '12px', color: '#DDDEBD',
-      }).setScrollFactor(0).setDepth(100);
-      this.placeHint = this.add.text(25, 108, '沿木梯向上，寻找石层中透出的玉色。', {
-        fontFamily: 'Fusion Pixel, Microsoft YaHei', fontSize: '10px', color: '#AFC2B7', wordWrap: { width: 400 },
-      }).setScrollFactor(0).setDepth(100);
-      this.routeHint = this.add.text(25, 138, '', {
-        fontFamily: 'Fusion Pixel, Microsoft YaHei', fontSize: '10px', color: '#E3D5A7',
-      }).setScrollFactor(0).setDepth(100);
-      this.toolHint = this.add.text(25, 156, '重镐开路 · 细凿点金色缝口（E 自动对缝）', {
-        fontFamily: 'Fusion Pixel, Microsoft YaHei', fontSize: '10px', color: '#91B7AD',
-      }).setScrollFactor(0).setDepth(100);
-      this.hudButtons = [
-        { label: '1 细凿', action: () => this.chooseTool('fine'), tool: 'fine' },
-        { label: '2 重镐', action: () => this.chooseTool('heavy'), tool: 'heavy' },
-        { label: 'R 侧灯观察', action: () => this.observeWall() },
-        { label: 'Q 换矿脉', action: () => this.trackNext() },
-      ].map((item, index) => {
-        const x = 25 + index * 101, y = 176;
-        const background = this.add.rectangle(x, y, 94, 25, 0x213b3d).setOrigin(0).setScrollFactor(0).setDepth(100)
-          .setStrokeStyle(1, 0x6a8573);
-        this.add.text(x + 6, y + 7, item.label, {
-          fontFamily: 'Fusion Pixel, Microsoft YaHei', fontSize: '10px', color: '#DDDDB9',
-        }).setScrollFactor(0).setDepth(101);
-        return { ...item, x, y, width: 94, height: 25, background };
-      });
+      this.cameras.main.centerOn(this.player.x, this.player.y - 150);
+      this.createGuide();
       this.placeHintKey = '';
       for (const [index, cluster] of this.world.clusters.entries()) {
         const label = `${index + 1} · ${VEIN_STORIES[index].name}`;
@@ -137,8 +115,57 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
         for (const particle of this.particles) particle.sprite.destroy();
         this.particles = [];
         this.dropSprites.clear(); this.crackSprites.clear(); this.veinGlows.clear();
+        this.guide.remove();
         onStop();
       });
+    }
+    createGuide() {
+      const guide = document.createElement('aside');
+      guide.className = 'mine-guide';
+      guide.setAttribute('aria-label', '矿洞行记与操作指引');
+      guide.innerHTML = `<div class="mine-guide-heading"><strong data-guide-title></strong><button type="button" data-guide-toggle aria-controls="mine-guide-detail" aria-expanded="true">收起指引</button></div>
+        <p class="mine-guide-keys"><kbd>R</kbd> 观察　<kbd>1</kbd>/<kbd>2</kbd> 工具　<kbd>Q</kbd> 追踪</p>
+        <div id="mine-guide-detail"><p class="mine-guide-route" data-guide-route></p><p data-guide-story></p>
+        <p class="mine-guide-movement"><kbd>A D</kbd> 行走　<kbd>W S</kbd> 爬梯　空格跳跃<br>鼠标 / <kbd>E</kbd> 挖掘；先用重镐开路。</p>
+        <p class="mine-guide-tool" data-guide-tool></p><div class="mine-guide-actions">
+        <button type="button" data-guide-action="fine" aria-pressed="true">1 细凿</button><button type="button" data-guide-action="heavy" aria-pressed="false">2 重镐</button>
+        <button type="button" data-guide-action="observe">R 侧灯观察</button><button type="button" data-guide-action="track">Q 换矿脉</button></div></div>`;
+      this.guide = guide;
+      document.querySelector('#game').append(guide);
+      // Setters retain the existing scene hint flow without uploading canvas
+      // text every frame, and expose all instructions to assistive technology.
+      const text = selector => ({ setText(value) { const node = guide.querySelector(selector); if (node.textContent !== value) node.textContent = value; } });
+      this.placeTitle = text('[data-guide-title]'); this.placeHint = text('[data-guide-story]');
+      this.routeHint = text('[data-guide-route]'); this.toolHint = text('[data-guide-tool]');
+      this.hudButtons = ['fine', 'heavy'].map(tool => ({ tool, element: guide.querySelector(`[data-guide-action="${tool}"]`) }));
+      this.autoCollapseGuide = !this.registry.get('mine-guide-seen') && !(store.state.mineSurvey?.length || store.state.inventory.length);
+      this.setGuideExpanded(this.autoCollapseGuide);
+      guide.addEventListener('pointerdown', event => {
+        if (!event.target.closest('button')) return;
+        event.stopPropagation(); this.resetInput();
+      });
+      guide.addEventListener('click', event => {
+        const button = event.target.closest('button');
+        if (!button || paused() || !this.scene.isActive()) return;
+        event.stopPropagation(); this.resetInput(); this.autoCollapseGuide = false; this.registry.set('mine-guide-seen', true);
+        if (button.hasAttribute('data-guide-toggle')) this.setGuideExpanded(!this.guideExpanded);
+        const action = button.dataset.guideAction;
+        if (action === 'fine' || action === 'heavy') this.chooseTool(action);
+        if (action === 'observe') this.observeWall();
+        if (action === 'track') this.trackNext();
+      });
+      const hideGuide = () => { guide.hidden = true; }, showGuide = () => { guide.hidden = false; };
+      this.events.on('pause', hideGuide);
+      this.events.on('resume', showGuide);
+      this.events.once('shutdown', () => { this.events.off('pause', hideGuide); this.events.off('resume', showGuide); });
+    }
+    setGuideExpanded(expanded) {
+      this.guideExpanded = expanded;
+      this.guide.classList.toggle('is-expanded', expanded);
+      this.guide.querySelector('#mine-guide-detail').hidden = !expanded;
+      const toggle = this.guide.querySelector('[data-guide-toggle]');
+      toggle.setAttribute('aria-expanded', String(expanded));
+      toggle.textContent = expanded ? '收起指引' : '展开指引';
     }
     resetInput() {
       this.heldKeys.clear();
@@ -152,13 +179,23 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       }
       this.target = null;
       this.targetBox.clear();
+      this.strikeTool.clear();
+      this.lastToolContact = null;
     }
     installInput() {
       const canvas = this.game.canvas;
+      const canvasHost = canvas.parentElement;
+      const previousCanvasAttributes = new Map(['tabindex', 'role', 'aria-label'].map(name => [name, canvas.getAttribute(name)]));
+      const previousHostHidden = canvasHost?.getAttribute('aria-hidden');
+      canvas.setAttribute('tabindex', '0');
+      canvas.setAttribute('role', 'application');
+      canvas.setAttribute('aria-label', '矿洞探索。A D 行走，W S 爬梯，空格跳跃，E 挖掘，R 观察，1 细凿，2 重镐，Q 追踪。Tab 前往矿洞工具与指引。');
+      canvasHost?.removeAttribute('aria-hidden');
       const canInput = () => this.scene.isActive() && !paused() && !document.hidden;
       const keydown = event => {
         if (!canInput() || event.ctrlKey || event.altKey || event.metaKey
           || event.target.closest?.('input,textarea,select,[contenteditable="true"]')) return;
+        if (event.target.closest?.('.mine-guide button') && ['Space', 'Enter'].includes(event.code)) return;
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) event.preventDefault();
         if (event.repeat) return;
         if (event.code === 'KeyR') { this.observeWall(); return; }
@@ -186,10 +223,12 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
         const point = this.screenPoint(event.clientX, event.clientY);
         if (this.inHud(point)) {
           this.pointer.down = false; this.cancelSwing();
-          this.hudButtons.find(button => point.x >= button.x && point.x <= button.x + button.width
-            && point.y >= button.y && point.y <= button.y + button.height)?.action();
           return;
         }
+        // A control keeps focus after it is clicked. Give it back only when
+        // the player deliberately clicks the playfield; Space then jumps
+        // instead of activating the last focused tool button.
+        canvas.focus({ preventScroll: true });
         pointermove(event); this.pointer.down = true;
       };
       const pointerup = event => {
@@ -214,6 +253,12 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       this.events.on('pause', reset);
       this.events.on('resume', reset);
       this.events.once('shutdown', () => {
+        for (const [name, value] of previousCanvasAttributes) {
+          if (value === null) canvas.removeAttribute(name); else canvas.setAttribute(name, value);
+        }
+        if (canvasHost) {
+          if (previousHostHidden === null) canvasHost.removeAttribute('aria-hidden'); else canvasHost.setAttribute('aria-hidden', previousHostHidden);
+        }
         document.removeEventListener('keydown', keydown);
         document.removeEventListener('keyup', keyup);
         canvas.removeEventListener('pointermove', pointermove);
@@ -242,12 +287,16 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
         y: (clientY - bounds.top) * this.scale.height / bounds.height };
     }
     inHud(point) {
-      return point.x >= HUD.x && point.x <= HUD.x + HUD.width && point.y >= HUD.y && point.y <= HUD.y + HUD.height;
+      if (this.guide.hidden) return false;
+      const canvas = this.game.canvas.getBoundingClientRect(), guide = this.guide.getBoundingClientRect();
+      const clientX = canvas.left + point.x * canvas.width / this.scale.width;
+      const clientY = canvas.top + point.y * canvas.height / this.scale.height;
+      return clientX >= guide.left && clientX <= guide.right && clientY >= guide.top && clientY <= guide.bottom;
     }
     chooseTool(tool, notify = true) {
       this.cancelSwing();
       if (!this.mining.setTool(tool)) return;
-      for (const button of this.hudButtons) button.background.setFillStyle(button.tool === tool ? 0x48634b : 0x213b3d);
+      for (const button of this.hudButtons) button.element.setAttribute('aria-pressed', String(button.tool === tool));
       if (notify) feedback.notify(tool === 'heavy' ? '重镐 · 普通岩石一击打开；遇玉后换细凿。' : '细凿 · 观察后点金色缝口，一击取玉；E 可自动对准。');
     }
     observeWall() {
@@ -315,6 +364,7 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       mineSound(hit.broken && hit.tile === TILE.JADE_VEIN ? 'reveal' : 'mine');
       this.drawCrack(hit);
       const centerX = hit.column * 32 + 16, centerY = hit.row * 32 + 16;
+      this.lastToolContact = { x: centerX, y: centerY, heavy: hit.tool === 'heavy', remaining: 85 };
       const jade = hit.tile === TILE.JADE_VEIN;
       const count = hit.broken ? (hit.tool === 'heavy' ? 16 : 10) : 3;
       const colors = jade ? [0x63d595, 0xb6e6ad, 0x308563] : hit.tile === TILE.DIRT
@@ -368,6 +418,41 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       });
       this.syncDrops();
     }
+    drawStrikeTool(delta) {
+      this.strikeTool.clear();
+      const swing = this.mining.swing;
+      if (this.lastToolContact) this.lastToolContact.remaining -= delta;
+      if (!swing && (!this.lastToolContact || this.lastToolContact.remaining <= 0)) return;
+      const [column, row] = swing ? swing.key.split(',').map(Number) : [];
+      const target = swing ? { x: column * 32 + 16, y: row * 32 + 16, heavy: swing.tool === 'heavy' } : this.lastToolContact;
+      const facing = target.x < this.body.x ? -1 : 1;
+      this.direction = facing < 0 ? 'left' : 'right';
+      const progress = swing ? Math.min(1, swing.elapsed / swing.duration) : 1;
+      const handX = this.body.x + facing * (progress < .5 ? 12 : 17);
+      const handY = this.body.y - (progress < .5 ? 47 : 35);
+      // Wind-up follows the arm; the downstroke terminates at the actual mined
+      // cell. A brief contact pose is shown on the same frame as its chip burst.
+      const impactProgress = Math.max(0, (progress - .25) / .75);
+      const eased = impactProgress * impactProgress;
+      const raisedX = this.body.x + facing * 16, raisedY = this.body.y - 91;
+      const headX = raisedX + (target.x - raisedX) * eased;
+      const headY = raisedY + (target.y - raisedY) * eased;
+      const pixelStroke = (ax, ay, bx, by, color, size) => {
+        const steps = Math.max(1, Math.ceil(Math.max(Math.abs(bx - ax), Math.abs(by - ay)) / 2));
+        this.strikeTool.fillStyle(color);
+        for (let index = 0; index <= steps; index++) this.strikeTool.fillRect(Math.round((ax + (bx - ax) * index / steps) / 2) * 2, Math.round((ay + (by - ay) * index / steps) / 2) * 2, size, size);
+      };
+      pixelStroke(handX, handY, headX, headY, 0x17232a, 5);
+      pixelStroke(handX, handY, headX, headY, 0xa67c48, 3);
+      const length = Math.hypot(headX - handX, headY - handY) || 1;
+      const sideX = -(headY - handY) / length, sideY = (headX - handX) / length;
+      const reach = target.heavy ? 13 : 8;
+      pixelStroke(headX - sideX * reach, headY - sideY * reach, headX + sideX * reach, headY + sideY * reach, 0x12232b, target.heavy ? 7 : 5);
+      pixelStroke(headX - sideX * reach, headY - sideY * reach, headX + sideX * reach, headY + sideY * reach, 0x98b2b3, target.heavy ? 4 : 3);
+      pixelStroke(headX - sideX * reach, headY - sideY * reach, headX, headY, 0xd2dbcc, 2);
+      this.player.stop();
+      this.player.setFrame((facing < 0 ? 0 : 6) + (progress < .55 ? 4 : 5));
+    }
     updatePlaceHint() {
       const cluster = this.world.clusters.find(item => item.id === this.trackedCluster);
       const index = this.world.clusters.indexOf(cluster);
@@ -378,7 +463,7 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       if (this.placeHintKey === key) return;
       this.placeHintKey = key;
       const story = VEIN_STORIES[index];
-      this.placeTitle.setText(`追踪 ${index + 1} · ${story.name} · 同源石已收 ${pair.recovered}/2`);
+      this.placeTitle.setText(`${index + 1} · ${story.name} · ${pair.recovered}/2`);
       this.placeHint.setText(pair.recovered === 2 ? `${story.clue}\n双石已带回，可用不同刀法创作一组成对作品。`
         : pair.pending ? `${story.color}的同源石已开采 ${pair.extracted}/2，地上还有 ${pair.pending} 块待拾取。`
           : observed ? `${story.clue}\n金色缝口已标出；同源的两块原石各有自己的纹理。`
@@ -391,9 +476,11 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       const down = code => Number(this.heldKeys.has(code));
       const dx = Math.sign(down('KeyD') + down('ArrowRight') - down('KeyA') - down('ArrowLeft'));
       const dy = Math.sign(down('KeyS') + down('ArrowDown') - down('KeyW') - down('ArrowUp'));
+      if (this.autoCollapseGuide && (dx || dy || this.jumpPending)) { this.autoCollapseGuide = false; this.registry.set('mine-guide-seen', true); this.setGuideExpanded(false); }
       this.body = moveMiner(this.body, { x: dx, y: dy, jump: this.jumpPending }, activeDelta, this.world);
       this.jumpPending = false;
       this.player.setPosition(this.body.x, this.body.y);
+      this.footShadow.setPosition(this.body.x, this.body.y - 1).setAlpha(this.body.climbing ? .12 : .45);
       this.lampShade.setPosition(Math.round(this.body.x), Math.round(this.body.y - 56));
       if (dx) this.direction = dx < 0 ? 'left' : 'right';
       this.target = this.selectedTarget();
@@ -439,9 +526,10 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       }
       this.updateEffects(activeDelta);
       this.player.anims.timeScale = this.mining.swing ? SWING_MS / this.mining.swing.duration : 1;
-      if (this.mining.swing) this.player.play(`mine-${this.direction}-swing`, true);
+      if (this.mining.swing || this.lastToolContact?.remaining > 0) this.drawStrikeTool(activeDelta);
       else if (dx || (dy && this.body.climbing)) this.player.play(`mine-${this.direction}-walk`, true);
       else { this.player.stop(); this.player.setFrame(this.direction === 'left' ? 0 : 6); }
+      if (!this.mining.swing && !(this.lastToolContact?.remaining > 0)) this.strikeTool.clear();
     }
   };
 }

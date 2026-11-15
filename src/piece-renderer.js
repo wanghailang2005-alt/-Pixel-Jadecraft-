@@ -62,8 +62,17 @@ export function drawWorktable(canvas, draft, options={}) {
   context.imageSmoothingEnabled=false;
   context.fillStyle='#31271e';context.fillRect(0,0,w,h);
   for(let row=0;row<h;row+=32) {
-    context.fillStyle='#5a4130';context.fillRect(0,row,w,29);
-    context.fillStyle='#745039';for(let col=12;col<w;col+=83)context.fillRect(col,row+9,48,2);
+    context.fillStyle=row%64?'#654832':'#5a4130';context.fillRect(0,row,w,29);
+    context.fillStyle='#8b6340';context.fillRect(0,row,w,2);
+    context.fillStyle='#745039';for(let col=12;col<w;col+=83){context.fillRect(col,row+9,48,2);context.fillRect(col+17,row+17,28,1);}
+  }
+  // Copper-bound wooden tray. Props stay outside the interactive jade surface.
+  context.fillStyle='#281d16';context.fillRect(12,10,w-24,5);context.fillRect(12,h-16,w-24,6);
+  context.fillStyle='#c29a5c';context.fillRect(14,10,w-28,2);
+  for(const px of [17,w-31])for(const py of [17,h-32]){
+    context.fillStyle='#9b7440';context.fillRect(px,py,14,14);
+    context.fillStyle='#d1b375';context.fillRect(px,py,14,2);
+    context.fillStyle='#48351e';context.fillRect(px+5,py+5,3,3);
   }
   context.fillStyle='#111f1b';context.fillRect(44,21,w-88,h-42);
   context.strokeStyle='#637653';context.lineWidth=2;context.strokeRect(49,26,w-98,h-52);
@@ -71,4 +80,39 @@ export function drawWorktable(canvas, draft, options={}) {
   const size=Math.min(w-100,h-48); const x=(w-size)/2,y=(h-size)/2;
   drawArtisanPiece(context,draft,{x,y,size,...options});
   return {x,y,size};
+}
+
+/** The visible tool tip is anchored to the very point sent to the carving model. */
+export function drawWorkingTool(context, { x, y, tool, radius, active=false, guide=true, phase=0 }) {
+  context.save();context.imageSmoothingEnabled=false;
+  if(guide){context.strokeStyle=active?'#edd49a':'#c3ba8a';context.lineWidth=1;context.setLineDash([3,4]);context.beginPath();context.arc(x,y,radius,0,Math.PI*2);context.stroke();context.setLineDash([]);}
+  context.translate(Math.round(x),Math.round(y));
+  const beat=active?Math.floor(phase/90)%3:0;
+  // A pixel handle and hand enter diagonally; the contact point never drifts.
+  context.rotate(-.62);
+  context.fillStyle='#201a16';context.fillRect(-3,1,9,50);
+  context.fillStyle='#87603b';context.fillRect(-2,6,6,39);
+  context.fillStyle='#c49b63';context.fillRect(-2,8,2,33);
+  if(tool==='polish'||tool==='sand'){
+    context.fillStyle=tool==='polish'?'#e2d5af':'#a1a18d';context.fillRect(-9,-5,18,12);
+    context.fillStyle=tool==='polish'?'#bcbba0':'#666d62';context.fillRect(-9,4,18,3);
+    context.fillStyle='#f0e7c7';context.fillRect(-6,-4,12,2);
+    if(active){context.fillStyle='#a7d4b3';context.fillRect(-7+beat*5,-7,3,2);}
+  }else{
+    context.fillStyle='#596c69';context.fillRect(-3,0,8,16);
+    context.fillStyle='#bccdc0';context.fillRect(-2,0,3,13);
+    context.fillStyle='#dce8c8';context.fillRect(tool==='engrave'?-1:-4,-2,tool==='engrave'?3:10,3);
+  }
+  context.fillStyle='#7d5539';context.fillRect(-7,24,18,15);
+  context.fillStyle='#c89869';context.fillRect(-8,23,17,12);
+  context.fillStyle='#e4bb89';context.fillRect(-7,23,13,3);
+  context.fillStyle='#a97650';for(let i=0;i<3;i++)context.fillRect(-6,28+i*3,10,1);
+  context.fillStyle='#3e6050';context.fillRect(-8,37,20,20);
+  context.fillStyle='#7a8b65';context.fillRect(-8,37,20,4);
+  context.restore();
+  if(active&&tool!=='polish'){
+    context.save();context.fillStyle=tool==='sand'?'#c2cda5':'#9bb996';
+    for(let i=0;i<5;i++){const a=i*1.7,dist=7+((Math.floor(phase/70)+i*3)%13);context.fillRect(Math.round(x+Math.cos(a)*dist),Math.round(y+Math.sin(a)*dist),2,2);}
+    context.restore();
+  }
 }

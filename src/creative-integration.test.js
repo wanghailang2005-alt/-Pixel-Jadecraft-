@@ -266,6 +266,15 @@ test('museum observations and inspirations reject invalid input and persist with
   assert.equal(game.configureExhibition('nature', 'moon'), true);
   assert.equal(game.configureExhibition('unknown', 'moon'), false);
   assert.deepEqual(reload(disk).state.museum, game.state.museum);
+  // Add new catalogue entries to a notebook saved before the expansion.
+  const expanded = reload(disk);
+  for (const newId of ['material-turquoise', 'heritage-empress-seal', 'heritage-tongyin']) {
+    assert.equal(expanded.recordMuseumObservation(newId, 2), true);
+    assert.equal(expanded.collectInspiration(newId), true);
+  }
+  const restored = reload(disk);
+  assert.deepEqual(restored.state.museum.observations[id], [1]);
+  assert.deepEqual(restored.state.museum.inspirations, [id, 'material-turquoise', 'heritage-empress-seal', 'heritage-tongyin']);
   for (const museum of [
     { ...game.state.museum, observations: { unknown: [0] } },
     { ...game.state.museum, observations: { [id]: [0, 0] } },

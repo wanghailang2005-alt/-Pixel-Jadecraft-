@@ -1,5 +1,5 @@
 import { createDraft, LAYOUT_PRESETS, getCraftSurface, beginStroke, endStroke, applyStroke, undoStroke, resetStage, stageMetrics, craftPointToLocal, localToCraftPoint } from './craft-model.js';
-import { drawWorktable, drawArtisanPiece } from './piece-renderer.js';
+import { drawWorktable, drawArtisanPiece, drawWorkingTool } from './piece-renderer.js';
 import { MOTIFS, MAX_MOTIFS, motifPaths, transformedMotifPaths, firstMotif } from './motifs.js';
 import { createSealImpression, drawSealImpression, drawSealAlbum } from './seal.js';
 import { createCraftingView } from './crafting-view.js';
@@ -113,16 +113,18 @@ export function createCreativeView({store,show,button,notify}) {
       root.querySelector('[data-progress]').textContent=metrics.ready?'已具备进入下一步的条件':`阶段完成 ${metrics.progress}%`;root.querySelector('[data-next]').disabled=!metrics.ready;
       const pairs=draft.stage==='shape'?[['余料处理',metrics.wasteRemoved]]:draft.stage==='carve'?(draft.sealFace?(draft.sealCut==='relief'?[['留住纹线',metrics.retainedGuide],['剔地完成',metrics.groundCoverage]]:[['白文刻线',metrics.guideCoverage],['刻线准确',metrics.precision]]):[['纹线完成',metrics.guideCoverage],['刻线准确',metrics.precision],['浮雕背景',metrics.relief]]):[['柔光区域',metrics.matte],['高光区域',metrics.gloss]];
       root.querySelector('[data-metrics]').innerHTML=pairs.filter(([,v])=>Number.isFinite(v)).map(([n,v])=>`<div><dt>${n}</dt><dd>${Math.round(v*100)}%</dd></div>`).join('');
-      const c=canvas.getContext('2d'),k=placement.size/64;c.strokeStyle='#eedcb2';c.lineWidth=1;c.beginPath();c.arc(placement.x+cursor.x*k,placement.y+cursor.y*k,brush*k,0,Math.PI*2);c.stroke();c.fillStyle='#be9b63';c.fillRect(placement.x+cursor.x*k+brush*k,placement.y+cursor.y*k,4,15);
+      const k=placement.size/64,active=(pointer!==null||keyboardWorking)&&canWork();
+      drawWorkingTool(canvas.getContext('2d'),{x:placement.x+cursor.x*k,y:placement.y+cursor.y*k,tool,radius:brush*k,active,guide,phase:matchMedia('(prefers-reduced-motion: reduce)').matches?0:performance.now()});
+      if(active&&!matchMedia('(prefers-reduced-motion: reduce)').matches)frame=requestAnimationFrame(draw);
     }
     const redraw=()=>{if(frame===null)frame=requestAnimationFrame(draw);};
     function save(){if(!dirty)return true;endStroke(draft);const ok=store.updateArtisan(draft);if(ok){dirty=false;root.querySelector('[data-save-status]').textContent=store.dirty?'进度暂留本次游戏，请导出备份。':'本次笔触已保存。';}else notify('进度未更新，请保留窗口重试。');return ok;}
-    function stop(){keyboardWorking=false;previous=null;const captured=pointer;pointer=null;if(captured!==null&&canvas.hasPointerCapture(captured))canvas.releasePointerCapture(captured);endStroke(draft);save();}
+    function stop(){keyboardWorking=false;previous=null;const captured=pointer;pointer=null;if(captured!==null&&canvas.hasPointerCapture(captured))canvas.releasePointerCapture(captured);endStroke(draft);save();if(root.isConnected)redraw();}
     function stroke(p){if(!canWork())return;if(!draft.strokeOpen)beginStroke(draft);applyStroke(draft,previous??p,p,tool,brush);previous=p;Object.assign(cursor,p);dirty=true;sound(draft.stage==='polish'?'polish':'carve');redraw();}
     const point=e=>{const b=canvas.getBoundingClientRect();return{x:((e.clientX-b.left)*canvas.width/b.width-placement.x)/placement.size*64,y:((e.clientY-b.top)*canvas.height/b.height-placement.y)/placement.size*64};};
     listen(canvas,'pointerdown',e=>{if(e.button!==0||!canWork())return;e.preventDefault();canvas.focus();pointer=e.pointerId;canvas.setPointerCapture(pointer);beginStroke(draft);stroke(point(e));});
-    listen(canvas,'pointermove',e=>{if(pointer===e.pointerId)stroke(point(e));});for(const name of ['pointerup','pointercancel','lostpointercapture'])listen(canvas,name,stop);
-    listen(window,'blur',stop);listen(document,'visibilitychange',()=>{if(document.hidden)stop();});
+    listen(canvas,'pointermove',e=>{if(pointer===e.pointerId)stroke(point(e));else if(pointer===null){const p=point(e);cursor.x=clamp(p.x,0,63);cursor.y=clamp(p.y,0,63);redraw();}});for(const name of ['pointerup','pointercancel','lostpointercapture'])listen(canvas,name,stop);
+    listen(canvas,'blur',stop);listen(window,'blur',stop);listen(document,'visibilitychange',()=>{if(document.hidden)stop();});
     listen(canvas,'keydown',e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].includes(e.code))return;e.preventDefault();cursor.x=clamp(cursor.x+(e.code==='ArrowLeft'?-1:e.code==='ArrowRight'?1:0),0,63);cursor.y=clamp(cursor.y+(e.code==='ArrowUp'?-1:e.code==='ArrowDown'?1:0),0,63);if(e.code==='Space')keyboardWorking=true;if(keyboardWorking||e.shiftKey)stroke({...cursor});else redraw();});
     listen(canvas,'keyup',e=>{if(e.code==='Space'||(!keyboardWorking&&e.code.startsWith('Arrow')))stop();});
     root.querySelectorAll('[data-tool]').forEach(b=>listen(b,'click',()=>{stop();tool=b.dataset.tool;brush=tool==='engrave'?1.3:4;root.querySelector('[data-radius]').value=brush;root.querySelectorAll('[data-tool]').forEach(v=>v.setAttribute('aria-pressed',String(v===b)));redraw();}));
