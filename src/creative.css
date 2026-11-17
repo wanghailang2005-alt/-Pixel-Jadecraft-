@@ -69,7 +69,11 @@
 .creative-notes h3,.creative-notes output,.creative-notes dd{color:#64482b;}
 .creative-notes dl>div{border-color:#b99a68;}
 .creative-notes .creative-insight{color:#735639;border-color:#b99a68;}
-.creative-seal-paper{margin-top:16px;padding:15px 20px;background:#e4cca0;color:#4c3625;border:6px ridge #9e7342;box-shadow:0 4px 0 #241d16;}
+.creative-seal-paper{position:relative;overflow:hidden;margin-top:16px;padding:15px 20px;background:#e4cca0;color:#4c3625;border:6px ridge #9e7342;box-shadow:0 4px 0 #241d16;}
+.creative-ink-pad{position:absolute;top:10px;right:18px;width:34px;height:22px;background:#6f2a24;border:2px solid #b36a43;box-shadow:inset 0 0 0 3px #3b211d,2px 2px #4f3827;opacity:.88;transform:rotate(-3deg);}
+.creative-ink-pad i{position:absolute;left:7px;top:5px;width:16px;height:7px;background:#c44e3c;box-shadow:0 0 8px #e36c4c99;}
+.creative-seal-paper.is-stamping .creative-ink-pad{animation:seal-ink-press .42s steps(3,end);}
+@keyframes seal-ink-press{0%{transform:rotate(-3deg) translateY(0);filter:brightness(1)}35%{transform:rotate(-3deg) translateY(4px) scale(.92);filter:brightness(1.35)}70%{transform:rotate(-3deg) translateY(-1px) scale(1.03);filter:brightness(1.15)}100%{transform:rotate(-3deg) translateY(0);filter:brightness(1)}}
 .creative-seal-heading{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 .creative-seal-heading h3{font-size:18px;margin:0 auto 0 0;color:#613b25;}
 .creative-proofs{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;padding:15px 0 4px;}
@@ -79,6 +83,7 @@
 .creative-seal-paper p{margin:8px 0 0;color:#76563b;}
 .creative-seal-paper [data-proof-status]{color:#5b3f28;}
 @media(max-width:600px){.creative-motif-palette{grid-template-columns:repeat(3,minmax(0,1fr));}.creative-controls{padding:12px;}.creative-proofs{gap:10px;}.creative-proofs canvas{width:128px;}.creative-seal-paper{padding:12px;}.creative-motif-actions button{padding:6px;}.creative-bench{grid-template-columns:96px minmax(0,1fr);gap:8px;}.creative-tools button{padding:5px;}.creative-canvas p{font-size:11px;}}
+@media(prefers-reduced-motion:reduce){.creative-seal-paper.is-stamping .creative-ink-pad{animation:none;}}
 /* Keep the drawing and its movable components together on a desktop worktable. */
 @media(min-width:1101px){
   dialog.wide:has(.creative-design){width:min(1160px,96vw);}

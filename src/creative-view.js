@@ -37,7 +37,14 @@ export function createCreativeView({store,show,button,notify}) {
     host.querySelectorAll('canvas').forEach((canvas,index)=>drawSealImpression(canvas.getContext('2d'),proofs.slice(-2)[index],{size:192}));
     const status=root.querySelector('[data-proof-status]');if(status)status.textContent=proofs.length?'印迹左右相反：刻槽与磨低处不着朱。纸上保留落印时的样子，再刻后请重新试印。':'纸上会出现真实刀痕，不会自动补成玉稿。';
   }
-  function sealPaper(draft){return '<section class="creative-seal-paper"><div class="creative-seal-heading"><h3>试印手记</h3><button data-stamp>蘸朱试印</button><button data-export-proof>导出印谱 PNG</button></div><div class="creative-proofs" data-proofs></div><p data-proof-status role="status"></p><p>刻下的线与磨低的背景不着朱；留下的高处会印在纸上。沿着印面试一试，留朱与留白可以相互呼应。</p></section>';}
+  function stampFeedback(root){
+    const paper=root?.querySelector('.creative-seal-paper');
+    if(!paper)return;
+    paper.classList.remove('is-stamping');
+    void paper.offsetWidth;
+    paper.classList.add('is-stamping');
+  }
+  function sealPaper(draft){return '<section class="creative-seal-paper"><div class="creative-ink-pad" aria-hidden="true"><i></i></div><div class="creative-seal-heading"><h3>试印手记</h3><button data-stamp>蘸朱试印</button><button data-export-proof>导出印谱 PNG</button></div><div class="creative-proofs" data-proofs></div><p data-proof-status role="status"></p><p>刻下的线与磨低的背景不着朱；留下的高处会印在纸上。沿着印面试一试，留朱与留白可以相互呼应。</p></section>';}
   function open(options={}){
     dispose();inspirationId=options.inspirationId??inspirationId;designOptions=options;
     if(store.state.crafting){if(!store.state.crafting.artisan)legacy.open();else work();}else design();
@@ -139,13 +146,13 @@ export function createCreativeView({store,show,button,notify}) {
     listen(root.querySelector('[data-save]'),'click',()=>{stop();if(!dirty)dialog.close();});listen(root.querySelector('[data-cancel]'),'click',()=>{stop();if(store.cancelCrafting()){dispose();open();}else notify('行囊已满，请先腾出一格。');});
     listen(root.querySelector('[data-next]'),'click',()=>{stop();if(!save()||!store.advanceCrafting())return;dispose();if(store.state.crafting)open();else complete(materialId);});
     const back=root.querySelector('[data-back-carve]');if(back)listen(back,'click',()=>{stop();if(!save())return;if(store.reopenArtisanCarving()){dispose();open();notify('刀痕已保留。补刻后重新细磨，再落一印比较。');}});
-    const stamp=root.querySelector('[data-stamp]');if(stamp){listen(stamp,'click',()=>{stop();if(!save())return;pullPrint(draft);renderProofs(root,draft);});listen(root.querySelector('[data-export-proof]'),'click',()=>exportPrints(draft));renderProofs(root,draft);}
+    const stamp=root.querySelector('[data-stamp]');if(stamp){listen(stamp,'click',()=>{stop();if(!save())return;stampFeedback(root);pullPrint(draft);renderProofs(root,draft);});listen(root.querySelector('[data-export-proof]'),'click',()=>exportPrints(draft));renderProofs(root,draft);}
     listen(dialog,'close',()=>{stop();dispose();});dispose=()=>{controller.abort();if(frame!==null)cancelAnimationFrame(frame);dispose=()=>{};};draw();
   }
   function openSeal(piece){
     if(!piece?.artisan||piece.shape!=='seal')return false;dispose();const draft=piece.artisan;pullPrint(draft);
     show('一印一痕 · 玉印谱',`<section class="creative-view"><p class="creative-lead">纸上留住的，是你在玉面刻下的每一笔。</p>${sealPaper(draft)}</section>`,button('返回工坊','close'),true);
-    const root=document.querySelector('.creative-view');renderProofs(root,draft);root.querySelector('[data-stamp]').onclick=()=>{pullPrint(draft);renderProofs(root,draft);};root.querySelector('[data-export-proof]').onclick=()=>exportPrints(draft);return true;
+    const root=document.querySelector('.creative-view');renderProofs(root,draft);root.querySelector('[data-stamp]').onclick=()=>{stampFeedback(root);pullPrint(draft);renderProofs(root,draft);};root.querySelector('[data-export-proof]').onclick=()=>exportPrints(draft);return true;
   }
   function complete(id){
     const piece=store.state.pieces.find(p=>p.id===id);show('玉里有你的答案',`<section class="creative-complete"><canvas width="400" height="330" aria-label="亲手制作的玉器"></canvas><div><p>一石一世界</p><h3>${NAMES[piece.shape]} · 已成器</h3><p>保留的天然色带、刻下的线迹和局部光泽，已经成为这件作品的一部分。</p><p>为它留一句话，或把它带到展厅，让别人看见你的选择。</p>${piece.shape==='seal'?'<button data-finished-proof>蘸朱试印，留一页印谱</button>':''}</div></section>`,button('为作品落款','customize','primary')+button('读一封旧玉来信','story')+button('进入玉文化馆','museum'),true);
