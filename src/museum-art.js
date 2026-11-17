@@ -4,6 +4,33 @@ const SIZE = 160;
 const cache = new Map();
 const DEFAULT = ['#153d32', '#2f7154', '#69a875', '#b4d7a1', '#e1e6bc'];
 const PALE = ['#4c5342', '#7c8965', '#a8b58a', '#d0d5ae', '#ede8cc'];
+const ART_STYLE_VERSION = 2;
+
+function stableSeed(value) {
+  let hash = 2166136261;
+  for (const character of String(value ?? 'museum')) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+/**
+ * The museum illustrations are deterministic interpretive pixel art. Keeping
+ * the style profile explicit makes the material treatment auditable without
+ * bundling source photographs or an external sprite sheet.
+ */
+export function museumArtProfile(exhibit = {}) {
+  const shape = String(exhibit.shape ?? 'stone');
+  const id = String(exhibit.id ?? shape);
+  return Object.freeze({
+    version: ART_STYLE_VERSION,
+    shape,
+    seed: stableSeed(id),
+    texture: shape === 'stone' ? 'mineral-grain' : 'carved-relief',
+    optics: 'pixel-side-light-scatter',
+  });
+}
 
 function rgb(hex) {
   const safe = /^#[0-9a-f]{6}$/i.test(hex ?? '') ? hex : '#699b73';
@@ -52,23 +79,85 @@ function polygon(ctx, points, color) {
 }
 function jade(ctx, mask, colors = DEFAULT, tone = () => 0) {
   const palette = colors.map(rgb), pixels = ctx.createImageData(SIZE, SIZE);
+  const seed = Number(ctx.__museumSeed) || 0;
   for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
     if (!mask(x, y)) continue;
     const edge = !mask(x - 2, y) || !mask(x, y - 2);
     const darkEdge = !mask(x + 2, y) || !mask(x, y + 2);
-    const cloud = Math.sin(x / 17 + Math.sin(y / 23)) + Math.cos(y / 21 - x / 31);
-    const shade = edge ? 3 : darkEdge ? 0 : Math.max(1, Math.min(3, Math.round(1.8 + cloud * .37 + tone(x, y))));
+    const cloud = Math.sin((x + seed % 29) / 17 + Math.sin((y + seed % 37) / 23))
+      + Math.cos((y + seed % 31) / 21 - (x + seed % 17) / 31);
+    const grain = Math.sin((x * 13 + y * 7 + seed % 101) / 19) * .16;
+    const shade = edge ? 3 : darkEdge ? 0 : Math.max(1, Math.min(3, Math.round(1.8 + cloud * .37 + grain + tone(x, y))));
     const index = (y * SIZE + x) * 4;
     const color = palette[Math.min(shade, palette.length - 1)];
     pixels.data[index] = color[0]; pixels.data[index + 1] = color[1]; pixels.data[index + 2] = color[2]; pixels.data[index + 3] = 255;
   }
   ctx.putImageData(pixels, 0, 0);
 }
+
+function drawPixelMaterialTexture(ctx, exhibit, profile) {
+  const palette = Array.isArray(exhibit.palette) && exhibit.palette.length >= 3 ? exhibit.palette : DEFAULT;
+  const seed = profile.seed;
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-atop';
+  // Sparse 1–2 pixel flecks keep the material readable at the 160px source
+  // scale and survive nearest-neighbour enlargement in the observation lens.
+  ctx.fillStyle = palette.at(-1) ?? DEFAULT.at(-1);
+  ctx.globalAlpha = .28;
+  for (let i = 0; i < 28; i++) {
+    const x = (seed + i * 47) % 142 + 9;
+    const y = ((seed >>> 5) + i * 31) % 142 + 9;
+    ctx.fillRect(x, y, i % 3 === 0 ? 2 : 1, i % 4 === 0 ? 2 : 1);
+  }
+  ctx.fillStyle = palette[0] ?? DEFAULT[0];
+  ctx.globalAlpha = .2;
+  for (let i = 0; i < 12; i++) {
+    const x = (seed + i * 71) % 132 + 14;
+    const y = ((seed >>> 7) + i * 53) % 132 + 14;
+    line(ctx, [[x, y], [x + (i % 2 ? 4 : -3), y + 2]], palette[0] ?? DEFAULT[0], 1);
+  }
+  ctx.restore();
+}
+
+function drawPixelOpticalLayer(ctx, canvas, exhibit, sideLight) {
+  if (!sideLight) return;
+  const profile = museumArtProfile(exhibit);
+  const fromRight = sideLight === 'right';
+  const width = canvas.width, height = canvas.height;
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-atop';
+  const gradient = ctx.createLinearGradient(fromRight ? width : 0, 0, fromRight ? 0 : width, 0);
+  gradient.addColorStop(0, 'rgba(240,224,154,.42)');
+  gradient.addColorStop(.2, 'rgba(198,235,167,.18)');
+  gradient.addColorStop(.58, 'rgba(16,47,37,0)');
+  gradient.addColorStop(1, 'rgba(5,18,18,.26)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+  // Break the smooth gradient into a few hard pixel glints and translucent
+  // mineral inclusions. This is the same side-light signal at every scale.
+  ctx.globalAlpha = .32;
+  ctx.fillStyle = '#eff4bd';
+  for (let i = 0; i < 18; i++) {
+    const y = (profile.seed + i * 37) % Math.max(1, height - 8) + 4;
+    const x = fromRight ? width - ((profile.seed >>> 6) + i * 23) % Math.max(1, width / 2) : ((profile.seed >>> 6) + i * 23) % Math.max(1, width / 2);
+    ctx.fillRect(Math.round(x / 2) * 2, Math.round(y / 2) * 2, i % 3 === 0 ? 4 : 2, 2);
+  }
+  ctx.globalAlpha = .18;
+  ctx.fillStyle = '#b5e1bd';
+  for (let i = 0; i < 11; i++) {
+    const x = (profile.seed + i * 61) % Math.max(1, width - 5) + 2;
+    const y = ((profile.seed >>> 8) + i * 29) % Math.max(1, height - 5) + 2;
+    ctx.fillRect(x, y, 2, 3);
+  }
+  ctx.restore();
+}
 function artCanvas(exhibit) {
-  const key = `${exhibit.id ?? exhibit.shape}:${JSON.stringify(exhibit.palette ?? [])}`;
+  const profile = museumArtProfile(exhibit);
+  const key = `${profile.version}:${exhibit.id ?? exhibit.shape}:${JSON.stringify(exhibit.palette ?? [])}`;
   if (cache.has(key)) return cache.get(key);
   const canvas = document.createElement('canvas'); canvas.width = canvas.height = SIZE;
   const c = canvas.getContext('2d'); c.imageSmoothingEnabled = false;
+  c.__museumSeed = profile.seed;
   const shape = exhibit.shape ?? 'stone';
   const supplied = Array.isArray(exhibit.palette) && exhibit.palette.length >= 3 ? exhibit.palette : null;
   let colors = supplied ? [...supplied].sort((a, b) => rgb(a).reduce((s, n) => s + n, 0) - rgb(b).reduce((s, n) => s + n, 0)) : /cong|bird|armor|seal/.test(shape) ? PALE : DEFAULT;
@@ -252,13 +341,15 @@ function artCanvas(exhibit) {
     jade(c,(x,y)=>ellipse(x,y,80,80,55,55)&&!ellipse(x,y,80,80,20,20),colors);
     for(let a=0;a<Math.PI*2;a+=Math.PI/6){const x=80+Math.cos(a)*38,y=80+Math.sin(a)*38;line(c,[[x-5,y-3],[x+3,y-3],[x+3,y+5],[x-2,y+5]],high,2);}
   }
+  drawPixelMaterialTexture(c, exhibit, profile);
   cache.set(key,canvas); return canvas;
 }
 
-export function drawMuseumArtifact(canvas, exhibit, { backdrop = false, light = false } = {}) {
+export function drawMuseumArtifact(canvas, exhibit, { backdrop = false, light = false, sideLight = false } = {}) {
   const c=canvas.getContext('2d');c.clearRect(0,0,canvas.width,canvas.height);c.imageSmoothingEnabled=false;
   if(backdrop){c.fillStyle=light?'#29473e':'#101f20';c.fillRect(0,0,canvas.width,canvas.height);}
   const size=Math.min(canvas.width,canvas.height);c.drawImage(artCanvas(exhibit),(canvas.width-size)/2,(canvas.height-size)/2,size,size);
+  drawPixelOpticalLayer(c, canvas, exhibit, sideLight);
 }
 
 export const MUSEUM_CASE_POSITIONS = [

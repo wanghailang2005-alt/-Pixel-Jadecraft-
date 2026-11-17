@@ -128,7 +128,7 @@ export function createMuseumView({ store, show, button, notify = () => {}, onCre
       <div class="museum-inspiration"><span>带回工坊的灵感</span><h4>${escape(exhibit.technique.name)}</h4><p>${escape(exhibit.technique.hint)}</p><div><button data-museum-collect ${saved?'disabled':''}>${saved?'灵感已收入册中':'收藏这条灵感'}</button><button data-museum-create class="museum-create">带着灵感创作</button></div><p class="museum-save-feedback" role="status"></p></div>
       ${(exhibit.relatedIds??[]).length?`<nav class="museum-related" aria-label="循着故事继续看"><span>循着故事继续看</span>${exhibit.relatedIds.map(id=>MUSEUM_EXHIBITS.find(item=>item.id===id)).filter(Boolean).map(item=>`<button data-museum-related="${escape(item.id)}">${escape(item.title.split(' · ')[0])}</button>`).join('')}</nav>`:''}
       <details class="museum-references"><summary>馆藏资料与故事出处</summary>${sourcesMarkup(exhibit.sources?.length?exhibit.sources:[exhibit.source])}</details></div><div class="museum-scroll-roller bottom"></div></section></div>`);
-    drawMuseumArtifact(root.querySelector('.museum-art-window canvas'),exhibit);
+    drawMuseumArtifact(root.querySelector('.museum-art-window canvas'),exhibit,{ sideLight: lit });
     listen(root.querySelector('[data-museum-back]'),'click',renderHall);
     root.querySelectorAll('[data-museum-section]').forEach(control=>listen(control,'click',()=>{section=control.dataset.museumSection;refreshExhibit(`[data-museum-section="${section}"]`);}));
     root.querySelectorAll('[data-story-page]').forEach(control=>listen(control,'click',()=>{storyPage=Math.max(0,Math.min(chapters.length-1,storyPage+Number(control.dataset.storyPage)));refreshExhibit('[data-story-index][aria-current="page"]');}));

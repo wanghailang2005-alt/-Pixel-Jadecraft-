@@ -7,6 +7,7 @@
 - 五项概念级拓展证据：`EXP-01-ambient-polish.md`、`EXP-02-juice.md`、`EXP-03-gallery-optics.md`、`EXP-04-memorial-ritual.md`、`EXP-05-micro-interaction.md`。
 - 追加素材补强：`scripts/generate-mine-atlas.mjs`、`src/asset-integrity.test.js` 与 P0-02 生产预览截图锁定 20 帧矿洞图集。
 - 追加工坊姿态补强：`src/workshop-pose.js`、`src/workshop-pose.test.js` 锁定四相接触点与玉屑冲击相位。
+- 追加玉文化馆视觉补强：`src/museum-art.js`、`src/museum-art.test.js` 锁定稳定种子材质纹理、像素化侧光与六槽展柜布局；无新增外部图片。
 - 所有临时截图、走查脚本和浏览器用户目录位于 `.tmp/validation/2026-11-18-final-polish/`，由 `.gitignore` 排除；未把临时 PNG 纳入提交。
 - 正式像素资产来源与许可记录见 `src/assets/README.md`；本轮新增的环境微动态、导出工具和光影均为代码生成，不增加外部素材。
-- 收尾检查：`git diff --check`、`npm test`（146/146，432/432 加工矩阵）、`npm run build`。
+- 收尾检查：`git diff --check`、`npm test`（149/149，432/432 加工矩阵）、`npm run build`。

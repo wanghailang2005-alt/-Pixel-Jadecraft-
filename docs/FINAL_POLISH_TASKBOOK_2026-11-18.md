@@ -204,7 +204,7 @@
 | P0-02 矿洞地形、光照与采矿手感 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-02-mine-guide.md`；六簇/十二原石、连续岩面 AO、20 帧正式图集、冷暖矿光、粒子、掉落恢复和四尺寸窄窗走查已闭环 |
 | P0-03 展厅布展与文字清晰度 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-03-gallery.md`；640px 按单列滚动 |
 | P0-04 三阶段加工与吸底操作栏 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-04-craft-bench.md`；表面差异由模型与矩阵测试覆盖 |
-| P0-05 玉文化馆与鉴赏观察 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-05-museum-inspection.md`；28 件馆藏与 800×700 观察台已回归 |
+| P0-05 玉文化馆与鉴赏观察 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-05-museum-inspection.md`；28 件馆藏、Canvas 像素纹理/侧光与 640×700、800×700 观察台已回归 |
 | P0-06 旧玉来信与回访 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-06-heirloom-letter.md`；保养与伴佩路线均有证据 |
 | P0-07 玉印雕纹与试印 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-07-seal-print.md`；真实刀痕镜像试印、手记与刷新重建已验证 |
 | P0-08 夜窗落款与纪念卡 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-08-memorial-card.md`；夜窗工作台、24 字边界、固定尺寸 PNG 与同一作品 ID 已验证 |
@@ -220,3 +220,10 @@
 | 拓展 3：展厅玉质光学 | 完成 | 见 `EXP-03-gallery-optics.md`；灯光主题、侧光梯度和内部散射已验证 |
 | 拓展 4：纪念卡仪式感 | 完成 | 见 `EXP-04-memorial-ritual.md`；回纹、印章、展签和导出失败恢复已验证 |
 | 拓展 5：微交互与快捷键 | 完成 | 见 `EXP-05-micro-interaction.md`；工具悬停提示、1/2/3 微标和新增边界单测已验证 |
+
+## 11. 追加视觉补强（2026-11-18）
+
+- `src/museum-art.js` 的馆藏图继续使用确定性代码生成；本轮加入稳定种子材质颗粒、刻纹颗粒和 Canvas 内像素化侧光/内部散射层，未新增来源不明图片。
+- `src/museum-art.test.js` 锁定纹理分类、稳定种子与六槽布局；当前 `npm test` 为 149/149，432/432 加工组合保持通过。
+- 生产预览在 1280×720、1024×768、800×700、640×700 验证观察台；侧光前后 Canvas 采样由 `p005-inspection-1280.png` / `p005-inspection-1280-side.png` 记录。
+- 概念图的英文 HUD、人物插画和射灯锥形仍属于后续美术差距，不影响当前功能与核心不变量。
