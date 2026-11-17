@@ -208,5 +208,5 @@
 | P0-07 玉印雕纹与试印 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-07-seal-print.md`；真实刀痕镜像试印、手记与刷新重建已验证 |
 | P0-08 夜窗落款与纪念卡 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-08-memorial-card.md`；夜窗工作台、24 字边界、固定尺寸 PNG 与同一作品 ID 已验证 |
 | P0-09 行囊、图鉴与铭牌 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-09-inventory-codex.md`；12 格、像素图标、DOM 铭牌与 B/G 快捷键已验证 |
-| 跨模块可靠性门 | 待证据 | 运行窗口、输入、存档、暂停和音频矩阵 |
-| P1 资源/稳定性/文字/交接 | 进行中 | 已完成 P1-01 入口分包与 P1-05 减弱动效收尾；继续补稳定性、文案与交接证据 |
+| 跨模块可靠性门 | 完成 | 见 `docs/validation/2026-11-18-final-polish/cross-module-reliability.md`；四尺寸场景往返、刷新继续、弹窗冻结和错误监听已闭环 |
+| P1 资源/稳定性/文字/交接 | 进行中 | P1-01 资源/分包与 P1-05 环境微动态已完成；继续补 P1-02 稳定性、P1-03 文案和 P1-04 交接证据 |
