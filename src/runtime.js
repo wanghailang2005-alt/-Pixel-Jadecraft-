@@ -62,6 +62,27 @@ export function createRuntime(store, feedback) {
         decorateMenuScene(this);
       } else if (key === 'workshop' && this.textures.exists('workshop')) {
         this.add.image(512, 279.5, 'workshop').setDisplaySize(1024, 559);
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!reducedMotion) {
+          // A few low-contrast square motes give the window light a quiet
+          // depth cue without competing with the DOM panels or dialogue.
+          const motes = Array.from({ length: 12 }, (_, index) => this.add.rectangle(
+            122 + (index * 47) % 520,
+            102 + (index * 61) % 292,
+            index % 3 ? 2 : 1,
+            index % 4 ? 2 : 1,
+            index % 2 ? 0xd9e5bd : 0xf1d39b,
+            .1 + (index % 3) * .025,
+          ).setDepth(2.4));
+          this.time.addEvent({ delay: 90, loop: true, callback: () => {
+            motes.forEach((mote, index) => {
+              const speed = .14 + (index % 4) * .035;
+              mote.y -= speed;
+              mote.x += Math.sin((this.time.now + index * 180) / 1100) * .08;
+              if (mote.y < 86) mote.y = 392 + (index % 5) * 4;
+            });
+          } });
+        }
         // The source is a square portrait with a narrow opaque character inside.
         // Crop the transparent margins before sizing it so the character keeps
         // its narrow 49×90 silhouette instead of being stretched sideways.

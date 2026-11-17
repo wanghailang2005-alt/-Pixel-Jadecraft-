@@ -81,6 +81,7 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       this.jumpPending = false;
       this.tapPending = false;
       this.effectTime = 0;
+      this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       this.impactLightTime = 0;
       this.impactLight = this.add.image(0, 0, 'mine-glow').setScale(.85).setAlpha(0).setDepth(5);
       this.fullNoticeTime = -Infinity;
@@ -148,7 +149,12 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       this.routeHint = text('[data-guide-route]'); this.toolHint = text('[data-guide-tool]');
       this.hudButtons = ['fine', 'heavy'].map(tool => ({ tool, element: guide.querySelector(`[data-guide-action="${tool}"]`) }));
       this.autoCollapseGuide = !this.registry.get('mine-guide-seen') && !(store.state.mineSurvey?.length || store.state.inventory.length);
-      this.setGuideExpanded(this.autoCollapseGuide);
+      // The guide is useful as a first-run briefing, but an expanded panel
+      // covers the upper route in the compact 800×700 and 640×700 layouts.
+      // Keep it available through the toggle while starting compact windows
+      // in the quiet, non-blocking state.
+      const compactViewport = window.matchMedia('(max-width: 900px)').matches;
+      this.setGuideExpanded(this.autoCollapseGuide && !compactViewport);
       guide.addEventListener('pointerdown', event => {
         if (!event.target.closest('button')) return;
         event.stopPropagation(); this.resetInput();
@@ -401,7 +407,7 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       for (const [id, sprite] of this.dropSprites) {
         if (!this.mining.drops.has(id)) { sprite.destroy(); this.dropSprites.delete(id); }
       }
-      const frame = Math.floor(this.effectTime / 300) % 2;
+      const frame = this.reducedMotion ? 0 : Math.floor(this.effectTime / 300) % 2;
       for (const drop of this.mining.drops.values()) {
         let sprite = this.dropSprites.get(drop.id);
         if (!sprite) { sprite = this.add.image(drop.x, drop.y, 'mine-drop').setDepth(5); this.dropSprites.set(drop.id, sprite); }
@@ -414,7 +420,7 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       this.impactLight.setAlpha(Math.min(.8, this.impactLightTime / 150));
       for (const [key, glow] of this.veinGlows) {
         const phase = Number(key.split(',')[0]) * .7;
-        glow.setAlpha(.58 + Math.sin(this.effectTime / 950 + phase) * .12);
+        glow.setAlpha(.64 + (this.reducedMotion ? 0 : Math.sin(this.effectTime / 950 + phase) * .12));
       }
       this.particles = this.particles.filter(particle => {
         particle.life -= delta;
