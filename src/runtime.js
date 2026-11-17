@@ -8,7 +8,7 @@ import { drawScene, drawGalleryExhibits } from './scenery.js';
 import { PauseGate } from './pause.js';
 import { createMining } from './mining.js';
 import { preloadMine, createMineScene } from './mine-scene.js';
-import { workshopPose } from './workshop-pose.js';
+import { WORKSHOP_CONTACT, workshopPose } from './workshop-pose.js';
 
 export function createRuntime(store, feedback) {
   let mining = null;
@@ -92,6 +92,15 @@ export function createRuntime(store, feedback) {
           .setDisplaySize(49, 90)
           .setDepth(2);
         const tool = this.add.graphics().setDepth(3);
+        const contact = this.add.graphics().setDepth(1.7);
+        contact.fillStyle(0x0a1711, .34);
+        contact.fillRect(WORKSHOP_CONTACT.shadowX, WORKSHOP_CONTACT.shadowY, WORKSHOP_CONTACT.shadowWidth, 5);
+        contact.fillStyle(0x9b794a, .46);
+        contact.fillRect(WORKSHOP_CONTACT.shadowX - 5, WORKSHOP_CONTACT.tableEdgeY, WORKSHOP_CONTACT.shadowWidth + 10, 2);
+        contact.fillStyle(0x6d9b73, .38);
+        contact.fillRect(WORKSHOP_CONTACT.x - 11, WORKSHOP_CONTACT.y - 5, 22, 2);
+        contact.fillStyle(0xc2dba4, .42);
+        contact.fillRect(WORKSHOP_CONTACT.x - 7, WORKSHOP_CONTACT.y - 3, 14, 2);
         const glow = this.add.graphics().setDepth(1);
         for (const [x, y] of [[254, 150], [105, 218], [477, 150], [635, 218]]) {
           glow.fillStyle(0xffb347, .05); glow.fillRect(x - 25, y - 20, 50, 40);
@@ -100,23 +109,23 @@ export function createRuntime(store, feedback) {
         }
         const sparkles = this.add.graphics().setDepth(3);
         const drawCraftContact = phase => {
-          // Four hand-cut poses. The tip meets the visible jade at (355, 307).
+          // Four hand-cut poses. The tip meets the visible jade contact anchor.
           const pose = workshopPose(phase);
           const lift = pose.lift;
           tool.clear();
-          tool.fillStyle(0x243b29); tool.fillRect(354, 286 + lift, 9, 7);
-          tool.fillStyle(0x587447); tool.fillRect(354, 286 + lift, 7, 3);
+          tool.fillStyle(0x243b29); tool.fillRect(WORKSHOP_CONTACT.x - 1, 286 + lift, 9, 7);
+          tool.fillStyle(0x587447); tool.fillRect(WORKSHOP_CONTACT.x - 1, 286 + lift, 7, 3);
           // The portrait already contains the master's hands. Keep only the
           // small chisel/contact highlight here; drawing square skin blocks on
           // top of the portrait made the hand look like a detached tile.
-          tool.fillStyle(0x6b492e); tool.fillRect(359, 291 + lift, 3, 8);
-          tool.fillStyle(0xbabfac); tool.fillRect(358, 297 + lift, 2, 4);
-          tool.fillStyle(0xe4dfbc); tool.fillRect(358, 297 + lift, 1, 3);
+          tool.fillStyle(0x6b492e); tool.fillRect(WORKSHOP_CONTACT.x + 4, 291 + lift, 3, 8);
+          tool.fillStyle(0xbabfac); tool.fillRect(WORKSHOP_CONTACT.x + 3, 297 + lift, 2, 4);
+          tool.fillStyle(0xe4dfbc); tool.fillRect(WORKSHOP_CONTACT.x + 3, 297 + lift, 1, 3);
           sparkles.clear();
           if (pose.impact) {
             sparkles.fillStyle(0xd4e7ad, .9);
-            for (const [x, y] of [[350, 305], [361, 307], [358, 312]]) sparkles.fillRect(x, y, 2, 1);
-            sparkles.fillStyle(0x6eab77, .8); sparkles.fillRect(347, 310, 2, 2);
+            for (const [x, y] of [[WORKSHOP_CONTACT.x - 5, WORKSHOP_CONTACT.y - 2], [WORKSHOP_CONTACT.x + 6, WORKSHOP_CONTACT.y], [WORKSHOP_CONTACT.x + 3, WORKSHOP_CONTACT.y + 5]]) sparkles.fillRect(x, y, 2, 1);
+            sparkles.fillStyle(0x6eab77, .8); sparkles.fillRect(WORKSHOP_CONTACT.x - 8, WORKSHOP_CONTACT.y + 3, 2, 2);
           }
           master.setY(262 + pose.masterY);
         };

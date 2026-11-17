@@ -200,7 +200,7 @@
 | 任务 | 状态 | 下一步 |
 | --- | --- | --- |
 | P0-00 基线锁定与素材清点 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-00-baseline.md`；v2 源文件缺失，保留为待补来源差距 |
-| P0-01 工坊全景与师傅姿态 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-01-workshop.md`；四相接触点/玉屑冲击已数据化，保留逐帧位图和透视重绘差距 |
+| P0-01 工坊全景与师傅姿态 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-01-workshop.md`；四相接触点、桌面 AO、桌沿高光和玉屑冲击已数据化，保留逐帧位图和透视重绘差距 |
 | P0-02 矿洞地形、光照与采矿手感 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-02-mine-guide.md`；六簇/十二原石、连续岩面 AO、20 帧正式图集、冷暖矿光、粒子、掉落恢复和四尺寸窄窗走查已闭环 |
 | P0-03 展厅布展与文字清晰度 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-03-gallery.md`；640px 按单列滚动 |
 | P0-04 三阶段加工与吸底操作栏 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-04-craft-bench.md`；表面差异由模型与矩阵测试覆盖 |
@@ -224,6 +224,7 @@
 ## 11. 追加视觉补强（2026-11-18）
 
 - `src/museum-art.js` 的馆藏图继续使用确定性代码生成；本轮加入稳定种子材质颗粒、刻纹颗粒和 Canvas 内像素化侧光/内部散射层，未新增来源不明图片。
-- `src/museum-art.test.js` 锁定纹理分类、稳定种子与六槽布局；当前 `npm test` 为 149/149，432/432 加工组合保持通过。
+- `src/museum-art.test.js` 锁定纹理分类、稳定种子与六槽布局；`workshop-pose.test.js` 另锁定桌面接触锚点；当前 `npm test` 为 150/150，432/432 加工组合保持通过。
 - 生产预览在 1280×720、1024×768、800×700、640×700 验证观察台；侧光前后 Canvas 采样由 `p005-inspection-1280.png` / `p005-inspection-1280-side.png` 记录。
+- 工坊四尺寸回归同时验证 `WORKSHOP_CONTACT` 锚点下的桌面 AO、桌沿高光、凿尖和玉屑冲击；截图见 `p001-workshop-*.png`。
 - 概念图的英文 HUD、人物插画和射灯锥形仍属于后续美术差距，不影响当前功能与核心不变量。
