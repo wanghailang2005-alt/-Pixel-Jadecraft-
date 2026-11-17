@@ -87,6 +87,11 @@ Create a production-ready 16:9 landscape background asset for an original Chines
 
 - `tiles-mine.png` 已接入固定加载路径；当前 80×16 文件是五帧占位图（AIR、DIRT、STONE、JADE_VEIN、BEDROCK），第 0 帧保持完全透明，运行时不绘制。为避免单帧平铺成棋盘格，正式图集需提供至少 20 帧（五类材质各四种变体）；不足时自动回退到带变体与 AO 明暗的程序地形。
 - `player-32x48.png` 已接入固定加载路径，尺寸为 192×144，共 18 个 32×48 帧；三行依次为 left、right、down，每行前四帧行走、后两帧挥镐。
+
+## 矿洞正式图集补强 · 2026-11-18
+
+- `tiles-mine.png` 由 `scripts/generate-mine-atlas.mjs` 确定性生成并覆盖旧占位图，尺寸 80×64，共 20 个 16×16 帧（AIR、DIRT、STONE、JADE_VEIN、BEDROCK 各 4 个变体）。图案使用项目既有深蓝灰岩、苔藓绿、玉光青绿和矿灯暖色调，不引入外部素材。
+- 生成来源为仓库内脚本与固定颜色/像素规则，可用 `node scripts/generate-mine-atlas.mjs` 重建；`src/asset-integrity.test.js` 锁定尺寸与帧数，运行时继续由 `src/mine-art.js` 添加 AO、边缘苔藓和矿脉高光。
 - 两张图以概念图 01 的深蓝灰岩、苔藓绿、玉光青绿和黄铜矿灯为视觉基准，由内置 imagegen 生成像素参考后以最近邻抽取为正式图集；未引入第三方素材。`src/mine-scene.js` 的帧数检查、加载失败提示和程序像素回退会把五帧占位图视为不可用于正式铺贴。
 
 生成提示词：

@@ -34,7 +34,7 @@ Notion Agent Operating Guide 的检索结果存在，但当前连接对页面正
 - `gallery-isometric-v1.png`：1672×941，RGB，无透明通道，SHA-256 `630391e069970ea13ab92f6721774c34dee4821930558a30e55e7ea15223cc89`。
 - `mine-cavern-v1.png`：1672×941，RGB，无透明通道，SHA-256 `a665b765d5333778d0808603d84a2367a9df6ad04a0424f7dc30fe4eb6ba2686`。
 - `menu-mountains-v1.png`：1672×941，RGB，无透明通道，SHA-256 `42d0647e1a3e928bfd54782de1adc32234259224291f506ae0929035f245789`。
-- `tiles-mine.png`：80×16，RGBA，透明通道范围 0–255；运行时帧数检查不足 20 帧时回退到程序地形。
+- `tiles-mine.png`：80×64，RGBA，透明通道范围 0–255，共 20 帧；运行时按 5 类材质 × 4 变体使用正式图集。
 - `player-32x48.png`：192×144，RGBA，透明通道范围 0–255；运行时按 18 帧校验。
 
 任务书中提到的 `master-carver-v2-bent.png` 与 `workshop-isometric-v2-aligned.png` 不在当前源目录，当前正式代码仍引用 v1；未把构建目录中无法追溯来源的残留文件当作正式资产。后续若补入 v2，必须先补原始来源、许可记录和哈希。
@@ -45,3 +45,8 @@ Notion Agent Operating Guide 的检索结果存在，但当前连接对页面正
 
 - `npm test`：137/137 通过，包含 432 种加工组合矩阵。
 - `npm run build`：通过；当前首包仍有 Vite >500 kB 提示，记录为 P1-01 待处理。
+
+## 追加核验（2026-11-18 收尾补强）
+
+- `scripts/generate-mine-atlas.mjs` 生成确定性 80×64 RGBA 矿洞图集，按 5 类材质 × 4 个变体提供 20 帧；覆盖原先 5 帧占位图，保留相同加载路径与存档兼容。
+- `src/asset-integrity.test.js` 锁定矿洞图集 20 帧与矿工图集 18 帧边界；当前 `npm test` 为 144/144，432/432 加工矩阵保持通过。

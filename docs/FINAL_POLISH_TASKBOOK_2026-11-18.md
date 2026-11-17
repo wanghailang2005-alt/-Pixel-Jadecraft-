@@ -42,7 +42,7 @@
 
 ### 已验证结果
 
-- `npm test`：142/142 通过，包含 432 种加工组合矩阵；本轮新增快捷键与导出边界单测。
+- `npm test`：144/144 通过，包含 432 种加工组合矩阵；本轮新增快捷键、导出与正式素材边界单测。
 - `npm run build`：通过。
 - 构建结果：JS 约 1.69 MB，gzip 约 483.5 KB；Vite 报告首包超过 500 KB。
 - 当前未验收：整套概念图 95% 视觉接近目标、工坊透视与人物姿态、矿洞整屏细节、展厅/鉴赏细节、800×700 小窗逐页体验、正式素材来源记录。
@@ -201,7 +201,7 @@
 | --- | --- | --- |
 | P0-00 基线锁定与素材清点 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-00-baseline.md`；v2 源文件缺失，保留为待补来源差距 |
 | P0-01 工坊全景与师傅姿态 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-01-workshop.md`；保留逐帧立绘和透视重绘差距 |
-| P0-02 矿洞地形、光照与采矿手感 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-02-mine-guide.md`；六簇/十二原石、连续岩面 AO、冷暖矿光、粒子、掉落恢复和四尺寸窄窗走查已闭环 |
+| P0-02 矿洞地形、光照与采矿手感 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-02-mine-guide.md`；六簇/十二原石、连续岩面 AO、20 帧正式图集、冷暖矿光、粒子、掉落恢复和四尺寸窄窗走查已闭环 |
 | P0-03 展厅布展与文字清晰度 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-03-gallery.md`；640px 按单列滚动 |
 | P0-04 三阶段加工与吸底操作栏 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-04-craft-bench.md`；表面差异由模型与矩阵测试覆盖 |
 | P0-05 玉文化馆与鉴赏观察 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-05-museum-inspection.md`；28 件馆藏与 800×700 观察台已回归 |
