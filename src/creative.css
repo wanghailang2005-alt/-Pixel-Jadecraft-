@@ -134,3 +134,15 @@
   .creative-motif-actions { gap: 4px; }
   .creative-motif-actions button { padding: 4px 5px; font-size: 10px; }
 }
+
+/* Keep the compact craft bench readable at 800×700 and 640×700: the
+   progress notes stay beside the canvas instead of falling underneath it. */
+@media (min-width: 620px) and (max-width: 900px) and (max-height: 760px) {
+  .creative-bench { grid-template-columns: 96px minmax(190px, 1fr) 142px; }
+  .creative-notes { grid-column: auto; display: block; max-height: 210px; overflow-y: auto; }
+  .creative-notes h3,
+  .creative-notes > p[data-description],
+  .creative-notes .creative-insight,
+  .creative-notes [data-save-status] { margin: 0 0 6px; }
+  .creative-notes output { font-size: 16px; }
+}
