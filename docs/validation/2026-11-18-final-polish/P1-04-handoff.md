@@ -11,4 +11,4 @@
 - 追加工坊接触补强：`WORKSHOP_CONTACT` 与 `workshop-pose.test.js` 锁定桌面 AO、桌沿高光、玉料和凿尖同一锚点；无新增外部图片。
 - 所有临时截图、走查脚本和浏览器用户目录位于 `.tmp/validation/2026-11-18-final-polish/`，由 `.gitignore` 排除；未把临时 PNG 纳入提交。
 - 正式像素资产来源与许可记录见 `src/assets/README.md`；本轮新增的环境微动态、导出工具和光影均为代码生成，不增加外部素材。
-- 收尾检查：`git diff --check`、`npm test`（152/152，432/432 加工矩阵）、`npm run build`；本轮展厅射灯锥形单测和四尺寸生产预览已补入证据。
+- 收尾检查：`git diff --check`、`npm test`（153/153，432/432 加工矩阵）、`npm run build`；本轮展厅射灯锥形、玻璃边缘反光、DOM 铭牌单测和四尺寸生产预览已补入证据。

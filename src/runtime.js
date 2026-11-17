@@ -9,7 +9,7 @@ import { PauseGate } from './pause.js';
 import { createMining } from './mining.js';
 import { preloadMine, createMineScene } from './mine-scene.js';
 import { WORKSHOP_CONTACT, workshopPose } from './workshop-pose.js';
-import { GALLERY_SPOTLIGHTS, spotlightFrame } from './gallery-lighting.js';
+import { GALLERY_CASES, GALLERY_SPOTLIGHTS, spotlightFrame } from './gallery-lighting.js';
 
 export function createRuntime(store, feedback) {
   let mining = null;
@@ -162,6 +162,17 @@ export function createRuntime(store, feedback) {
           }
         };
         drawSpotlights(0);
+        const glass = this.add.graphics().setDepth(1.8);
+        const drawGlass = phase => {
+          glass.clear();
+          glass.lineStyle(1, 0xd8f2df, .18 + spotlightFrame(phase) * .05);
+          for (const { x, y } of GALLERY_CASES) {
+            glass.strokeRect(x - 35, y - 55, 70, 55);
+            glass.lineBetween(x - 35, y - 55, x - 8, y - 28);
+            glass.lineBetween(x + 35, y - 55, x + 8, y - 28);
+          }
+        };
+        drawGlass(0);
         if (!reducedMotion) {
           const motes = Array.from({ length: 15 }, (_, index) => this.add.rectangle(
             180 + (index * 61) % 600, 145 + (index * 37) % 210,
@@ -177,6 +188,7 @@ export function createRuntime(store, feedback) {
           this.time.addEvent({ delay: 220, loop: true, callback: () => {
             phase = (phase + 1) % 4;
             drawSpotlights(phase);
+            drawGlass(phase);
           } });
         }
       } else drawScene(this.add.graphics(), key);

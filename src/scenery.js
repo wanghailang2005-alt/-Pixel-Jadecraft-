@@ -97,7 +97,6 @@ export function drawScene(g, location) {
 
 export function drawGalleryExhibits(scene, layer, state) {
   const slots = [[320, 310], [480, 380], [640, 310]];
-  const names = { bi: '玉璧', fish: '玉鱼佩', seal: '玉印' };
   for (const [index, [x, y]] of slots.entries()) {
     const piece = state.pieces.find(item => item.id === state.exhibits[index]);
     const textureKey = `gallery-piece-${index}`;
@@ -114,10 +113,5 @@ export function drawGalleryExhibits(scene, layer, state) {
     else context.drawImage(original, 100, 100, 280, 220, 0, 0, 64, 52);
     scene.textures.addCanvas(textureKey, cropped);
     layer.add(scene.add.image(x, y - 29, textureKey));
-    const label = scene.add.text(x, y - 86, names[piece.shape], {
-      fontFamily: 'Fusion Pixel, Microsoft YaHei', fontSize: '12px', color: '#e8dcc0',
-      backgroundColor: '#17251f', padding: { x: 8, y: 4 },
-    }).setOrigin(.5, 1);
-    layer.add(label);
   }
 }

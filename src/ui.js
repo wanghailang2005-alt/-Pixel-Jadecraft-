@@ -15,6 +15,7 @@ import { drawArtisanPiece } from './piece-renderer.js';
 import { MUSEUM_EXHIBITS } from './museum-content.js';
 import { createStoryView } from './story-view.js';
 import { resolveGlobalShortcut } from './shortcuts.js';
+import { GALLERY_CASES, galleryPlaqueData } from './gallery-lighting.js';
 
 const NAMES = { workshop: '玉作工坊', mine: '青岚矿洞', gallery: '像素数字展厅' };
 const SHAPES = { bi: '玉璧', fish: '玉鱼佩', seal: '玉印' };
@@ -384,13 +385,19 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
       return;
     }
     const location = state.location;
+    const galleryPlaques = location === 'gallery' ? GALLERY_CASES.map(({ index, x, y }) => {
+      const piece = state.pieces.find(item => item.id === state.exhibits[index]);
+      const plaque = galleryPlaqueData(piece, materials);
+      return `<div class="gallery-plaque ${piece ? '' : 'is-empty'}" style="left:${x}px;top:${y + 17}px" aria-label="展位 ${index + 1}：${escape(plaque.title)}"><strong>${escape(plaque.title)}</strong><small>${escape(plaque.finish)}</small></div>`;
+    }).join('') : '';
     const objectives = taskList(state);
     const complete = objectives.filter(task => task.done).length;
     const exhibited = state.exhibits.filter(Boolean).length;
     root.innerHTML = `<header class="hud"><div class="place-name"><span class="seal">玉</span><div><strong>${NAMES[location]}</strong><small>玉作学徒 · 首展之约</small></div></div><div class="stamina"><div><span>已展作品</span><strong>${exhibited}<small> / 3</small></strong></div><meter min="0" max="3" value="${exhibited}" aria-label="已展作品">${exhibited}/3</meter></div><div class="hud-tools">${button(state.settings.muted ? '声音：关' : '声音：开', 'mute')}${button('全屏', 'fullscreen')}${button('设置', 'settings')}${button('暂停', 'pause')}</div></header>
       <aside class="quest-strip"><div><span>师傅的首展委托</span><small>${complete} / 4</small></div><strong>${objectives.find(task => !task.done)?.name ?? '首展完成'}</strong><p>${objectives.find(task => !task.done)?.detail ?? '三器齐备，温润成展。'}</p><progress max="4" value="${complete}" aria-label="委托完成度"></progress>${button('查看委托 <kbd>J</kbd>', 'tasks', 'quiet')}</aside>
       <div class="location-note"><h2>一器一故事</h2><p>我的首展 · ${state.exhibits.filter(Boolean).length} / 3 件作品</p>${button('布置展位', 'exhibit', 'primary')}${button('走进玉文化馆', 'museum')}</div>
-      ${[[320,310],[480,380],[640,310]].map(([x,y], index) => `<button class="gallery-case-button" style="left:${x-45}px;top:${y-60}px" data-action="exhibit" aria-label="管理展位 ${index+1}"><span class="screen-reader-text">管理展位 ${index+1}</span></button>`).join('')}
+      ${GALLERY_CASES.map(({ x, y, index }) => `<button class="gallery-case-button" style="left:${x-45}px;top:${y-60}px" data-action="exhibit" aria-label="管理展位 ${index+1}"><span class="screen-reader-text">管理展位 ${index+1}</span></button>`).join('')}
+      ${galleryPlaques}
       <div class="bottom-bar"><nav class="travel" aria-label="地点切换">${Object.entries(NAMES).map(([id,name])=>`<button data-action="${id}" ${location === id ? 'aria-current="location"' : ''}><span>${name}</span><small>${{ workshop:'归来琢玉',mine:'寻石之旅',gallery:'陈列珍藏' }[id]}</small></button>`).join('')}</nav><nav class="pack-tools" aria-label="学徒工具">${button(`${icon('bag')}<span>行囊 <small>${state.inventory.length}/12</small></span><kbd>B</kbd>`, 'inventory')}${button(`${icon('scroll')}<span>委托</span><kbd>J</kbd>`, 'tasks')}${button(`${icon('book')}<span>图鉴</span><kbd>G</kbd>`, 'codex')}${button('?', 'help', 'help-button')}</nav></div>
       ${location === 'mine' ? `<nav class="mine-hotbar" aria-label="矿洞热键栏">${button('镐 <kbd>E</kbd>', 'pickaxe')}${button(`行囊 ${state.inventory.length}/12 <kbd>B</kbd>`, 'inventory')}${button('委托 <kbd>J</kbd>', 'tasks')}${button('图鉴 <kbd>G</kbd>', 'codex')}</nav>` : ''}
       <div class="save-status ${store.error ? 'save-warning' : ''}" role="status" title="${escape(store.error)}"><span>${store.error ? escape(store.error) : `◆ ${saveText}`}</span>${store.dirty ? button('重试', 'save') : ''}</div>`;

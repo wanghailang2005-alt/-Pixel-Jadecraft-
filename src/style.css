@@ -106,6 +106,11 @@ kbd { font: 9px "Microsoft YaHei", sans-serif; display: inline-grid; place-items
 .location-note button { margin-top: 10px; }
 .gallery-case-button { position: absolute; width: 90px; height: 140px; padding: 0; background: transparent; border: 2px solid transparent; box-shadow: none; }
 .gallery-case-button:hover, .gallery-case-button:focus-visible { background: #7fe3b011; border-color: #b2d6a5; outline: none; }
+.gallery-plaque { position: absolute; width: 104px; min-height: 27px; transform: translateX(-50%); padding: 4px 6px 3px; border: 1px solid #b8955c; background: #392a20e8; box-shadow: 2px 2px #1119; color: #f0dfb1; text-align: center; pointer-events: none; line-height: 1.25; }
+.gallery-plaque strong, .gallery-plaque small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gallery-plaque strong { font: 11px SimSun, serif; }
+.gallery-plaque small { margin-top: 2px; color: #c9bd91; font-size: 8px; }
+.gallery-plaque.is-empty { opacity: .76; border-color: #796a4d; color: #c1b99b; }
 dialog { width: min(620px, calc(100vw - 28px)); max-height: min(90dvh, 850px); padding: 0; border: 4px double #b29d69; color: #e0dbc2; background: #2a352c; box-shadow: 0 0 0 2px #18221c, 0 24px 100px #0009; }
 dialog.wide { width: min(920px, calc(100vw - 28px)); }
 dialog[open] { display: flex; flex-direction: column; overflow: hidden; }
