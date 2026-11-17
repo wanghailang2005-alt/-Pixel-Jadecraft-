@@ -28,6 +28,17 @@ export function drawArtisanPiece(context, draft, { x=0, y=0, size=320, light=-.6
     data.data[i*4+3]=255;
   }
   tc.putImageData(data,0,0);
+  // A restrained internal scatter and rim response separates side light from
+  // warm front light while keeping the sprite crisp and fully pixelated.
+  const glow = tc.createRadialGradient(n * (.5 - light * .22), n * .34, n * .05, n * (.5 - light * .22), n * .34, n * .72);
+  glow.addColorStop(0, light > .4 ? 'rgba(222,255,220,.26)' : 'rgba(194,235,203,.08)');
+  glow.addColorStop(.56, light > .4 ? 'rgba(139,216,171,.08)' : 'rgba(126,178,150,.025)');
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  tc.globalCompositeOperation='source-atop'; tc.fillStyle=glow; tc.fillRect(0,0,n,n);
+  tc.globalCompositeOperation='source-over'; tc.fillStyle='rgba(239,248,209,.22)';
+  for(let py=3;py<n-3;py+=7) for(let px=3;px<n-3;px+=9) {
+    const i=py*n+px; if(exists(i)&&((px*13+py*7+(light>0?3:0))%29===0)) tc.fillRect(px,py,1,1);
+  }
   context.save(); context.imageSmoothingEnabled=false;
   context.globalAlpha=.3; context.drawImage(texture,x+size*.022,y+size*.035,size,size);
   context.globalAlpha=1; context.drawImage(texture,x,y,size,size);

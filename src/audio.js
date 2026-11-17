@@ -165,20 +165,22 @@ export function createAudioDirector() {
     if (oldLocation !== state.location) stop();
     void start();
   }
-  function play(name = 'button') {
+  function play(name = 'button', detail = {}) {
     name = ALIASES[name] ?? name;
     if (!THROTTLE[name] || !canPlay() || !context || context.state !== 'running' || effectLevel() === 0) return;
     const nowMs = performance.now();
     if (nowMs - (lastEffect.get(name) ?? -Infinity) < THROTTLE[name]) return;
     lastEffect.set(name, nowMs);
     const now = context.currentTime + .005;
+    const progress = volume(detail.progress, .55);
+    const tune = frequency => frequency * (1 + progress * .08 + (detail.broken ? .025 : 0));
     if (name === 'button') {
       tone(effects, 330, now, .08, .13, { endFrequency: 260 });
       texture(effects, now, .045, .07, 800);
     } else if (name === 'mine-hit') {
-      tone(effects, 155, now, .19, .26, { type: 'triangle', endFrequency: 67, cutoff: 850 });
-      texture(effects, now, .12, .36, 1400, 'bandpass');
-      tone(effects, 580, now + .012, .12, .035);
+      tone(effects, tune(155), now, .16 + progress * .08, .26, { type: 'triangle', endFrequency: tune(67), cutoff: 850 });
+      texture(effects, now, .1 + progress * .04, .36, tune(1400), 'bandpass');
+      tone(effects, tune(580), now + .012, .12, .035);
     } else if (name === 'rough' || name === 'carve') {
       texture(effects, now, name === 'rough' ? .17 : .095, .21, name === 'rough' ? 680 : 1500, 'bandpass');
       tone(effects, name === 'rough' ? 215 : 440, now, .09, .09, { endFrequency: name === 'rough' ? 125 : 360 });
@@ -199,7 +201,7 @@ export function createAudioDirector() {
     } else if (name === 'paper') texture(effects, now, .2, .16, 1200, 'bandpass');
     else tone(effects, hz(62), now, .46, .1, { type: 'triangle', cutoff: 900 });
   }
-  const onSound = event => play(event.detail?.name);
+  const onSound = event => play(event.detail?.name, event.detail);
   const onVisibility = () => document.hidden ? stop() : void start();
   const onGesture = () => { if (!unlocked || context?.state === 'suspended') unlock(); };
   window.addEventListener('pointerdown', onGesture, { capture: true, passive: true });

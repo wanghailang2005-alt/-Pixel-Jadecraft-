@@ -33,7 +33,7 @@
   padding: 16px;
   box-shadow: inset 0 0 0 1px #0a1208;
 }
-.collection-preview { align-self: center; text-align: center; }
+.collection-preview { align-self: center; text-align: center; position: relative; }
 .collection-preview canvas {
   display: block; width: 100%; height: auto;
   max-width: 480px; margin: auto;
@@ -43,6 +43,13 @@
   box-shadow: inset 2px 2px 0 #0f1f17, 3px 3px 0 #0d0906;
 }
 .collection-preview p { color: #acbd9d; }
+.collection-ambient-smoke { position: absolute; top: 20%; right: 9%; width: 22px; height: 110px; pointer-events: none; opacity: .52; }
+.collection-ambient-smoke i { position: absolute; right: 0; width: 8px; height: 4px; background: #c6d1b6; opacity: .5; animation: collection-smoke 3.8s ease-in-out infinite; }
+.collection-ambient-smoke i:nth-child(1) { top: 72px; animation-delay: -.4s; }
+.collection-ambient-smoke i:nth-child(2) { top: 45px; right: 7px; animation-delay: -1.7s; }
+.collection-ambient-smoke i:nth-child(3) { top: 18px; right: 2px; animation-delay: -2.8s; }
+@keyframes collection-smoke { 0%,100% { transform: translate(0, 8px); opacity: .12; } 45% { transform: translate(-7px, -8px); opacity: .48; } 75% { transform: translate(4px, -24px); opacity: .22; } }
+@media (prefers-reduced-motion: reduce) { .collection-ambient-smoke i { animation: none; opacity: .25; } }
 
 /* ── action buttons ────────────────────────────────────── */
 .collection-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }

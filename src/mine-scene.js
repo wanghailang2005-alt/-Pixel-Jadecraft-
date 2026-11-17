@@ -11,7 +11,7 @@ const playerAssets = import.meta.glob('./assets/player-32x48.png', { eager: true
 const mapAssets = import.meta.glob('/public/maps/mine.tmj', { eager: true, query: '?raw', import: 'default' });
 
 const VEIN_STORIES = MINE_LORE;
-const mineSound = name => window.dispatchEvent(new CustomEvent('jade:sound', { detail: { name } }));
+const mineSound = (name, detail = {}) => window.dispatchEvent(new CustomEvent('jade:sound', { detail: { name, ...detail } }));
 
 export function preloadMine(scene) {
   scene.load.image('mine-cavern', caveUrl);
@@ -380,7 +380,10 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
     }
     impact(hit) {
       feedback.hit();
-      mineSound(hit.broken && hit.tile === TILE.JADE_VEIN ? 'reveal' : 'mine');
+      const hardness = TILE_RULES[hit.tile]?.hardness ?? 1;
+      mineSound(hit.broken && hit.tile === TILE.JADE_VEIN ? 'reveal' : 'mine', {
+        progress: Math.min(1, hit.hits / hardness), tool: hit.tool, broken: hit.broken,
+      });
       this.drawCrack(hit);
       const centerX = hit.column * 32 + 16, centerY = hit.row * 32 + 16;
       this.lastToolContact = { x: centerX, y: centerY, heavy: hit.tool === 'heavy', remaining: 85 };
@@ -398,6 +401,7 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       this.impactLightTime = jade ? 125 : 75;
       this.impactLight.setPosition(centerX, centerY).setTint(jade ? 0xc9f8cd : 0xcbdde2).setAlpha(jade ? .85 : .35);
       if (hit.tool === 'heavy' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) this.cameras.main.shake(90, .002);
+      if (!this.reducedMotion && navigator.vibrate) { try { navigator.vibrate(hit.broken ? 12 : 6); } catch { /* Haptics are optional. */ } }
       if (hit.seam) feedback.notify('顺着缝口取下整块玉 · 同源的另一块就在旁边。');
       if (hit.broken) {
         this.terrain.update(hit.column, hit.row);

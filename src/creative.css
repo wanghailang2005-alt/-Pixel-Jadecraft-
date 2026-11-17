@@ -19,6 +19,8 @@
 .creative-bench {display:grid;grid-template-columns:144px minmax(280px,1fr) 168px;gap:14px;align-items:start;}
 .creative-tools,.creative-notes {background:#172a20;border:3px double #927341;padding:12px;}
 .creative-tools h3,.creative-notes h3 {font-size:16px;color:#e2c588;margin:0 0 12px;}
+.creative-shortcut-hint {margin:0;color:#aebd9d;font-size:11px;line-height:1.5;}
+.creative-tools button kbd {float:right;min-width:16px;padding:1px 3px;border:1px solid #a88a56;background:#1b2b21;color:#f0d28e;font:10px var(--font-game);text-align:center;}
 .creative-tools {display:flex;flex-direction:column;gap:10px;}
 .creative-tools button b,.creative-tools button small {display:block;}
 .creative-tools button small {font-size:12px;color:#c0c8a8;margin-top:5px;}

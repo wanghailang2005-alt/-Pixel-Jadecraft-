@@ -129,6 +129,19 @@ export function createRuntime(store, feedback) {
         }
       } else if (key === 'gallery' && this.textures.exists('gallery-room')) {
         this.add.image(480, 270, 'gallery-room').setDisplaySize(960, 540);
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!reducedMotion) {
+          const motes = Array.from({ length: 15 }, (_, index) => this.add.rectangle(
+            180 + (index * 61) % 600, 145 + (index * 37) % 210,
+            index % 3 ? 2 : 1, index % 4 ? 2 : 1,
+            index % 2 ? 0xd8e7c4 : 0xf2d79b, .08 + (index % 3) * .018,
+          ).setDepth(2.5));
+          this.time.addEvent({ delay: 110, loop: true, callback: () => motes.forEach((mote, index) => {
+            mote.y -= .08 + (index % 4) * .025;
+            mote.x += Math.sin((this.time.now + index * 160) / 1250) * .05;
+            if (mote.y < 126) mote.y = 344 + (index % 5) * 5;
+          }) });
+        }
       } else drawScene(this.add.graphics(), key);
       if (key === 'gallery') {
         this.exhibitLayer = this.add.container(0, 0);

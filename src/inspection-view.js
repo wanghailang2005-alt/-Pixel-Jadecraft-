@@ -55,7 +55,7 @@ export function createInspectionView({ store, show, button, onCreate = () => {} 
       <div class="inspection-layout">
         <section class="inspection-observe" aria-label="圆形玉材观察台">
           <div class="inspection-lens"><canvas width="420" height="420" tabindex="0" aria-label="原石圆形观察窗；拖动或方向键移动，按加减号缩放"></canvas><span class="inspection-lens-label" data-lens-label>天然色带</span></div>
-          <div class="inspection-tools" aria-label="观察工具">${[['normal', '观', '看本色'], ['side', '光', '移侧光'], ['translucent', '透', '看透光']].map(([id, mark, label]) => `<button type="button" data-inspect-mode="${id}" aria-pressed="${mode === id}"><span aria-hidden="true">${mark}</span>${label}</button>`).join('')}</div>
+          <div class="inspection-tools" aria-label="观察工具"><p class="inspection-shortcut-hint">悬停看提示 · <kbd>1</kbd>/<kbd>2</kbd>/<kbd>3</kbd>切换观察光线</p>${[['normal', '观', '看本色'], ['side', '光', '移侧光'], ['translucent', '透', '看透光']].map(([id, mark, label], index) => `<button type="button" data-inspect-mode="${id}" aria-pressed="${mode === id}" title="${label}（快捷键 ${index + 1}）"><span aria-hidden="true">${mark}</span>${label} <kbd>${index + 1}</kbd></button>`).join('')}</div>
           <div class="inspection-adjustments"><label for="inspect-zoom">放大 <output data-zoom>${zoom.toFixed(1)}×</output><input id="inspect-zoom" type="range" min="1" max="2.8" step=".1" value="${zoom}"></label><label for="inspect-light">移动侧光<input id="inspect-light" type="range" min="-100" max="100" step="5" value="${light * 100}"></label></div>
           <div class="inspection-lens-footer"><span>拖动看局部 · 透光为观察示意</span><button type="button" data-inspect-center>回到全貌</button></div>
         </section>
@@ -202,6 +202,12 @@ export function createInspectionView({ store, show, button, onCreate = () => {} 
       pan.y = clamp(pan.y + (event.key === 'ArrowUp' ? -.04 : event.key === 'ArrowDown' ? .04 : 0), .12, .88);
       if (['+', '=', '-'].includes(event.key)) { zoom = clamp(zoom + (event.key === '-' ? -.2 : .2), 1, 2.8); root.querySelector('#inspect-zoom').value = zoom.toFixed(1); }
       redraw();
+    });
+    listen(root, 'keydown', event => {
+      if (event.target.closest('input,select,textarea,[contenteditable="true"]')) return;
+      const index = Number(event.key) - 1;
+      const control = Number.isInteger(index) ? root.querySelectorAll('[data-inspect-mode]')[index] : null;
+      if (control) { event.preventDefault(); control.click(); }
     });
     listen(root.querySelector('[data-inspect-create]'), 'click', () => {
       if (!store.active || store.state.location !== 'workshop' || !store.state.inventory.some(item => item.id === material.id)) { render(); return; }

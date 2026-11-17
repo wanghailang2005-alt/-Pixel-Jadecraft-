@@ -4,6 +4,7 @@ import { getCraftSurface } from './craft-model.js';
 import { evaluateExhibition, evaluateCommission } from './commissions.js';
 import { mountStoryCuration } from './story-view.js';
 import { MOTIFS } from './motifs.js';
+import { downloadBlob } from './export.js';
 
 const SHAPES = { bi: '玉璧', fish: '玉鱼佩', seal: '玉印' };
 const MATERIALS = { nephrite: '和田玉', jadeite: '翡翠' };
@@ -211,6 +212,11 @@ export function drawMemorialCard(canvas, piece) {
     rect(x, y, 20, 4, '#b99156'); rect(x, y, 4, 20, '#b99156'); rect(x + 8, y + 8, 8, 4, '#6a4930');
   }
   for (let x = 52; x < width - 52; x += 28) { rect(x, 34, 12, 2, '#8b6b43'); rect(x, height - 38, 12, 2, '#8b6b43'); }
+  // A stepped meander keeps the export legible at thumbnail size.
+  for (let x = 54; x < width - 58; x += 20) {
+    rect(x, 42, 8, 2, '#c39a5d'); rect(x + 8, 42, 2, 8, '#c39a5d');
+    rect(x + 10, 48, 8, 2, '#6e4d32'); rect(x + 18, 42, 2, 8, '#6e4d32');
+  }
 
   // Night window, moonlit mountains and the warm lantern collision.
   rect(42, 76, 382, 218, '#2c211c'); rect(50, 84, 366, 202, '#132c3b');
@@ -249,6 +255,12 @@ export function drawMemorialCard(canvas, piece) {
   text('落款', 474, 338, 14, '#805a37');
   text(blessing.slice(0, 12).join('') || '（未落款）', 474, 361, 17, '#493323');
   if (blessing.length > 12) text(blessing.slice(12).join(''), 474, 384, 17, '#493323');
+  // The seal is an export mark derived from the stored seal workflow, never a
+  // decorative replacement for the real carved surface.
+  const sealX = 614, sealY = 392, sealColor = piece.artisan?.sealCut === 'relief' ? '#b0473e' : '#8d3e38';
+  rect(sealX, sealY, 36, 36, sealColor); rect(sealX + 4, sealY + 4, 28, 28, '#e7c38f');
+  rect(sealX + 8, sealY + 8, 20, 4, sealColor); rect(sealX + 8, sealY + 8, 4, 20, sealColor);
+  rect(sealX + 20, sealY + 16, 8, 4, sealColor); rect(sealX + 16, sealY + 20, 4, 8, sealColor);
   text('像素琢玉 · 实作纪念', 557, 414, 12, '#765333', 'center');
   return { width, height };
 }
@@ -265,7 +277,7 @@ export function createCollectionView({ store, show, button, notify = () => {}, o
     const piece = pieces.find(item => item.id === selectedId) ?? pieces[pieces.length - 1];
     selectedId = piece.id;
     const draft = { ...piece, pattern: piece.pattern ?? 'cloud', color: piece.color ?? 'natural', blessing: piece.blessing ?? '' };
-    show('一器一心意', `<div class="collection-view collection-customize"><section class="collection-controls"><label for="collection-piece">选择成品</label><select id="collection-piece">${pieces.map(item => `<option value="${escape(item.id)}" ${item.id === piece.id ? 'selected' : ''}>${pieceName(item)}</option>`).join('')}</select><label for="collection-pattern">纹样</label><select id="collection-pattern">${options(PATTERNS, draft.pattern)}</select><label for="collection-color">配色</label><select id="collection-color">${options(COLORS, draft.color)}</select><label for="collection-blessing">祝福语 <span data-collection-count></span></label><input id="collection-blessing" type="text" autocomplete="off" aria-describedby="collection-blessing-hint"><p id="collection-blessing-hint">最多 24 个字，随作品一同保存。</p><div class="collection-actions"><button data-collection-save class="primary">保存定制</button><button data-collection-export>导出当前预览</button></div><p class="collection-feedback" role="status" aria-live="polite"></p></section><section class="collection-preview"><canvas width="480" height="480" aria-label="玉器定制预览"></canvas><p>选择纹样与玉色，为作品留下一句心意。</p></section></div>`, button('返回工坊', 'close'), true);
+    show('一器一心意', `<div class="collection-view collection-customize"><section class="collection-controls"><label for="collection-piece">选择成品</label><select id="collection-piece">${pieces.map(item => `<option value="${escape(item.id)}" ${item.id === piece.id ? 'selected' : ''}>${pieceName(item)}</option>`).join('')}</select><label for="collection-pattern">纹样</label><select id="collection-pattern">${options(PATTERNS, draft.pattern)}</select><label for="collection-color">配色</label><select id="collection-color">${options(COLORS, draft.color)}</select><label for="collection-blessing">祝福语 <span data-collection-count></span></label><input id="collection-blessing" type="text" autocomplete="off" aria-describedby="collection-blessing-hint"><p id="collection-blessing-hint">最多 24 个字，随作品一同保存。</p><div class="collection-actions"><button data-collection-save class="primary">保存落款与纹样</button><button data-collection-export>导出纪念卡 PNG</button></div><p class="collection-feedback" role="status" aria-live="polite"></p></section><section class="collection-preview"><canvas width="480" height="480" aria-label="玉器定制预览"></canvas><div class="collection-ambient-smoke" aria-hidden="true"><i></i><i></i><i></i></div><p>选择纹样与玉色，为作品留下一句心意。</p></section></div>`, button('返回工坊', 'close'), true);
     const root = document.querySelector('dialog .collection-view');
     const canvas = root.querySelector('canvas');
     const blessingInput = root.querySelector('#collection-blessing');
@@ -310,19 +322,14 @@ export function createCollectionView({ store, show, button, notify = () => {}, o
       // memorial card so the PNG carries the actual artifact and its labels.
       const exportCanvas = document.createElement('canvas');
       drawMemorialCard(exportCanvas, draft);
-      exportCanvas.toBlob(blob => {
-        if (!blob) { feedback.textContent = '图片未能生成，请重试。'; return; }
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `像素琢玉_${SHAPES[piece.shape] ?? '玉器'}.png`;
-        link.hidden = true;
-        document.body.append(link);
-        link.click();
-        link.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 60_000);
-        feedback.textContent = 'PNG 已生成，已请求浏览器下载。';
-      }, 'image/png');
+      try {
+        exportCanvas.toBlob(blob => {
+          const ok = downloadBlob(blob, `像素琢玉_${SHAPES[piece.shape] ?? '玉器'}.png`);
+          feedback.textContent = ok ? 'PNG 已生成，已请求浏览器下载。' : '图片未能生成，请重试。';
+        }, 'image/png');
+      } catch {
+        feedback.textContent = '图片未能生成，请重试。';
+      }
     };
     preview();
   }

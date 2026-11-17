@@ -14,6 +14,7 @@ import { CREATIVE_COMMISSIONS, evaluateCommission } from './commissions.js';
 import { drawArtisanPiece } from './piece-renderer.js';
 import { MUSEUM_EXHIBITS } from './museum-content.js';
 import { createStoryView } from './story-view.js';
+import { resolveGlobalShortcut } from './shortcuts.js';
 
 const NAMES = { workshop: '玉作工坊', mine: '青岚矿洞', gallery: '像素数字展厅' };
 const SHAPES = { bi: '玉璧', fish: '玉鱼佩', seal: '玉印' };
@@ -102,7 +103,8 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
   workshopTools.className = 'workshop-page-tools';
   workshopTools.setAttribute('aria-label', '游戏导航');
   workshopTools.hidden = true;
-  workshopTools.innerHTML = `<div class="workshop-tool-group" role="group" aria-label="行旅"><span>行旅</span>${button('工坊','workshop')+button('矿洞','mine')+button('玉文化馆','museum')+button('我的展厅','gallery')}</div><div class="workshop-tool-group" role="group" aria-label="工艺"><span>工艺</span>${button('鉴赏','inspect')+button('创作','make')+button('落款','customize')+button('旧玉来信','story')+button('行囊','inventory')+button('委托','tasks')}</div><div class="workshop-tool-group" role="group" aria-label="系统"><span>系统</span>${button('设置','settings')+button('主菜单','menu')}</div>`;
+  workshopTools.innerHTML = `<div class="workshop-tool-group" role="group" aria-label="行旅"><span>行旅</span>${button('工坊','workshop')+button('矿洞','mine')+button('玉文化馆','museum')+button('我的展厅','gallery')}</div><div class="workshop-tool-group" role="group" aria-label="工艺"><span>工艺</span>${button('鉴赏','inspect')+button('创作','make')+button('落款','customize')+button('旧玉来信','story')+button('行囊 <kbd>B</kbd>','inventory')+button('委托 <kbd>J</kbd>','tasks')}</div><div class="workshop-tool-group" role="group" aria-label="系统">${button('图鉴 <kbd>G</kbd>','codex')+button('设置','settings')+button('主菜单','menu')}</div>`;
+  workshopTools.querySelectorAll('[data-action]').forEach(control => { control.title = `打开${control.textContent.replace(/\s*[B/J/G]$/, '').trim()}`; });
   document.querySelector('.frame-heading').append(workshopTools);
   const workshopWarning = document.createElement('p');
   workshopWarning.className = 'workshop-save-warning';
@@ -326,8 +328,7 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
     if (event.repeat || event.ctrlKey || event.altKey || event.metaKey || event.target.closest?.('input,textarea,select,[contenteditable="true"]')) return;
     if (dialog.open) return;
     if (event.key === 'Escape' && store.active) { event.preventDefault(); actions.pause(); return; }
-    const shortcuts = { b:'inventory', j:'tasks', g:'codex', m:'mute', f:'fullscreen' };
-    const action = shortcuts[event.key.toLowerCase()];
+    const action = resolveGlobalShortcut(event.key);
     if (action && (store.active || ['mute','fullscreen'].includes(action))) { event.preventDefault(); sound(); actions[action](); }
   });
   function render() {
