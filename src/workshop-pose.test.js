@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { WORKSHOP_CONTACT, WORKSHOP_POSES, workshopPose } from './workshop-pose.js';
+import { WORKSHOP_CONTACT, WORKSHOP_POSES, WORKSHOP_PORTRAIT, workshopPose } from './workshop-pose.js';
 
 test('workshop pose table keeps four contact phases and wraps safely', () => {
   assert.equal(WORKSHOP_POSES.length, 4);
@@ -21,4 +21,10 @@ test('workshop contact anchor keeps the overlay on the authored jade and table e
   assert.ok(WORKSHOP_CONTACT.shadowX < WORKSHOP_CONTACT.x);
   assert.ok(WORKSHOP_CONTACT.shadowX + WORKSHOP_CONTACT.shadowWidth > WORKSHOP_CONTACT.x);
   assert.ok(WORKSHOP_CONTACT.tableEdgeY > WORKSHOP_CONTACT.y);
+});
+
+test('workshop portrait uses a larger anchored lean for the narrow first screen', () => {
+  assert.deepEqual(WORKSHOP_PORTRAIT, { x: 355, y: 307, width: 68, height: 124, rotation: -.12 });
+  assert.equal(WORKSHOP_PORTRAIT.y, WORKSHOP_CONTACT.y);
+  assert.ok(WORKSHOP_PORTRAIT.height > WORKSHOP_PORTRAIT.width);
 });

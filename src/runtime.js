@@ -8,7 +8,7 @@ import { drawScene, drawGalleryExhibits } from './scenery.js';
 import { PauseGate } from './pause.js';
 import { createMining } from './mining.js';
 import { preloadMine, createMineScene } from './mine-scene.js';
-import { WORKSHOP_CONTACT, workshopPose } from './workshop-pose.js';
+import { WORKSHOP_CONTACT, WORKSHOP_PORTRAIT, workshopPose } from './workshop-pose.js';
 import { GALLERY_CASES, GALLERY_SPOTLIGHTS, spotlightFrame } from './gallery-lighting.js';
 
 export function createRuntime(store, feedback) {
@@ -87,10 +87,13 @@ export function createRuntime(store, feedback) {
         }
         // The source is a square portrait with a narrow opaque character inside.
         // Crop the transparent margins before sizing it so the character keeps
-        // its narrow 49×90 silhouette instead of being stretched sideways.
-        const master = this.add.image(355, 262, 'master-carver')
+        // its narrow portrait silhouette instead of being stretched sideways;
+        // the authored metrics below then scale and lean it over the jade.
+        const master = this.add.image(WORKSHOP_PORTRAIT.x, WORKSHOP_PORTRAIT.y, 'master-carver')
           .setCrop(288, 22, 658, 1218)
-          .setDisplaySize(49, 90)
+          .setOrigin(.5, 1)
+          .setDisplaySize(WORKSHOP_PORTRAIT.width, WORKSHOP_PORTRAIT.height)
+          .setRotation(WORKSHOP_PORTRAIT.rotation)
           .setDepth(2);
         const tool = this.add.graphics().setDepth(3);
         const contact = this.add.graphics().setDepth(1.7);
@@ -128,7 +131,7 @@ export function createRuntime(store, feedback) {
             for (const [x, y] of [[WORKSHOP_CONTACT.x - 5, WORKSHOP_CONTACT.y - 2], [WORKSHOP_CONTACT.x + 6, WORKSHOP_CONTACT.y], [WORKSHOP_CONTACT.x + 3, WORKSHOP_CONTACT.y + 5]]) sparkles.fillRect(x, y, 2, 1);
             sparkles.fillStyle(0x6eab77, .8); sparkles.fillRect(WORKSHOP_CONTACT.x - 8, WORKSHOP_CONTACT.y + 3, 2, 2);
           }
-          master.setY(262 + pose.masterY);
+          master.setY(WORKSHOP_PORTRAIT.y + pose.masterY);
         };
         drawCraftContact(0);
         if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
