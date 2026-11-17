@@ -205,7 +205,7 @@
 | P0-04 三阶段加工与吸底操作栏 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-04-craft-bench.md`；表面差异由模型与矩阵测试覆盖 |
 | P0-05 玉文化馆与鉴赏观察 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-05-museum-inspection.md`；28 件馆藏与 800×700 观察台已回归 |
 | P0-06 旧玉来信与回访 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-06-heirloom-letter.md`；保养与伴佩路线均有证据 |
-| P0-07 玉印雕纹与试印 | 待证据 | 验证白文/朱文真实镜像试印 |
+| P0-07 玉印雕纹与试印 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-07-seal-print.md`；真实刀痕镜像试印、手记与刷新重建已验证 |
 | P0-08 夜窗落款与纪念卡 | 待证据 | 验证 24 字边界和完整 PNG 内容 |
 | P0-09 行囊、图鉴与铭牌 | 待证据 | 验证 12 格、选中态、图标和中文清晰度 |
 | 跨模块可靠性门 | 待证据 | 运行窗口、输入、存档、暂停和音频矩阵 |
