@@ -26,3 +26,9 @@
 640px 窄宽下三展位按单列排列，需要在弹窗内部滚动查看后续展位的铭牌；这是响应式布局的可达性取舍，不会把中文压进 Canvas。附件概念图的英文标签被当前中文信息架构替换，未宣称逐像素相似度。
 
 结论：完成 P0-03 的展柜/铭牌分层与多窗口清晰度验收。
+
+## 2026-11-18 追加收尾
+
+- `src/scenery.js` 的 Phaser 展厅层只保留器物像素；`src/ui.js` 将三展位名称、材质和工艺铭牌放到 DOM，`src/style.css` 维持 800×700 与 640×700 的锐利排版。
+- `src/runtime.js` 增加玻璃边缘反光和低对比度射灯锥形；空展位 DOM 铭牌走查截图为 `.tmp/validation/2026-11-18-final-polish/exp03-gallery-dom-empty-800x700.png`。
+- 追加验证：`npm test` 153/153，432/432 加工矩阵；`npm run build` 通过；`git diff --check` 通过。`gallery-lighting.test.js` 覆盖三展位坐标与铭牌数据。
