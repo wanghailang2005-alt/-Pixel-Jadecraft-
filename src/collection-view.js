@@ -184,6 +184,75 @@ export function drawCollectionPiece(canvas, piece, { artifactOnly = false, prese
   context.fillText('PIXEL JADECRAFT · 像素琢玉', 240, workbench ? 469 : 451);
 }
 
+/**
+ * Render the fixed-size collectible memorial card. The on-screen workbench
+ * remains interactive and keeps its DOM labels; this canvas is the deliberate
+ * export surface, so the downloaded PNG carries the night window, material,
+ * process, blessing and exhibit caption in one stable composition.
+ */
+export function drawMemorialCard(canvas, piece) {
+  const width = 720, height = 520;
+  canvas.width = width; canvas.height = height;
+  const c = canvas.getContext('2d'); c.imageSmoothingEnabled = false;
+  const rect = (x, y, w, h, color) => { c.fillStyle = color; c.fillRect(x, y, w, h); };
+  const line = (x1, y1, x2, y2, color, thickness = 2) => { c.fillStyle = color; c.fillRect(x1, y1, x2 - x1, thickness); };
+  const text = (value, x, y, size, color, align = 'left') => {
+    c.font = `${size}px "Fusion Pixel", serif`; c.fillStyle = color; c.textAlign = align; c.textBaseline = 'top'; c.fillText(value, x, y);
+  };
+  const finish = piece.artisan?.finish === 'satin' ? '温润柔光' : '局部亮面';
+  const blessing = [...(piece.blessing ?? '')].slice(0, 24);
+
+  rect(0, 0, width, height, '#10231e');
+  rect(12, 12, width - 24, height - 24, '#d9bd83');
+  rect(18, 18, width - 36, height - 36, '#4b3023');
+  rect(24, 24, width - 48, height - 48, '#203d31');
+  // Pixel cloud corners and a restrained key-fret border.
+  for (const [x, y] of [[30, 30], [width - 50, 30], [30, height - 50], [width - 50, height - 50]]) {
+    rect(x, y, 20, 4, '#b99156'); rect(x, y, 4, 20, '#b99156'); rect(x + 8, y + 8, 8, 4, '#6a4930');
+  }
+  for (let x = 52; x < width - 52; x += 28) { rect(x, 34, 12, 2, '#8b6b43'); rect(x, height - 38, 12, 2, '#8b6b43'); }
+
+  // Night window, moonlit mountains and the warm lantern collision.
+  rect(42, 76, 382, 218, '#2c211c'); rect(50, 84, 366, 202, '#132c3b');
+  rect(62, 96, 342, 178, '#1a3d4a');
+  rect(96, 110, 22, 22, '#e7d99d'); rect(104, 106, 14, 6, '#1a3d4a');
+  const mountain = (points, color) => { c.fillStyle = color; c.beginPath(); points.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.fill(); };
+  mountain([[62, 260], [116, 196], [152, 230], [204, 164], [246, 216], [306, 146], [404, 242], [404, 274], [62, 274]], '#264a4a');
+  mountain([[62, 266], [154, 224], [208, 248], [272, 200], [340, 236], [404, 212], [404, 274], [62, 274]], '#3d6255');
+  line(50, 84, 416, 84, '#c59a5b', 4); line(50, 282, 416, 282, '#8f6a40', 4);
+  for (const x of [50, 408]) { rect(x, 84, 8, 202, '#7c5534'); rect(x + 4, 88, 3, 194, '#bc8e52'); }
+  // Warm lantern and stepped glow.
+  rect(68, 142, 64, 76, '#7e532f'); rect(76, 150, 48, 60, '#d58e39'); rect(88, 158, 24, 44, '#ffe2a0');
+  rect(58, 132, 84, 4, '#b77d43'); rect(64, 218, 72, 5, '#5a3926');
+  rect(52, 138, 4, 68, '#6d4a2e'); rect(140, 138, 4, 68, '#6d4a2e');
+  // Incense smoke is intentionally sparse, so the card keeps breathing room.
+  for (const [x, y, w] of [[362, 172, 7], [368, 157, 10], [362, 142, 8], [371, 127, 6]]) rect(x, y, w, 4, '#b5bea0');
+
+  // Redwood seat and the actual carved surface.
+  rect(52, 308, 366, 136, '#452a1f'); rect(60, 318, 350, 112, '#a2693b');
+  for (const [x, y, w] of [[74, 336, 112], [210, 326, 156], [92, 376, 88], [228, 390, 126]]) { line(x, y, x + w, y, '#c08a4e'); line(x + 12, y + 7, x + Math.floor(w * .7), y + 7, '#734728', 1); }
+  rect(66, 430, 338, 8, '#d29a59');
+  if (piece.artisan) drawArtisanPiece(c, piece.artisan, { x: 126, y: 274, size: 210, light: -.2 });
+  else {
+    const artifact = document.createElement('canvas');
+    drawCollectionPiece(artifact, piece, { artifactOnly: true });
+    c.drawImage(artifact, 126, 274, 210, 210);
+  }
+
+  // Parchment plaque: labels are part of the exported keepsake, not the game canvas UI.
+  rect(442, 76, 230, 368, '#ead2a2'); rect(450, 84, 214, 352, '#f2ddb0');
+  c.strokeStyle = '#9a6f42'; c.lineWidth = 3; c.strokeRect(450, 84, 214, 352);
+  text('一器一心意', 557, 102, 24, '#563522', 'center'); line(474, 138, 640, 138, '#b38a53', 2);
+  text('材质', 474, 158, 14, '#805a37'); text(`${MATERIALS[piece.material] ?? '玉材'} · ${SHAPES[piece.shape] ?? '玉器'}`, 474, 181, 17, '#493323');
+  text('工艺', 474, 218, 14, '#805a37'); text(`${finish} · 三阶段手作`, 474, 241, 17, '#493323');
+  text('纹样', 474, 278, 14, '#805a37'); text(patternLabel(piece), 474, 301, 15, '#493323');
+  text('落款', 474, 338, 14, '#805a37');
+  text(blessing.slice(0, 12).join('') || '（未落款）', 474, 361, 17, '#493323');
+  if (blessing.length > 12) text(blessing.slice(12).join(''), 474, 384, 17, '#493323');
+  text('像素琢玉 · 实作纪念', 557, 414, 12, '#765333', 'center');
+  return { width, height };
+}
+
 export function createCollectionView({ store, show, button, notify = () => {}, onRework = () => {}, onSeal = () => {} }) {
   let selectedId = null;
 
@@ -237,10 +306,10 @@ export function createCollectionView({ store, show, button, notify = () => {}, o
       if (ok) notify('玉器定制已更新。');
     };
     root.querySelector('[data-collection-export]').onclick = () => {
-      // The room is a display setting; keep the existing 480×480 artwork card
-      // for download, including the real carved surface and the saved wording.
+      // The room is a display setting; exports use the fixed night-window
+      // memorial card so the PNG carries the actual artifact and its labels.
       const exportCanvas = document.createElement('canvas');
-      drawCollectionPiece(exportCanvas, draft);
+      drawMemorialCard(exportCanvas, draft);
       exportCanvas.toBlob(blob => {
         if (!blob) { feedback.textContent = '图片未能生成，请重试。'; return; }
         const url = URL.createObjectURL(blob);
