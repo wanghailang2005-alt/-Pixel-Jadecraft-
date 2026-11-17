@@ -31,4 +31,4 @@
 
 - `src/scenery.js` 的 Phaser 展厅层只保留器物像素；`src/ui.js` 将三展位名称、材质和工艺铭牌放到 DOM，`src/style.css` 维持 800×700 与 640×700 的锐利排版。
 - `src/runtime.js` 增加玻璃边缘反光和低对比度射灯锥形；空展位 DOM 铭牌走查截图为 `.tmp/validation/2026-11-18-final-polish/exp03-gallery-dom-empty-800x700.png`。
-- 追加验证：`npm test` 153/153，432/432 加工矩阵；`npm run build` 通过；`git diff --check` 通过。`gallery-lighting.test.js` 覆盖三展位坐标与铭牌数据。
+- 追加验证：`npm test` 154/154，432/432 加工矩阵；`npm run build` 通过；`git diff --check` 通过。`gallery-lighting.test.js` 覆盖三展位坐标与铭牌数据。

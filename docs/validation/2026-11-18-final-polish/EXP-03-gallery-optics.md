@@ -13,7 +13,7 @@
 - 展厅四尺寸截图：`p1-gallery-ambient-1280x720.png`、`p1-gallery-ambient-1024x768.png`、`p1-gallery-ambient-800x700.png`、`p1-gallery-ambient-640x700.png`。
 - 射灯锥形四尺寸截图：`exp03-gallery-lighting-1280x720.png`、`exp03-gallery-lighting-1024x768.png`、`exp03-gallery-lighting-800x700.png`、`exp03-gallery-lighting-640x700.png`；减弱动效证据：`exp03-gallery-reduced-motion-800x700.png`。
 - 侧光、透光和放大观察证据：`p005-inspection-800x700.png`、`p005-inspection-640x700.png`、`p005-inspection-1280.png`、`p005-inspection-1280-side.png`、`p005-museum-800.png`；侧光前后 Canvas 像素采样由生产预览验证，馆藏观察由 `inspection.test.js` 和 `museum-art.test.js` 覆盖。
-- `npm test`：153/153（含 432/432 加工矩阵，包含射灯锚点、铭牌数据与呼吸帧单测）；`npm run build`：通过；`git diff --check`：通过。
+- `npm test`：154/154（含 432/432 加工矩阵，包含射灯锚点、铭牌数据、呼吸帧与工坊人物锚点单测）；`npm run build`：通过；`git diff --check`：通过。
 
 ## 结论
 

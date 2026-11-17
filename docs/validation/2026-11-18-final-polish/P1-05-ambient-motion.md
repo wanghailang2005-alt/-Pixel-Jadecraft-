@@ -9,7 +9,7 @@
 
 ## 验证
 
-- `npm test`：153/153 通过，432/432 加工组合通过；新增射灯锚点、DOM 铭牌数据与呼吸帧边界单测。
+- `npm test`：154/154 通过，432/432 加工组合通过；新增射灯锚点、DOM 铭牌数据、呼吸帧边界与工坊人物锚点单测。
 - `npm run build`：通过，应用入口约 326.00 kB，Phaser vendor 约 1.37 MB。
 - 工坊、矿洞、展厅与纪念卡生产预览截图继续写入 `.tmp/validation/2026-11-18-final-polish/`；无头浏览器页面错误为空。展厅锥形四尺寸截图为 `exp03-gallery-lighting-*.png`，减弱动效截图为 `exp03-gallery-reduced-motion-800x700.png`，DOM 空展位铭牌走查为 `exp03-gallery-dom-empty-800x700.png`。
 - `p1-ambient-export-smoke.mjs` 在 `1280×720`、`1024×768`、`800×700`、`640×700` 验证展厅三展位 DOM 铭牌、生产画布场景和滚动位置；`toBlob(null)` 故障注入得到“图片未能生成，请重试。”；减弱动效媒体查询命中并生成 `p1-gallery-reduced-motion-800x700.png`。
