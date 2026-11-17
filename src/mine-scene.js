@@ -64,9 +64,13 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       if (this.textures.exists('mine-tiles') && !formalTiles) this.registry.set('mine-asset-error', '地形图集帧数不足，已使用五类程序地形。');
       this.terrain = drawRuntimeTerrain(this, this.world, formalTiles);
       this.veinGlows = new Map();
+      this.veinWarmGlows = new Map();
       for (const vein of this.world.veins) {
         if (this.world.map[vein.row][vein.column] !== 3) continue;
-        this.veinGlows.set(cellKey(vein), this.add.image(vein.column * 32 + 16, vein.row * 32 + 16, 'mine-glow')
+        const key = cellKey(vein);
+        this.veinWarmGlows.set(key, this.add.image(vein.column * 32 + 16, vein.row * 32 + 16, 'mine-amber-glow')
+          .setScale(1.2).setAlpha(.2).setDepth(1.8));
+        this.veinGlows.set(key, this.add.image(vein.column * 32 + 16, vein.row * 32 + 16, 'mine-glow')
           .setScale(1.12).setAlpha(.7).setDepth(2));
       }
       this.player = this.add.sprite(this.world.spawn.x, this.world.spawn.y, 'mine-player', 6).setOrigin(.5, 1).setScale(1.5).setDepth(4);
@@ -124,7 +128,7 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
         this.resetInput();
         for (const particle of this.particles) particle.sprite.destroy();
         this.particles = [];
-        this.dropSprites.clear(); this.crackSprites.clear(); this.veinGlows.clear();
+        this.dropSprites.clear(); this.crackSprites.clear(); this.veinGlows.clear(); this.veinWarmGlows.clear();
         this.guide.remove();
         onStop();
       });
@@ -399,6 +403,7 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
         this.terrain.update(hit.column, hit.row);
         const key = cellKey(hit);
         this.veinGlows.get(key)?.destroy(); this.veinGlows.delete(key);
+        this.veinWarmGlows.get(key)?.destroy(); this.veinWarmGlows.delete(key);
         this.drawSurveyMarks();
       }
       while (this.particles.length > 112) this.particles.shift().sprite.destroy();
@@ -421,6 +426,7 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       for (const [key, glow] of this.veinGlows) {
         const phase = Number(key.split(',')[0]) * .7;
         glow.setAlpha(.64 + (this.reducedMotion ? 0 : Math.sin(this.effectTime / 950 + phase) * .12));
+        this.veinWarmGlows.get(key)?.setAlpha(.2 + (this.reducedMotion ? 0 : Math.sin(this.effectTime / 1100 + phase) * .04));
       }
       this.particles = this.particles.filter(particle => {
         particle.life -= delta;

@@ -357,6 +357,11 @@ export function createMineArt(scene) {
     glow.addColorStop(0, '#7fe3b077'); glow.addColorStop(0.45, '#4fc98a33'); glow.addColorStop(1, '#4fc98a00');
     ctx.fillStyle = glow; ctx.fillRect(0, 0, 64, 64);
   });
+  texture(scene, 'mine-amber-glow', 96, 96, ctx => {
+    const glow = ctx.createRadialGradient(48, 48, 4, 48, 48, 48);
+    glow.addColorStop(0, '#ffe4a878'); glow.addColorStop(.38, '#e7b86b35'); glow.addColorStop(1, '#d5903c00');
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, 96, 96);
+  });
   texture(scene, 'mine-cart', 48, 32, ctx => {
     polygon(ctx, [[2,5],[46,5],[41,22],[9,22]], outline);
     polygon(ctx, [[5,8],[43,8],[39,20],[10,20]], '#765038');
