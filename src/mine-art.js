@@ -83,11 +83,18 @@ export function drawRuntimeTerrain(scene, world, useFormalTiles = false) {
     const tile = world.map[row]?.[column];
     if (tile === undefined || tile === TILE.AIR) return;
     const variant = column % ROCK_PATCH_COLUMNS + row % ROCK_PATCH_COLUMNS * ROCK_PATCH_COLUMNS;
-    const frame = useFormalTiles ? world.frames[tile] : variant * 5 + tile;
+    const formalVariantCount = useFormalTiles
+      ? Math.max(1, Math.floor(scene.textures.get('mine-tiles').frameTotal / 5))
+      : 1;
+    const frameVariant = variant % formalVariantCount;
+    const frame = useFormalTiles ? frameVariant * 5 + tile : variant * 5 + tile;
     const face = scene.add.image(column * 32, row * 32, key, frame).setOrigin(0).setScale(2).setDepth(1);
     // Keep the cavern silhouette legible: only rock near an actual opening
     // catches reflected light, while the unexcavated mass recedes into blue shade.
-    if (!useFormalTiles && tile !== TILE.JADE_VEIN) {
+    // Apply the same distance-based ambient occlusion to authored tiles. A
+    // formal atlas may provide richer variants, but it still needs the cavern
+    // light falloff to sit inside the generated excavation consistently.
+    if (tile !== TILE.JADE_VEIN) {
       let exposure = 4;
       for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) {
         const distance = Math.abs(dx) + Math.abs(dy);

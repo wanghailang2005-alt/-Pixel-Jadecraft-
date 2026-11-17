@@ -116,7 +116,7 @@
 - 一个嵌入 tileset，firstgid=1，margin/spacing=0，至少五帧。五类 kind 属性为 AIR / DIRT / STONE / JADE_VEIN / BEDROCK；对应 hardness 为 0 / 2 / 3 / 3 / 0。kind 映射稳定 tile ID，帧顺序可通过元数据调整。当前加载器要求每项声明唯一类型。
 - spawn 中仅一个 PlayerSpawn 点对象，采用脚底锚点。Tiled 逻辑坐标乘 2；旧 (80,416) 点仍可用。不加载 Tiled 时运行时默认出生点现为显示坐标 (384,864)；不使用矩形中心点。
 - LibreSprite 人工导出透明 PNG、等距网格、行优先、margin/spacing=0：`src/assets/tiles-mine.png` 为 16×16、至少五帧；默认依次 AIR/DIRT/STONE/JADE_VEIN/BEDROCK，AIR 透明且不绘制。`src/assets/player-32x48.png` 为 32×48 共18帧，左/右/下各六帧，前四行走、后两挥镐。角色显示比例 1.5，碰撞盒24×56。
-- 缺席或加载失败使用五类程序像素地形及矿工，保留已有矿洞背景。三份人工资源当前均未提供。素材可由代理自行寻找，必须核验授权及是否符合概念图01；本阶段没有引入第三方资源。
+- 缺席或加载失败使用五类程序像素地形及矿工，保留已有矿洞背景。2026-11-17 已提供并接入 `tiles-mine.png` 与 `player-32x48.png`；`public/maps/mine.tmj` 仍未提供，继续使用运行时默认地图。两份图以概念图01为视觉基准，未引入第三方资源；加载失败时仍回退程序素材。
 - 运行时新增素材后重启开发服务或重新构建。合成 TMJ 测试已经通过，正式人工文件仍待验证。
 
 ## 验证重点

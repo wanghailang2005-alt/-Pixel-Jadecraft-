@@ -33,6 +33,12 @@ dialog.settings-panel .setting output { color: #c3d9a2; min-width: 42px; text-al
   .workshop-page-tools { justify-content: flex-start; }
   .workshop-tool-group { flex: 1 1 auto; }
 }
+@media (max-width: 900px) {
+  .frame-heading { align-items: flex-start; flex-wrap: wrap; }
+  .frame-heading > span:last-of-type { display: none; }
+  .workshop-page-tools { flex: 1 1 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+  .workshop-tool-group { min-width: 0; }
+}
 @media (max-width: 620px) {
   .workshop-page-tools { display: grid; grid-template-columns: 1fr; }
   .workshop-tool-group { padding: 5px 7px; }

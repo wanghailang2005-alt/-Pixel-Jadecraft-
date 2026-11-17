@@ -267,7 +267,7 @@ export function createCollectionView({ store, show, button, notify = () => {}, o
     }
     show('布置你的玉展', `<div class="collection-view"><p class="collection-exhibit-hint">将作品放入展位。同一件作品换到新展位时，会从原位置移走。</p><div class="collection-exhibits">${store.state.exhibits.map((id, index) => {
       const piece = pieces.find(item => item.id === id);
-      return `<section class="collection-exhibit"><h3>展位 ${index + 1}</h3><canvas width="480" height="480" data-collection-slot="${index}" aria-label="展位 ${index + 1} ${piece ? pieceName(piece) : '空展位'}"></canvas><strong>${piece ? pieceName(piece) : '等待作品'}</strong><p>${escape(piece?.blessing ?? '')}</p><label for="exhibit-piece-${index}">选择作品</label><select id="exhibit-piece-${index}">${pieces.map(item => `<option value="${escape(item.id)}" ${item.id === id ? 'selected' : ''}>${pieceName(item)}</option>`).join('')}</select><div class="collection-actions"><button data-collection-place="${index}" class="primary">陈列</button><button data-collection-remove="${index}" ${piece ? '' : 'disabled'}>撤展</button></div></section>`;
+      return `<section class="collection-exhibit"><h3>展位 ${index + 1}</h3><canvas width="480" height="480" data-collection-slot="${index}" aria-label="展位 ${index + 1} ${piece ? pieceName(piece) : '空展位'}"></canvas><strong>${piece ? pieceName(piece) : '静候一件玉器'}</strong><p>${escape(piece?.blessing ?? '')}</p><label for="exhibit-piece-${index}">选择作品</label><select id="exhibit-piece-${index}">${pieces.map(item => `<option value="${escape(item.id)}" ${item.id === id ? 'selected' : ''}>${pieceName(item)}</option>`).join('')}</select><div class="collection-actions"><button data-collection-place="${index}" class="primary">陈列</button><button data-collection-remove="${index}" ${piece ? '' : 'disabled'}>撤展</button></div></section>`;
     }).join('')}</div><p class="collection-feedback" role="status" aria-live="polite"></p></div>`, button('返回展厅', 'close'), true);
     const root = document.querySelector('dialog .collection-view');
     const curation=document.createElement('section');curation.className='collection-curation';
@@ -278,13 +278,13 @@ export function createCollectionView({ store, show, button, notify = () => {}, o
     for(const input of curation.querySelectorAll('select')) input.onchange=()=>{store.configureExhibition(curation.querySelector('[data-theme]').value,curation.querySelector('[data-light]').value);exhibit();};
     root.querySelectorAll('[data-collection-slot]').forEach(canvas => {
       const piece = pieces.find(item => item.id === store.state.exhibits[Number(canvas.dataset.collectionSlot)]);
-      if (piece) drawCollectionPiece(canvas, {...piece,displayLight:store.state.museum.lighting==='side'?1:store.state.museum.lighting==='moon'?.15:-.65});
+      if (piece) drawCollectionPiece(canvas, {...piece,displayLight:store.state.museum.lighting==='side'?1:store.state.museum.lighting==='moon'?.15:-.65}, { artifactOnly: true });
       else {
         const context = canvas.getContext('2d');
         context.fillStyle = '#172c25'; context.fillRect(0, 0, 480, 480);
         context.strokeStyle = '#876f46'; context.lineWidth = 4; context.strokeRect(45, 45, 390, 390);
-        context.textAlign = 'center'; context.fillStyle = '#8c9e83'; context.font = '24px "Fusion Pixel", sans-serif';
-        context.fillText('静候一件玉器', 240, 250);
+        context.strokeStyle = '#456451'; context.lineWidth = 3;
+        context.strokeRect(192, 192, 96, 96);
       }
     });
     function place(index, id) {

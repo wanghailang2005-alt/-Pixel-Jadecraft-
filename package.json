@@ -2,6 +2,9 @@
   "name": "pixel-jadecraft",
   "version": "0.1.0",
   "private": true,
+  "description": "像素琢玉 · 寻石、琢玉与策展",
+  "author": "Pixel Jadecraft",
+  "main": "desktop/main.cjs",
   "type": "module",
   "engines": {
     "node": ">=22.12"
@@ -10,12 +13,50 @@
     "test": "node --test",
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1"
+    "preview": "vite preview --host 127.0.0.1",
+    "desktop": "npm run build && electron .",
+    "package:win": "npm run build && pwsh -NoProfile -ExecutionPolicy Bypass -File desktop/webview/build.ps1",
+    "package:win:electron": "npm run build && electron-builder --win nsis --x64"
+  },
+  "build": {
+    "appId": "com.pixeljadecraft.game",
+    "productName": "像素琢玉",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "desktop/main.cjs",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "target": "nsis",
+      "executableName": "Pixel Jadecraft",
+      "signAndEditExecutable": false,
+      "artifactName": "Pixel-Jadecraft-Setup-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "像素琢玉",
+      "installerLanguages": [
+        "zh_CN",
+        "en_US"
+      ],
+      "language": "2052",
+      "deleteAppDataOnUninstall": false
+    }
   },
   "dependencies": {
     "phaser": "^4.2.1"
   },
   "devDependencies": {
+    "electron": "45.3.2",
+    "electron-builder": "26.18.0",
     "vite": "^8.3.7"
   }
 }

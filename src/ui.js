@@ -230,6 +230,22 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
   function startJourney() {
     store.startNew();
   }
+  function runWorkshopAction(action, options) {
+    if (action === 'make') return crafting.open(options);
+    if (action === 'inspect') return inspection.open();
+    if (action === 'customize') return collection.customize();
+  }
+  function openWorkshopAction(action, options) {
+    if (!store.active) return;
+    if (store.state.location !== 'workshop') {
+      store.navigate('workshop');
+      requestAnimationFrame(() => {
+        if (store.active && store.state.location === 'workshop') runWorkshopAction(action, options);
+      });
+      return;
+    }
+    runWorkshopAction(action, options);
+  }
   const actions = {
     story: () => story.open(),
     mentor: () => show('师傅的首展委托', '<p>去玉文化馆看看前人怎样借色成器，再去矿洞寻一块属于你的玉。</p><p>观察色带、安排纸样、琢出轮廓，再用刻线、浮雕和局部光泽留下自己的答案。三件作品齐备，就为它们办一场小展。</p>',button('参观玉文化馆','museum','primary')+button('开始创作','make')),
@@ -249,9 +265,9 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
     menu: () => store.menu(),
     pause: () => show('稍歇片刻', '<p>喝一盏茶，再继续你的琢玉之旅。</p>', button('继续旅程', 'close', 'primary') + button('返回主菜单', 'to-menu', 'quiet')),
     'to-menu': () => { closeCallback = () => store.menu(); close(); },
-    inspect: () => inspection.open(),
-    make: () => crafting.open(),
-    customize: () => collection.customize(),
+    inspect: () => openWorkshopAction('inspect'),
+    make: () => openWorkshopAction('make'),
+    customize: () => openWorkshopAction('customize'),
     exhibit: () => collection.exhibit(),
     craft: () => store.active && store.state.location === 'workshop' ? crafting.open() : onPolish(),
     pickaxe: onMine,
@@ -282,10 +298,11 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
     root.classList.toggle('mine-interface', store.active && state.location === 'mine');
     root.style.width = `${isWorkshop ? 1024 : 960}px`;
     root.style.height = `${isWorkshop ? 559 : 540}px`;
-    workshopTools.hidden = !isWorkshop && !(store.active && state.location === 'mine');
-    for (const action of ['inspect', 'make', 'customize']) {
-      workshopTools.querySelector(`[data-action="${action}"]`).disabled = !isWorkshop;
-    }
+    // Keep one global navigation rail across the active scenes. Craft actions
+    // route back to the workshop before opening their modal, so they remain
+    // useful from the mine and gallery instead of becoming unexplained dead
+    // buttons.
+    workshopTools.hidden = !store.active;
     workshopWarning.hidden = !isWorkshop || !store.error;
     workshopWarning.innerHTML = store.error ? `${escape(store.error)} ${store.dirty ? button('重试保存', 'save') : ''}` : '';
     workshop.setPaused('inactive', !isWorkshop);

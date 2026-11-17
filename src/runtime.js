@@ -62,9 +62,13 @@ export function createRuntime(store, feedback) {
         decorateMenuScene(this);
       } else if (key === 'workshop' && this.textures.exists('workshop')) {
         this.add.image(512, 279.5, 'workshop').setDisplaySize(1024, 559);
-        // Alpha >= 128 occupies (288,22)-(946,1240) in the 1254px source.
-        // Visible silhouette: x317–391, y218–307, beside the jade at (355,307).
-        const master = this.add.image(355, 262, 'master-carver').setDisplaySize(140, 92).setDepth(2);
+        // The source is a square portrait with a narrow opaque character inside.
+        // Crop the transparent margins before sizing it so the character keeps
+        // its narrow 49×90 silhouette instead of being stretched sideways.
+        const master = this.add.image(355, 262, 'master-carver')
+          .setCrop(288, 22, 658, 1218)
+          .setDisplaySize(49, 90)
+          .setDepth(2);
         const tool = this.add.graphics().setDepth(3);
         const glow = this.add.graphics().setDepth(1);
         for (const [x, y] of [[254, 150], [105, 218], [477, 150], [635, 218]]) {
@@ -79,10 +83,11 @@ export function createRuntime(store, feedback) {
           tool.clear();
           tool.fillStyle(0x243b29); tool.fillRect(354, 286 + lift, 9, 7);
           tool.fillStyle(0x587447); tool.fillRect(354, 286 + lift, 7, 3);
-          tool.fillStyle(0xd1a06b); tool.fillRect(357, 290 + lift, 6, 6);
-          tool.fillStyle(0x6b492e); tool.fillRect(359, 293 + lift, 3, 5);
-          tool.fillStyle(0xbabfac); tool.fillRect(358, 297 + lift, 2, 3);
-          tool.fillRect(356, 299 + lift, 2, 5); tool.fillRect(355, 303 + lift, 2, 4);
+          // The portrait already contains the master's hands. Keep only the
+          // small chisel/contact highlight here; drawing square skin blocks on
+          // top of the portrait made the hand look like a detached tile.
+          tool.fillStyle(0x6b492e); tool.fillRect(359, 291 + lift, 3, 8);
+          tool.fillStyle(0xbabfac); tool.fillRect(358, 297 + lift, 2, 4);
           tool.fillStyle(0xe4dfbc); tool.fillRect(358, 297 + lift, 1, 3);
           sparkles.clear();
           if (phase === 0) {

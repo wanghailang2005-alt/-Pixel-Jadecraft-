@@ -46,3 +46,10 @@
   .mine-guide-heading { gap: 4px; }
   .mine-guide.is-expanded { max-height: calc(100% - 86px); overflow-y: auto; pointer-events: auto; }
 }
+@media (max-width: 900px) {
+  /* The playable frame is 16:9, so an 800px browser is only about 450px high. */
+  .mine-guide { top: 64px; right: 8px; width: 286px; max-width: calc(100% - 16px); padding: 5px 8px; font-size: 11px; line-height: 1.45; }
+  .mine-guide.is-expanded { max-height: 128px; overflow-y: auto; }
+  .mine-guide p { margin: 3px 0; }
+  .mine-guide-actions { margin-top: 5px; }
+}

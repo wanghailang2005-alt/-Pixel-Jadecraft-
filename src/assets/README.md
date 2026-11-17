@@ -81,7 +81,13 @@ Create a production-ready 16:9 landscape background asset for an original Chines
 
 ## 矿洞视觉试玩 · 2026-11-11
 
-`mine-cavern-v1.png`：使用 OpenAI imagegen，以 `docs/concept-art/01-mine-exploration.png` 为参考生成的洞穴背景，保留冷光洞口、苔藓、蓝灰岩壁与石柱。它是背景画面，不是 tileset。交互平台、梯子、矿车、矿工及玉脉由 `src/mine-art.js` 独立绘制。固定替换路径仍为 `src/assets/tiles-mine.png`（16×16 帧）、`src/assets/player-32x48.png`（32×48 帧，左/右/下各 4 行走 + 2 挥镐，18 帧行优先），地图为 `public/maps/mine.tmj`。当前三者未提供；地图回落二维数组。Tiled 可增加 ladders 对象层，矩形中心 x 与上下边界定义梯子，采用地图逻辑像素。
+`mine-cavern-v1.png`：使用 OpenAI imagegen，以 `docs/concept-art/01-mine-exploration.png` 为参考生成的洞穴背景，保留冷光洞口、苔藓、蓝灰岩壁与石柱。它是背景画面，不是 tileset。交互平台、梯子、矿车、矿工及玉脉由 `src/mine-art.js` 独立绘制。固定替换路径仍为 `src/assets/tiles-mine.png`（16×16 帧）、`src/assets/player-32x48.png`（32×48 帧，左/右/下各 4 行走 + 2 挥镐，18 帧行优先），地图为 `public/maps/mine.tmj`。截至本节记录日期三者未提供；当前状态见下方 2026-11-17 记录。地图回落二维数组。Tiled 可增加 ladders 对象层，矩形中心 x 与上下边界定义梯子，采用地图逻辑像素。
+
+## 矿洞正式替换素材 · 2026-11-17
+
+- `tiles-mine.png` 已接入固定加载路径；当前 80×16 文件是五帧占位图（AIR、DIRT、STONE、JADE_VEIN、BEDROCK），第 0 帧保持完全透明，运行时不绘制。为避免单帧平铺成棋盘格，正式图集需提供至少 20 帧（五类材质各四种变体）；不足时自动回退到带变体与 AO 明暗的程序地形。
+- `player-32x48.png` 已接入固定加载路径，尺寸为 192×144，共 18 个 32×48 帧；三行依次为 left、right、down，每行前四帧行走、后两帧挥镐。
+- 两张图以概念图 01 的深蓝灰岩、苔藓绿、玉光青绿和黄铜矿灯为视觉基准，由内置 imagegen 生成像素参考后以最近邻抽取为正式图集；未引入第三方素材。`src/mine-scene.js` 的帧数检查、加载失败提示和程序像素回退会把五帧占位图视为不可用于正式铺贴。
 
 生成提示词：
 

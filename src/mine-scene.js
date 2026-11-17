@@ -33,9 +33,12 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
   return class MineScene extends Phaser.Scene {
     constructor() { super('mine'); }
     create() {
-      if (this.textures.exists('mine-player') && this.textures.get('mine-player').frameTotal < 19) {
+      // Phaser exposes a base frame in addition to the 18 animation frames.
+      // Validate the authored frame count explicitly so the fallback condition
+      // remains correct if the loader changes its base-frame bookkeeping.
+      if (this.textures.exists('mine-player') && this.textures.get('mine-player').frameTotal < 18) {
         this.textures.remove('mine-player');
-        this.registry.set('mine-asset-error', '角色图集不足 18 帧，已使用程序矿工。');
+        this.registry.set('mine-asset-error', '角色图集不足 18 个动画帧，已使用程序矿工。');
       }
       createMineArt(this);
       for (const [direction, row] of [['left', 0], ['right', 1], ['down', 2]]) {
@@ -51,7 +54,13 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       this.world = this.mining.world;
       createMiningEffects(this);
       this.add.image(480, 270, 'mine-cavern').setDisplaySize(960, 540).setScrollFactor(0).setDepth(-10);
-      const formalTiles = this.textures.exists('mine-tiles') && this.textures.get('mine-tiles').frameTotal > Math.max(...this.world.frames) + 1;
+      // A five-frame sheet (one frame per material) repeats the same 16×16
+      // block on every collision cell and produces a visible checkerboard.
+      // Treat a formal sheet as usable only when it provides four variants for
+      // each of the five material frames; otherwise use the continuous runtime
+      // terrain generator, which adds deterministic strata and AO tinting.
+      const formalTileFrames = this.textures.exists('mine-tiles') ? this.textures.get('mine-tiles').frameTotal : 0;
+      const formalTiles = formalTileFrames >= 20;
       if (this.textures.exists('mine-tiles') && !formalTiles) this.registry.set('mine-asset-error', '地形图集帧数不足，已使用五类程序地形。');
       this.terrain = drawRuntimeTerrain(this, this.world, formalTiles);
       this.veinGlows = new Map();
@@ -470,6 +479,17 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
             : '每脉两块同源玉。先沿木梯找到岩壁，按 R 用侧灯照出缝口，再决定从哪里开采。');
       this.routeHint.setText(pair.recovered === 2 ? '已集齐 · Q 寻找另一脉，或回工坊观察与创作' : route);
     }
+    mouseCorridorBlocked() {
+      if (!this.pointer.inside) return null;
+      const facing = this.direction === 'left' ? -1 : 1;
+      const column = Math.floor(this.body.x / 32) + facing;
+      const row = Math.floor((this.body.y - 28) / 32);
+      if (this.world.map[row]?.[column] !== TILE.AIR) return null;
+      const upperRow = row - 1;
+      return this.world.map[upperRow]?.[column] !== undefined && this.world.map[upperRow][column] !== TILE.AIR
+        ? { column, row: upperRow }
+        : null;
+    }
     update(time, delta) {
       if (paused() || document.hidden) return;
       const activeDelta = Math.max(0, Math.min(delta, 50));
@@ -486,6 +506,11 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
       this.target = this.selectedTarget();
       const valid = validDigTarget(this.world, this.body, this.target);
       this.targetBox.clear();
+      const blockedUpper = this.mouseCorridorBlocked();
+      if (blockedUpper) {
+        this.targetBox.lineStyle(2, 0xffd47b, .95);
+        this.targetBox.strokeRect(blockedUpper.column * 32 + .5, blockedUpper.row * 32 + .5, 31, 31);
+      }
       if (valid) {
         const x = this.target.column * 32, y = this.target.row * 32;
         const stroke = this.mining.profile(this.target);
@@ -501,7 +526,9 @@ export function createMineScene({ store, feedback, paused, getSession, onReady, 
           : tile === TILE.JADE_VEIN ? (stroke.tool === 'heavy' ? '玉脉质密 · 按 1 换细凿，R 观察后对准金缝' : '盲敲需三击 · R 观察后点金缝（E 自动对缝）')
             : stroke.tool === 'heavy' ? '重镐 · 一击打开普通岩石，保留玉脉待细凿' : '细凿 · 按 2 换重镐可更快打开石墙');
       } else {
-        this.toolHint.setText(`${EXCAVATION_TOOLS[this.mining.tool].name}已选 · 重镐开路，细凿点金缝（E 自动对缝）`);
+        this.toolHint.setText(blockedUpper
+          ? '前方脚下已挖通，但头顶仍有石块 · 鼠标点亮的金色框内还需挖开，才能走入通道'
+          : `${EXCAVATION_TOOLS[this.mining.tool].name}已选 · 重镐开路，细凿点金缝（E 自动对缝）`);
       }
       this.updatePlaceHint();
       const held = this.heldKeys.has('KeyE') || this.tapPending || (this.pointer.inside && this.pointer.down);
