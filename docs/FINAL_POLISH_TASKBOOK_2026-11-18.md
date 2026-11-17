@@ -200,13 +200,13 @@
 | 任务 | 状态 | 下一步 |
 | --- | --- | --- |
 | P0-00 基线锁定与素材清点 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-00-baseline.md`；v2 源文件缺失，保留为待补来源差距 |
-| P0-01 工坊全景与师傅姿态 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-01-workshop.md`；四相接触点、桌面 AO、桌沿高光和玉屑冲击已数据化，保留逐帧位图和透视重绘差距 |
+| P0-01 工坊全景与师傅姿态 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-01-workshop.md`；四相接触点、放大前倾人物锚点、桌面 AO、桌沿高光和玉屑冲击已数据化，保留逐帧位图和透视重绘差距 |
 | P0-02 矿洞地形、光照与采矿手感 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-02-mine-guide.md`；六簇/十二原石、连续岩面 AO、20 帧正式图集、冷暖矿光、粒子、掉落恢复和四尺寸窄窗走查已闭环 |
 | P0-03 展厅布展与文字清晰度 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-03-gallery.md`；640px 按单列滚动 |
 | P0-04 三阶段加工与吸底操作栏 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-04-craft-bench.md`；表面差异由模型与矩阵测试覆盖 |
 | P0-05 玉文化馆与鉴赏观察 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-05-museum-inspection.md`；28 件馆藏、Canvas 像素纹理/侧光与 640×700、800×700 观察台已回归 |
 | P0-06 旧玉来信与回访 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-06-heirloom-letter.md`；保养与伴佩路线均有证据 |
-| P0-07 玉印雕纹与试印 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-07-seal-print.md`；真实刀痕镜像试印、手记与刷新重建已验证 |
+| P0-07 玉印雕纹与试印 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-07-seal-print.md`；真实刀痕镜像试印、朱砂按压反馈、手记与刷新重建已验证 |
 | P0-08 夜窗落款与纪念卡 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-08-memorial-card.md`；夜窗工作台、24 字边界、固定尺寸 PNG 与同一作品 ID 已验证 |
 | P0-09 行囊、图鉴与铭牌 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-09-inventory-codex.md`；12 格、像素图标、DOM 铭牌与 B/G 快捷键已验证 |
 | 跨模块可靠性门 | 完成 | 见 `docs/validation/2026-11-18-final-polish/cross-module-reliability.md`；四尺寸场景往返、刷新继续、弹窗冻结和错误监听已闭环 |
@@ -215,7 +215,7 @@
 | P1-03 文字与信息 | 完成 | 见 `P1-03-copy-consistency.md`；动作词统一且中文信息仍由 DOM/铭牌承载 |
 | P1-04 证据与交接 | 完成 | 见 `P1-04-handoff.md`；验证索引、临时目录与来源记录已整理 |
 | P1-05 环境微动态 | 完成 | 见 `P1-05-ambient-motion.md`；工坊、矿洞、展厅和纪念卡环境微动态已接入减弱动效门 |
-| 拓展 1：Ambient Polish | 完成 | 见 `EXP-01-ambient-polish.md`；四尺寸展厅、减弱动效与页面错误监听已验证 |
+| 拓展 1：Ambient Polish | 完成 | 见 `EXP-01-ambient-polish.md`；工坊、矿洞、展厅、玉文化馆与纪念卡环境层，四尺寸、减弱动效与页面错误监听已验证 |
 | 拓展 2：视听触 Juice | 完成 | 见 `EXP-02-juice.md`；完成度音高、像素粒子和可选轻触反馈已接入 |
 | 拓展 3：展厅玉质光学 | 完成 | 见 `EXP-03-gallery-optics.md`；灯光主题、侧光梯度和内部散射已验证 |
 | 拓展 4：纪念卡仪式感 | 完成 | 见 `EXP-04-memorial-ritual.md`；回纹、印章、展签和导出失败恢复已验证 |
