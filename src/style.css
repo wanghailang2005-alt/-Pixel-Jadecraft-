@@ -134,6 +134,7 @@ hr { border: 0; border-top: 1px solid #606c4b; margin: 20px 0; }
 .inventory-layout { display: grid; grid-template-columns: 1.18fr 1fr; gap: 22px; }
 .inventory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
 .slot { position: relative; min-width: 0; height: 88px; border: 2px solid #8c987d; background: #19261e; box-shadow: inset 2px 2px #050d0a, 2px 2px #111d17; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 3px; gap: 4px; }
+.inventory-icon { display: block; image-rendering: pixelated; }
 .slot span { font-size: 10px; color: #ccc9aa; }
 .slot.empty { border-color: #626c55; background: #263129; }
 .slot.empty span { color: #6c775d; font: 12px monospace; }
@@ -144,11 +145,16 @@ hr { border: 0; border-top: 1px solid #606c4b; margin: 20px 0; }
 .item-detail { border: 3px double #a1aa87; padding: 17px 18px; background: #1b281f; display: flex; flex-direction: column; align-items: flex-start; }
 .detail-art { width: 100%; height: 112px; display: grid; place-items: center; background: #162219; border: 1px solid #536247; margin-bottom: 15px; }
 .detail-art .item-icon { width: 90px; height: 90px; }
+.detail-art .inventory-icon { width: 112px; height: 112px; }
 .detail-kind { font-size: 10px; color: #9fae8c; }
 .item-detail h3 { color: #e2cf99; font: 23px SimSun, serif; margin: 8px 0 10px; }
 .item-detail p { font-size: 12px; color: #c3c6ac; line-height: 1.85; }
 .detail-status { margin: 15px 0 9px; font-size: 11px; color: #c5c391; padding: 4px 8px; border: 1px solid #717b54; }
 .item-detail small { color: #94a082; font-size: 10px; }
+.detail-trace { width: 100%; margin: 6px 0 10px; display: grid; gap: 5px; }
+.detail-trace div { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 8px; border-top: 1px solid #485a45; padding-top: 4px; }
+.detail-trace dt { color: #aab88e; font-size: 11px; }
+.detail-trace dd { margin: 0; color: #ded2a8; font-size: 11px; overflow-wrap: anywhere; }
 .inventory-tabs { display: flex; gap: 6px; margin-top: 21px; padding-top: 16px; border-top: 1px solid #6b7554; justify-content: flex-end; }
 .inventory-tabs button { min-width: 90px; padding: 8px 20px; }
 .inventory-tabs button[aria-pressed=true] { border-color: #d6c080; background: #677a52; color: #fcf0c9; }

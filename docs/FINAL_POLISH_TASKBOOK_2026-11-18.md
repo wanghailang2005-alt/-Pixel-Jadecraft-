@@ -207,6 +207,6 @@
 | P0-06 旧玉来信与回访 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-06-heirloom-letter.md`；保养与伴佩路线均有证据 |
 | P0-07 玉印雕纹与试印 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-07-seal-print.md`；真实刀痕镜像试印、手记与刷新重建已验证 |
 | P0-08 夜窗落款与纪念卡 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-08-memorial-card.md`；夜窗工作台、24 字边界、固定尺寸 PNG 与同一作品 ID 已验证 |
-| P0-09 行囊、图鉴与铭牌 | 待证据 | 验证 12 格、选中态、图标和中文清晰度 |
+| P0-09 行囊、图鉴与铭牌 | 完成 | 见 `docs/validation/2026-11-18-final-polish/P0-09-inventory-codex.md`；12 格、像素图标、DOM 铭牌与 B/G 快捷键已验证 |
 | 跨模块可靠性门 | 待证据 | 运行窗口、输入、存档、暂停和音频矩阵 |
 | P1 资源/稳定性/文字/交接 | 进行中 | 已完成 P1-01 入口分包与 P1-05 减弱动效收尾；继续补稳定性、文案与交接证据 |

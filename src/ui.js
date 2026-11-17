@@ -19,6 +19,44 @@ const NAMES = { workshop: '玉作工坊', mine: '青岚矿洞', gallery: '像素
 const SHAPES = { bi: '玉璧', fish: '玉鱼佩', seal: '玉印' };
 const escape = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
+/** Compact 16-bit inventory art. Labels stay in DOM; these canvases carry only pixels. */
+function drawInventoryIcon(canvas, value, kind, unlocked = true) {
+  const c = canvas.getContext('2d'); c.imageSmoothingEnabled = false;
+  const size = canvas.width; c.clearRect(0, 0, size, size);
+  const scale = size / 32, px = (x, y, w, h, color) => { c.fillStyle = color; c.fillRect(x * scale, y * scale, w * scale, h * scale); };
+  const palette = kind === 'raw'
+    ? (value?.material === 'jadeite' ? ['#1e5b45', '#4eaa76', '#a7d6a0'] : ['#566d52', '#8db28a', '#d0d9ac'])
+    : ['#245a43', '#5e9d68', '#c2d39a'];
+  const [shadow, mid, light] = palette;
+  px(3, 3, 26, 26, '#14231d');
+  if (kind === 'raw') {
+    c.fillStyle = mid; c.beginPath(); c.moveTo(7 * scale, 19 * scale); c.lineTo(11 * scale, 9 * scale); c.lineTo(21 * scale, 6 * scale); c.lineTo(27 * scale, 12 * scale); c.lineTo(24 * scale, 24 * scale); c.lineTo(12 * scale, 27 * scale); c.closePath(); c.fill();
+    px(11, 10, 8, 3, light); px(8, 18, 4, 6, shadow); px(18, 23, 7, 3, shadow); px(20, 9, 5, 3, light); px(14, 15, 3, 8, light);
+  } else {
+    const shape = kind === 'codex' ? value?.id : value?.shape;
+    if (shape === 'bi') {
+      c.fillStyle = mid; c.beginPath(); c.arc(16 * scale, 16 * scale, 10 * scale, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#14231d'; c.beginPath(); c.arc(16 * scale, 16 * scale, 3.5 * scale, 0, Math.PI * 2); c.fill();
+      px(7, 11, 3, 2, light); px(22, 11, 3, 2, light); px(11, 23, 3, 2, light);
+    } else if (shape === 'fish') {
+      c.fillStyle = mid; c.beginPath(); c.moveTo(4 * scale, 16 * scale); c.lineTo(10 * scale, 9 * scale); c.lineTo(22 * scale, 10 * scale); c.lineTo(27 * scale, 15 * scale); c.lineTo(30 * scale, 9 * scale); c.lineTo(30 * scale, 23 * scale); c.lineTo(27 * scale, 17 * scale); c.lineTo(22 * scale, 23 * scale); c.lineTo(10 * scale, 22 * scale); c.closePath(); c.fill();
+      px(11, 11, 8, 2, light); px(14, 14, 2, 2, '#182e24'); px(20, 17, 7, 2, light); px(8, 21, 5, 2, shadow);
+    } else if (shape === 'seal') {
+      px(8, 14, 16, 12, mid); px(11, 11, 10, 5, light); px(13, 8, 6, 4, mid); px(15, 6, 2, 3, light); px(10, 18, 12, 2, light); px(15, 21, 2, 5, shadow);
+    } else if (shape === 'cong') {
+      px(8, 8, 16, 16, mid); px(11, 6, 10, 3, light); px(12, 11, 8, 3, '#14231d'); px(10, 18, 12, 2, light); px(15, 21, 2, 4, shadow);
+    } else if (shape === 'huang') {
+      c.fillStyle = mid; c.beginPath(); c.arc(16 * scale, 13 * scale, 11 * scale, 0, Math.PI); c.lineTo(24 * scale, 24 * scale); c.arc(16 * scale, 13 * scale, 8 * scale, Math.PI, 0, true); c.closePath(); c.fill();
+      px(7, 13, 4, 2, light); px(21, 13, 4, 2, light); px(14, 21, 5, 2, shadow);
+    } else if (shape === 'dragon') {
+      c.strokeStyle = light; c.lineWidth = 3 * scale; c.beginPath(); c.moveTo(24 * scale, 8 * scale); c.lineTo(13 * scale, 10 * scale); c.lineTo(9 * scale, 17 * scale); c.lineTo(12 * scale, 24 * scale); c.lineTo(21 * scale, 25 * scale); c.lineTo(25 * scale, 19 * scale); c.lineTo(18 * scale, 17 * scale); c.stroke(); px(23, 7, 5, 3, light); px(24, 10, 2, 2, '#14231d');
+    } else {
+      px(9, 9, 14, 14, mid); px(12, 7, 8, 3, light); px(12, 14, 8, 2, light);
+    }
+  }
+  if (!unlocked) { px(3, 3, 26, 26, '#0d1612aa'); px(7, 15, 18, 3, '#9a9b82'); }
+}
+
 export function createInterface(store, materials, taskList, { onOverlayChange = () => {}, onPolish = () => {}, onMine = () => {}, onSound = () => {}, onPauseAudio = () => {} } = {}) {
   const root = document.querySelector('#interface');
   const frame = document.querySelector('#game');
@@ -171,9 +209,11 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
     const item = items[selectedItem];
     const knowledge = isCodex && item ? CODEX_CONTENT[item.id] : null;
     const itemName = value => isCodex ? value.name : inventoryTab === 'raw' ? materials[value.material].name : SHAPES[value.shape];
-    const itemIcon = value => !isCodex && value.artisan
-      ? `<canvas width="128" height="128" data-stored-art="${escape(value.id)}" aria-label="${itemName(value)}，实际作品"></canvas>`
-      : icon(isCodex ? value.id : value.shape ?? 'stone');
+    const itemIcon = (value, place = 'slot') => {
+      const kind = isCodex ? 'codex' : inventoryTab;
+      const label = `${itemName(value)}${value?.artisan ? '，实际作品' : ''}`;
+      return `<canvas class="inventory-icon" width="128" height="128" data-inventory-icon="${escape(value.id)}" data-icon-kind="${kind}" data-icon-place="${place}" aria-label="${escape(label)}"></canvas>`;
+    };
     const unlocked = item && (!isCodex || store.state.discoveries.includes(item.id));
     const count = Math.max(isCodex ? 6 : 12, items.length);
     show('藏玉行囊', `<div class="inventory-top"><p>玉作学徒的收藏</p><span>原石 ${store.state.inventory.length}/12 · 成品 ${store.state.pieces.length}</span></div>
@@ -181,12 +221,13 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
         const entry = items[i];
         return entry ? `<button class="slot ${selectedItem === i ? 'selected' : ''} ${isCodex && !store.state.discoveries.includes(entry.id) ? 'uncollected' : ''}" data-item="${i}" aria-label="${itemName(entry)}" aria-pressed="${selectedItem === i}">${itemIcon(entry)}<span>${itemName(entry)}</span></button>` : `<div class="slot empty" aria-label="空格 ${i+1}"><span>${String(i + 1).padStart(2, '0')}</span></div>`;
       }).join('')}</div><p class="inventory-hint">${isCodex ? '六种器物，慢慢相识。' : inventoryTab === 'raw' ? '每块原石占一格 · 满包时采集会提前提示' : '完成制作后，作品会保存在这里。'}</p></div>
-      <aside class="item-detail"><div class="detail-art ${!unlocked ? 'uncollected' : ''}">${item ? itemIcon(item) : icon('bag')}</div><span class="detail-kind">${isCodex ? '器物图鉴' : inventoryTab === 'raw' ? '天然玉材 · 游戏材料' : '玉作成品'}</span><h3>${item ? itemName(item) : '空空的行囊'}</h3><p>${!item ? '前往矿洞寻找原石，拾取后便会收入行囊。' : isCodex ? escape(knowledge.description) : inventoryTab === 'raw' ? '带回工坊观察鉴赏，或取出一块原石，完成琢形、雕纹与抛光。' : '亲手刻线与光泽随作品保留。可以落款、返工、导出图片，再到展厅陈列。'}</p><div class="detail-status">${isCodex ? unlocked ? '已收录' : '等待收录' : item ? '已收入行囊' : '未获得材料'}</div>${item && !isCodex ? `<small>材质：${materials[item.material].name}</small>` : ''}${isCodex ? `<small><a href="${escape(knowledge.source.url)}" target="_blank" rel="noopener noreferrer">资料来源 · ${escape(knowledge.source.title)}</a></small>` : ''}</aside></div>
+      <aside class="item-detail"><div class="detail-art ${!unlocked ? 'uncollected' : ''}">${item ? itemIcon(item, 'detail') : icon('bag')}</div><span class="detail-kind">${isCodex ? '器物图鉴' : inventoryTab === 'raw' ? '天然玉材 · 游戏材料' : '玉作成品'}</span><h3>${item ? itemName(item) : '空空的行囊'}</h3><p>${!item ? '前往矿洞寻找原石，拾取后便会收入行囊。' : isCodex ? escape(knowledge.description) : inventoryTab === 'raw' ? '带回工坊观察鉴赏，或取出一块原石，完成琢形、雕纹与抛光。' : '亲手刻线与光泽随作品保留。可以落款、返工、导出图片，再到展厅陈列。'}</p><dl class="detail-trace">${item && !isCodex ? `<div><dt>材质</dt><dd>${materials[item.material].name}</dd></div><div><dt>来源</dt><dd>${item.artisan ? `原石 ${escape(item.artisan.material.id)}` : `矿脉原石 ${escape(item.id)}`}</dd></div><div><dt>${inventoryTab === 'raw' ? '观察' : '加工历程'}</dt><dd>${inventoryTab === 'raw' ? (store.state.mineSurvey.length ? '已记录矿脉观察' : '尚未记录观察') : item.artisan?.completed ? '琢形 · 雕纹 · 抛光' : '加工中 · 已保存进度'}</dd></div>` : isCodex ? `<div><dt>收录路径</dt><dd>${unlocked ? '已由真实作品或馆藏观察收录' : '完成对应器型后收录'}</dd></div><div><dt>资料</dt><dd>${escape(knowledge.source.title)}</dd></div>` : ''}</dl><div class="detail-status">${isCodex ? unlocked ? '已收录' : '等待收录' : item ? '已收入行囊' : '未获得材料'}</div>${isCodex ? `<small><a href="${escape(knowledge.source.url)}" target="_blank" rel="noopener noreferrer">资料来源 · ${escape(knowledge.source.title)}</a></small>` : ''}</aside></div>
       `, `<nav class="inventory-tabs" aria-label="行囊分类">${[['raw','原石'],['pieces','成品'],['codex','图鉴']].map(([id,label])=>`<button data-tab="${id}" aria-pressed="${inventoryTab === id}">${label}</button>`).join('')}</nav>`, true);
-    dialog.querySelectorAll('[data-stored-art]').forEach(canvas => {
-      const piece = items.find(p=>p.id===canvas.dataset.storedArt);
-      drawArtisanPiece(canvas.getContext('2d'),piece.artisan,{size:128});
-      canvas.style.width=canvas.closest('.slot')?'56px':'112px';canvas.style.height=canvas.closest('.slot')?'56px':'112px';canvas.style.objectFit='contain';canvas.style.imageRendering='pixelated';
+    dialog.querySelectorAll('[data-inventory-icon]').forEach(canvas => {
+      const entry = items.find(value => value.id === canvas.dataset.inventoryIcon);
+      if (entry?.artisan) drawArtisanPiece(canvas.getContext('2d'), entry.artisan, { size: 128 });
+      else drawInventoryIcon(canvas, entry, canvas.dataset.iconKind, !isCodex || store.state.discoveries.includes(entry?.id));
+      canvas.style.width = canvas.dataset.iconPlace === 'slot' ? '56px' : '112px'; canvas.style.height = canvas.dataset.iconPlace === 'slot' ? '56px' : '112px'; canvas.style.objectFit = 'contain'; canvas.style.imageRendering = 'pixelated';
     });
     dialog.querySelectorAll('[data-tab]').forEach(tab => tab.onclick = () => { inventoryTab = tab.dataset.tab; selectedItem = 0; sound(); inventory(); dialog.querySelector(`[data-tab="${inventoryTab}"]`).focus(); });
     dialog.querySelectorAll('[data-item]').forEach(slot => slot.onclick = () => { selectedItem = Number(slot.dataset.item); sound(); inventory(); dialog.querySelector(`[data-item="${selectedItem}"]`).focus(); });
