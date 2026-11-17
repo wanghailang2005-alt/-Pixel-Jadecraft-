@@ -8,6 +8,7 @@ import { drawScene, drawGalleryExhibits } from './scenery.js';
 import { PauseGate } from './pause.js';
 import { createMining } from './mining.js';
 import { preloadMine, createMineScene } from './mine-scene.js';
+import { workshopPose } from './workshop-pose.js';
 
 export function createRuntime(store, feedback) {
   let mining = null;
@@ -100,7 +101,8 @@ export function createRuntime(store, feedback) {
         const sparkles = this.add.graphics().setDepth(3);
         const drawCraftContact = phase => {
           // Four hand-cut poses. The tip meets the visible jade at (355, 307).
-          const lift = [0, -2, -4, -1][phase];
+          const pose = workshopPose(phase);
+          const lift = pose.lift;
           tool.clear();
           tool.fillStyle(0x243b29); tool.fillRect(354, 286 + lift, 9, 7);
           tool.fillStyle(0x587447); tool.fillRect(354, 286 + lift, 7, 3);
@@ -111,12 +113,12 @@ export function createRuntime(store, feedback) {
           tool.fillStyle(0xbabfac); tool.fillRect(358, 297 + lift, 2, 4);
           tool.fillStyle(0xe4dfbc); tool.fillRect(358, 297 + lift, 1, 3);
           sparkles.clear();
-          if (phase === 0) {
+          if (pose.impact) {
             sparkles.fillStyle(0xd4e7ad, .9);
             for (const [x, y] of [[350, 305], [361, 307], [358, 312]]) sparkles.fillRect(x, y, 2, 1);
             sparkles.fillStyle(0x6eab77, .8); sparkles.fillRect(347, 310, 2, 2);
           }
-          master.setY(262 + (phase === 0 ? 1 : 0));
+          master.setY(262 + pose.masterY);
         };
         drawCraftContact(0);
         if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {

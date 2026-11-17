@@ -49,4 +49,4 @@ Notion Agent Operating Guide 的检索结果存在，但当前连接对页面正
 ## 追加核验（2026-11-18 收尾补强）
 
 - `scripts/generate-mine-atlas.mjs` 生成确定性 80×64 RGBA 矿洞图集，按 5 类材质 × 4 个变体提供 20 帧；覆盖原先 5 帧占位图，保留相同加载路径与存档兼容。
-- `src/asset-integrity.test.js` 锁定矿洞图集 20 帧与矿工图集 18 帧边界；当前 `npm test` 为 144/144，432/432 加工矩阵保持通过。
+- `src/asset-integrity.test.js` 锁定矿洞图集 20 帧与矿工图集 18 帧边界；`src/workshop-pose.test.js` 锁定工坊四相接触点；当前 `npm test` 为 146/146，432/432 加工矩阵保持通过。
