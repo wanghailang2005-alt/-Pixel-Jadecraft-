@@ -9,6 +9,7 @@ import { PauseGate } from './pause.js';
 import { createMining } from './mining.js';
 import { preloadMine, createMineScene } from './mine-scene.js';
 import { WORKSHOP_CONTACT, workshopPose } from './workshop-pose.js';
+import { GALLERY_SPOTLIGHTS, spotlightFrame } from './gallery-lighting.js';
 
 export function createRuntime(store, feedback) {
   let mining = null;
@@ -141,6 +142,26 @@ export function createRuntime(store, feedback) {
       } else if (key === 'gallery' && this.textures.exists('gallery-room')) {
         this.add.image(480, 270, 'gallery-room').setDisplaySize(960, 540);
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const spotlights = this.add.graphics().setDepth(1.1);
+        const drawSpotlights = phase => {
+          spotlights.clear();
+          spotlights.setAlpha(spotlightFrame(phase));
+          for (const { x, top, bottom, width } of GALLERY_SPOTLIGHTS) {
+            // Stepped polygons read as a cone at the game's pixel scale and
+            // leave the display case glass and DOM labels unobscured.
+            spotlights.fillStyle(0xf3dfad, .08);
+            spotlights.fillPoints([
+              { x: x - 7, y: top }, { x: x + 7, y: top },
+              { x: x + width, y: bottom }, { x: x - width, y: bottom },
+            ], true);
+            spotlights.fillStyle(0xffe7ad, .11);
+            spotlights.fillPoints([
+              { x: x - 4, y: top + 3 }, { x: x + 4, y: top + 3 },
+              { x: x + width - 18, y: bottom - 9 }, { x: x - width + 18, y: bottom - 9 },
+            ], true);
+          }
+        };
+        drawSpotlights(0);
         if (!reducedMotion) {
           const motes = Array.from({ length: 15 }, (_, index) => this.add.rectangle(
             180 + (index * 61) % 600, 145 + (index * 37) % 210,
@@ -152,10 +173,15 @@ export function createRuntime(store, feedback) {
             mote.x += Math.sin((this.time.now + index * 160) / 1250) * .05;
             if (mote.y < 126) mote.y = 344 + (index % 5) * 5;
           }) });
+          let phase = 0;
+          this.time.addEvent({ delay: 220, loop: true, callback: () => {
+            phase = (phase + 1) % 4;
+            drawSpotlights(phase);
+          } });
         }
       } else drawScene(this.add.graphics(), key);
       if (key === 'gallery') {
-        this.exhibitLayer = this.add.container(0, 0);
+        this.exhibitLayer = this.add.container(0, 0).setDepth(2);
         this.renderExhibits();
       }
       document.querySelector('#game').dataset.scene = key;
