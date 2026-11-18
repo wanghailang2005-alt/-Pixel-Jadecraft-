@@ -5,6 +5,7 @@ import { evaluateExhibition, evaluateCommission } from './commissions.js';
 import { mountStoryCuration } from './story-view.js';
 import { MOTIFS } from './motifs.js';
 import { downloadBlob } from './export.js';
+import { memorialCardLayout } from './memorial-card.js';
 
 const SHAPES = { bi: '玉璧', fish: '玉鱼佩', seal: '玉印' };
 const MATERIALS = { nephrite: '和田玉', jadeite: '翡翠' };
@@ -200,8 +201,7 @@ export function drawMemorialCard(canvas, piece) {
   const text = (value, x, y, size, color, align = 'left') => {
     c.font = `${size}px "Fusion Pixel", serif`; c.fillStyle = color; c.textAlign = align; c.textBaseline = 'top'; c.fillText(value, x, y);
   };
-  const finish = piece.artisan?.finish === 'satin' ? '温润柔光' : '局部亮面';
-  const blessing = [...(piece.blessing ?? '')].slice(0, 24);
+  const layout = memorialCardLayout(piece);
 
   rect(0, 0, width, height, '#10231e');
   rect(12, 12, width - 24, height - 24, '#d9bd83');
@@ -211,6 +211,10 @@ export function drawMemorialCard(canvas, piece) {
   for (const [x, y] of [[30, 30], [width - 50, 30], [30, height - 50], [width - 50, height - 50]]) {
     rect(x, y, 20, 4, '#b99156'); rect(x, y, 4, 20, '#b99156'); rect(x + 8, y + 8, 8, 4, '#6a4930');
   }
+  const cloud = (x, y) => {
+    for (const [dx, dy, w, h, color] of [[0, 8, 24, 4, '#b99156'], [4, 4, 8, 4, '#b99156'], [12, 0, 8, 4, '#c9a468'], [20, 4, 8, 4, '#b99156'], [8, 12, 16, 4, '#6a4930']]) rect(x + dx, y + dy, w, h, color);
+  };
+  cloud(72, 28); cloud(width - 102, 28); cloud(72, height - 52); cloud(width - 102, height - 52);
   for (let x = 52; x < width - 52; x += 28) { rect(x, 34, 12, 2, '#8b6b43'); rect(x, height - 38, 12, 2, '#8b6b43'); }
   // A stepped meander keeps the export legible at thumbnail size.
   for (let x = 54; x < width - 58; x += 20) {
@@ -250,18 +254,21 @@ export function drawMemorialCard(canvas, piece) {
   c.strokeStyle = '#9a6f42'; c.lineWidth = 3; c.strokeRect(450, 84, 214, 352);
   text('一器一心意', 557, 102, 24, '#563522', 'center'); line(474, 138, 640, 138, '#b38a53', 2);
   text('材质', 474, 158, 14, '#805a37'); text(`${MATERIALS[piece.material] ?? '玉材'} · ${SHAPES[piece.shape] ?? '玉器'}`, 474, 181, 17, '#493323');
-  text('工艺', 474, 218, 14, '#805a37'); text(`${finish} · 三阶段手作`, 474, 241, 17, '#493323');
+  text('工艺', 474, 218, 14, '#805a37'); text(`${layout.finish} · 三阶手作`, 474, 241, 17, '#493323');
   text('纹样', 474, 278, 14, '#805a37'); text(patternLabel(piece), 474, 301, 15, '#493323');
   text('落款', 474, 338, 14, '#805a37');
-  text(blessing.slice(0, 12).join('') || '（未落款）', 474, 361, 17, '#493323');
-  if (blessing.length > 12) text(blessing.slice(12).join(''), 474, 384, 17, '#493323');
+  if (layout.blessingLines.length) layout.blessingLines.forEach((line, index) => text(line, 474, 360 + index * layout.blessingLineHeight, 15, '#493323'));
+  else text('（未落款）', 474, 360, 15, '#493323');
   // The seal is an export mark derived from the stored seal workflow, never a
   // decorative replacement for the real carved surface.
-  const sealX = 614, sealY = 392, sealColor = piece.artisan?.sealCut === 'relief' ? '#b0473e' : '#8d3e38';
-  rect(sealX, sealY, 36, 36, sealColor); rect(sealX + 4, sealY + 4, 28, 28, '#e7c38f');
-  rect(sealX + 8, sealY + 8, 20, 4, sealColor); rect(sealX + 8, sealY + 8, 4, 20, sealColor);
-  rect(sealX + 20, sealY + 16, 8, 4, sealColor); rect(sealX + 16, sealY + 20, 4, 8, sealColor);
-  text('像素琢玉 · 实作纪念', 557, 414, 12, '#765333', 'center');
+  const sealSize = layout.seal.size, sealX = width - 68 - sealSize / 2, sealY = layout.seal.top;
+  const sealColor = piece.artisan?.sealCut === 'relief' ? '#b0473e' : '#8d3e38';
+  rect(sealX, sealY, sealSize, sealSize, sealColor); rect(sealX + 4, sealY + 4, sealSize - 8, sealSize - 8, '#e7c38f');
+  const glyph = sealSize - 16;
+  rect(sealX + 8, sealY + 8, glyph, 4, sealColor); rect(sealX + 8, sealY + 8, 4, glyph, sealColor);
+  rect(sealX + 8 + Math.floor(glyph * .6), sealY + Math.floor(glyph * .4), Math.max(4, Math.floor(glyph * .4)), 4, sealColor);
+  rect(sealX + Math.floor(glyph * .45), sealY + Math.floor(glyph * .6), 4, Math.max(4, Math.floor(glyph * .35)), sealColor);
+  text('像素琢玉 · 实作纪念', 557, layout.footerTop, 12, '#765333', 'center');
   return { width, height };
 }
 

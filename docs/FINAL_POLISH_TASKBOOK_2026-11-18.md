@@ -224,7 +224,7 @@
 ## 11. 追加视觉补强（2026-11-18）
 
 - `src/museum-art.js` 的馆藏图继续使用确定性代码生成；本轮加入稳定种子材质颗粒、刻纹颗粒和 Canvas 内像素化侧光/内部散射层，未新增来源不明图片。
-- `src/museum-art.test.js` 锁定纹理分类、稳定种子与六槽布局；`workshop-pose.test.js` 锁定桌面接触锚点及放大前倾的人物锚点；`gallery-lighting.test.js` 锁定三展位射灯锚点、DOM 铭牌数据与呼吸帧边界；当前 `npm test` 为 154/154，432/432 加工组合保持通过。
+- `src/museum-art.test.js` 锁定纹理分类、稳定种子与六槽布局；`workshop-pose.test.js` 锁定桌面接触锚点及放大前倾的人物锚点；`gallery-lighting.test.js` 锁定三展位射灯锚点、DOM 铭牌数据与呼吸帧边界；`memorial-card.test.js` 锁定纪念卡雅称、落款分行与印章适配；当前 `npm test` 为 156/156，432/432 加工组合保持通过。
 - 生产预览在 1280×720、1024×768、800×700、640×700 验证观察台；侧光前后 Canvas 采样由 `p005-inspection-1280.png` / `p005-inspection-1280-side.png` 记录。
 - 工坊四尺寸回归同时验证 `WORKSHOP_CONTACT` 锚点下的桌面 AO、桌沿高光、凿尖和玉屑冲击；截图见 `p001-workshop-*.png`。
 - 概念图的英文 HUD、人物插画和完整逐帧重绘仍属于后续美术差距；三展位阶梯像素射灯锥形已接入并完成四尺寸与减弱动效验证，不影响当前功能与核心不变量。
