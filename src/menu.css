@@ -10,5 +10,10 @@
 .landscape-menu-actions button:hover::before, .landscape-menu-actions button:focus-visible::before { content: '◆'; position: absolute; left: 32px; top: 5px; font-size: 10px; color: #d9eaa6; }
 .landscape-menu-actions button:disabled { opacity: .42; transform: none; color: #ccdac3; }
 .landscape-menu-actions button:disabled::before { display: none; }
+.menu-save-note { position: absolute; top: 486px; left: 260px; right: 260px; min-height: 30px; padding: 5px 12px 4px; border: 1px solid #856d48; border-left: 3px solid #b59a60; background: #173329d9; box-shadow: 2px 2px #08151088; color: #bec8ae; text-align: center; font-size: 10px; line-height: 14px; }
+.menu-save-note strong, .menu-save-note span { display: block; }
+.menu-save-note strong { color: #e4d29a; font-size: 11px; letter-spacing: 1px; }
+.menu-save-note span { color: #b4c0a7; }
 .menu-error { position: absolute; bottom: 42px; left: 250px; right: 250px; text-align: center; font-size: 11px; line-height: 1.5; color: #ffe1ad; background: #19332bea; padding: 5px 10px; border: 1px solid #a58d5a; }
 @media (prefers-reduced-motion: reduce) { .landscape-menu-actions button { transition: none; } }
+@media (max-width: 700px) { .menu-save-note { left: 220px; right: 220px; font-size: 9px; } .menu-save-note strong { font-size: 10px; } }

@@ -371,7 +371,7 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
         <nav class="landscape-menu-actions" aria-label="开始游戏">
           ${button('继续旅程', 'continue', '', !store.hasSession)}${button('开启旅程', 'new')}${button('参观玉文化馆', 'museum')}${button('玉器图鉴', 'codex')}${button('学徒手册', 'help')}${button('设置', 'settings')}${button('退出游戏', 'exit')}
         </nav>
-        ${store.error ? `<p class="menu-error" role="status">存档或设置需要处理，请打开“设置”查看。</p>` : ''}
+        ${store.error ? `<p class="menu-error" role="status">存档或设置需要处理，请打开“设置”查看。</p>` : `<p class="menu-save-note" role="status"><strong>◆ ${saveText}</strong><span>${store.hasSession ? '继续旅程会保留上次的工坊进度' : '开启旅程后，先去矿洞寻找第一块玉'}</span></p>`}
       </section>`;
       root.querySelector('.menu-title').append(createMenuLogo());
       if (focusedAction) root.querySelector(`[data-action="${focusedAction}"]`)?.focus({ preventScroll: true });
