@@ -22,30 +22,28 @@
 
 - 工作目录：`E:/Pixel_Jadecraft`
 - 分支：`codex/museum-craft-20261114`
-- 本地 HEAD：`2537d2ce224449b0119b2298ade11235057e32b3`
-- `origin/codex/museum-craft-20261114`：与本地 HEAD 一致
+- 代码基线：`0c0110f68128d8662cede23e47c65c016162c5a6`（`feat: polish shortcut guidance states`）
+- 本地收尾文档：在代码基线之后新增 1 个 `docs: sync final polish baseline` 提交，当前 HEAD 以 `git log` 为准
+- `origin/codex/museum-craft-20261114`：`0c0110f68128d8662cede23e47c65c016162c5a6`，本地还有 1 个未推送提交
 - `origin/main`：`60bf493786e293f6964a88786f5f55432f58aa68`
-- 分支关系：相对 `origin/main` 领先 3 个提交、落后 0 个提交
+- 分支关系：相对 `origin/main` 领先 32 个提交、落后 0 个提交
 - GitHub 远端实时核验已用直连完成；环境变量代理 `127.0.0.1:7890` 不可用，Windows 当前系统代理未启用，后续网络操作先重做代理诊断。
 
 ### 工作区未提交内容
 
-这些内容在任务书建立时已存在，未被本文件改动：
+当前复核发现的未提交内容如下：
 
-- `AGENTS.md`：工作区已有的项目协作规则改动，后续提交不得与本轮收尾文件混提交。
-- `src/runtime.js`：切换到 `workshop-isometric-v2-aligned.png` 与 `master-carver-v2-bent.png`。
-- `src/assets/master-carver-v2-bent.png`
-- `src/assets/workshop-isometric-v2-aligned.png`
-- 根目录现有的 `tmp_*.png`，以及浏览器回归产生的 `.tmp/` 临时文件
+- `.openai/hosting.json`：Sites 托管配置，暂不纳入本项目提交。
+- `tihu-bike.html`：独立单页，暂不纳入本项目提交。
 
-提交前必须单独决定两张 v2 正式素材是否纳入，并为其补来源/许可；所有 `tmp_*.png` 和 `.tmp/` 文件只能移出提交范围或加入明确的临时目录规则。不得把这些文件与任务书一起无检查地提交。
+`.tmp/` 下的浏览器回归文件已被忽略，未进入提交范围。提交时只按明确文件路径暂存项目改动，不移动或删除两个独立残留文件。
 
 ### 已验证结果
 
-- `npm test`：146/146 通过，包含 432 种加工组合矩阵；本轮新增快捷键、导出、正式素材与工坊姿态边界单测。
+- `npm test`：157/157 通过，包含 432 种加工组合矩阵；本轮新增快捷键、导出、正式素材与工坊姿态边界单测。
 - `npm run build`：通过。
 - 构建结果：JS 约 1.69 MB，gzip 约 483.5 KB；Vite 报告首包超过 500 KB。
-- 当前未验收：整套概念图 95% 视觉接近目标、工坊透视与人物姿态、矿洞整屏细节、展厅/鉴赏细节、800×700 小窗逐页体验、正式素材来源记录。
+- 当前剩余事项：概念图逐帧美术差距仍需继续记录；本轮收尾代码、测试和构建已完成，提交前还需完成工作区残留复核与文档基线同步。
 
 ### 设计基线
 

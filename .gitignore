@@ -8,3 +8,5 @@ release/
 UnityEditor/
 *.log
 unity-install.ps1
+.tmp/
+tmp_*.png
