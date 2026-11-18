@@ -14,7 +14,7 @@ import { CREATIVE_COMMISSIONS, evaluateCommission } from './commissions.js';
 import { drawArtisanPiece } from './piece-renderer.js';
 import { MUSEUM_EXHIBITS } from './museum-content.js';
 import { createStoryView } from './story-view.js';
-import { resolveGlobalShortcut } from './shortcuts.js';
+import { resolveGlobalShortcut, shortcutKeyForAction } from './shortcuts.js';
 import { GALLERY_CASES, galleryPlaqueData } from './gallery-lighting.js';
 
 const NAMES = { workshop: '玉作工坊', mine: '青岚矿洞', gallery: '像素数字展厅' };
@@ -105,7 +105,11 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
   workshopTools.setAttribute('aria-label', '游戏导航');
   workshopTools.hidden = true;
   workshopTools.innerHTML = `<div class="workshop-tool-group" role="group" aria-label="行旅"><span>行旅</span>${button('工坊','workshop')+button('矿洞','mine')+button('玉文化馆','museum')+button('我的展厅','gallery')}</div><div class="workshop-tool-group" role="group" aria-label="工艺"><span>工艺</span>${button('鉴赏','inspect')+button('创作','make')+button('落款','customize')+button('旧玉来信','story')+button('行囊 <kbd>B</kbd>','inventory')+button('委托 <kbd>J</kbd>','tasks')}</div><div class="workshop-tool-group" role="group" aria-label="系统">${button('图鉴 <kbd>G</kbd>','codex')+button('设置','settings')+button('主菜单','menu')}</div>`;
-  workshopTools.querySelectorAll('[data-action]').forEach(control => { control.title = `打开${control.textContent.replace(/\s*[B/J/G]$/, '').trim()}`; });
+  workshopTools.querySelectorAll('[data-action]').forEach(control => {
+    control.title = `打开${control.textContent.replace(/\s*[B/J/G]$/, '').trim()}`;
+    const shortcut = shortcutKeyForAction(control.dataset.action);
+    if (shortcut) control.setAttribute('aria-keyshortcuts', shortcut);
+  });
   document.querySelector('.frame-heading').append(workshopTools);
   const workshopWarning = document.createElement('p');
   workshopWarning.className = 'workshop-save-warning';
@@ -381,6 +385,10 @@ export function createInterface(store, materials, taskList, { onOverlayChange = 
       root.querySelector('[data-action="pickaxe"]').setAttribute('aria-label', '挥镐采集');
       root.querySelector('[data-action="inventory"]').setAttribute('aria-label', '打开行囊');
       root.querySelector('[data-action="codex"]').setAttribute('aria-label', '打开图鉴');
+      root.querySelectorAll('[data-action]').forEach(control => {
+        const shortcut = shortcutKeyForAction(control.dataset.action);
+        if (shortcut) control.setAttribute('aria-keyshortcuts', shortcut);
+      });
       if (focusedAction) root.querySelector(`[data-action="${focusedAction}"]`)?.focus({ preventScroll: true });
       return;
     }
