@@ -11,12 +11,12 @@
 ## 改动
 
 - 展柜 Canvas 继续只绘制真实器物像素；名称、材质、工艺、纹样和落款改为 DOM 木铜铭牌，避免中文进入 480×480 Canvas 后被缩放成色块。
-- 铭牌在空展位显示真实的“待选/尚未加工”状态；有作品时显示对应玉材、真实抛光意图（柔光抛磨/局部亮面）和真实纹样来源。
+- 铭牌在空展位显示清晰的“空展位 / 选择作品陈列”状态；有作品时显示对应玉材、真实抛光意图（柔光抛磨/局部亮面）和真实纹样来源。
 - 保留三展位、唯一作品引用、灯光主题、陈列/撤展流程和原有存档兼容。
 
 ## 验证
 
-- `npm test`：137/137 通过，432 种加工组合矩阵通过。
+- `npm test`：157/157 通过，432 种加工组合矩阵通过。
 - `npm run build`：通过。
 - 生产预览通过独立无头 CDP：导入现有有效作品存档，进入“我的展厅 → 布置你的玉展”，在 1280×720、800×700、640×700 截图；三种尺寸均检测到三个 180×180 展柜 Canvas、DOM 展签和陈列/撤展按钮，`document.documentElement.scrollWidth <= innerWidth`。
 - 截图：`.tmp/validation/2026-11-18-final-polish/p003-exhibit-1280x720.png`、`p003-exhibit-800x700.png`、`p003-exhibit-640x700.png`。
@@ -31,4 +31,11 @@
 
 - `src/scenery.js` 的 Phaser 展厅层只保留器物像素；`src/ui.js` 将三展位名称、材质和工艺铭牌放到 DOM，`src/style.css` 维持 800×700 与 640×700 的锐利排版。
 - `src/runtime.js` 增加玻璃边缘反光和低对比度射灯锥形；空展位 DOM 铭牌走查截图为 `.tmp/validation/2026-11-18-final-polish/exp03-gallery-dom-empty-800x700.png`。
-- 追加验证：`npm test` 154/154，432/432 加工矩阵；`npm run build` 通过；`git diff --check` 通过。`gallery-lighting.test.js` 覆盖三展位坐标与铭牌数据。
+- 追加验证：`npm test` 157/157，432/432 加工矩阵；`npm run build` 通过；`git diff --check` 通过。`gallery-lighting.test.js` 覆盖三展位坐标与铭牌数据。
+
+## 2026-11-18 空展位铭牌优化
+
+- 改动：`galleryPlaqueData(null)` 改为“空展位 / 选择作品陈列”；`.gallery-plaque.is-empty` 提高边框、底色和文字对比度。
+- 不变量：保留三展位、空位可管理、成品唯一引用、替换和撤展流程。
+- 验证目标：空展位与有作品铭牌在 800×700、640×700 下均可读，DOM 继续承载文字，Canvas 只承载器物。
+- 实际截图：`.tmp/validation/2026-11-18-final-polish/gallery-empty-status-640x700-main.png`、`gallery-empty-status-800x700-main.png`；DOM 文本核验为“空展位 / 选择作品陈列”。

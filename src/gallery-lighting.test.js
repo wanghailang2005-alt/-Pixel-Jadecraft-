@@ -17,7 +17,7 @@ test('gallery spotlight breathing wraps safely and keeps reduced-motion baseline
 
 test('gallery plaque data keeps labels in the DOM layer and describes real work', () => {
   assert.deepEqual(GALLERY_CASES.map(({ x, y }) => [x, y]), [[320, 310], [480, 380], [640, 310]]);
-  assert.deepEqual(galleryPlaqueData(null), { title: '静候一件玉器', meta: '空展位', finish: '等待陈列' });
+  assert.deepEqual(galleryPlaqueData(null), { title: '空展位', meta: '尚未陈列', finish: '选择作品陈列' });
   assert.deepEqual(galleryPlaqueData({ material: 'jadeite', shape: 'fish', artisan: { finish: 'satin' } }, { jadeite: { name: '翡翠原石' } }), {
     title: '翡翠 · 玉鱼佩', meta: '翡翠 · 玉鱼佩', finish: '柔光抛磨',
   });
