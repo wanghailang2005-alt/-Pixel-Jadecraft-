@@ -1,4 +1,5 @@
 import { compositionPaths, validateMotifs } from './motifs.js';
+import { jadeVariety } from './jade-varieties.js';
 
 /** Persistent, deterministic 2.5D jade work. All saved values are ordinary JSON. */
 export const CRAFT_SIZE = 64;
@@ -31,7 +32,8 @@ function materialFor(input) {
   if (typeof id !== 'string' || !id || id.length > 160) fail();
   const seed = raw.seed ?? seedFor(`${raw.material}:${id}`);
   if (!Number.isInteger(seed) || seed < 0 || seed > 0xffffffff) fail();
-  return { id, material: raw.material, seed };
+  if (raw.variety !== undefined && !jadeVariety(raw)) fail();
+  return { id, material: raw.material, seed, ...(raw.variety ? { variety: raw.variety } : {}) };
 }
 
 function layoutFor(input = {}) {
@@ -112,12 +114,24 @@ function guidePaths(shape, pattern) {
   return [points];
 }
 
+const varietyBands = {
+  dushan: (x, y, ribbon) => ribbon + .10 * Math.sin(x * 15 + y * 9) > .03,
+  sugar: (x, y) => Math.hypot(x + .12, y + .09) < .34,
+  speckle: (x, y, ribbon, phase) => Math.sin(x * 19 + y * 6 + phase) + Math.cos(y * 18 - x * 9) > .55,
+  green: (x, y, ribbon) => Math.abs(ribbon) < .035,
+  pink: (x, y, ribbon) => Math.sin(ribbon * 28) > .55,
+  russet: (x, y) => Math.hypot(x - .09, y + .08) > .36,
+};
+
 function geometry(draft) {
   const key = JSON.stringify([draft.material, draft.shape, draft.layout, draft.pattern, draft.motifs, draft.sealFace]);
   if (cache.has(key)) return cache.get(key);
   const target = Array(LENGTH).fill(0), original = Array(LENGTH).fill(0), guide = Array(LENGTH).fill(0);
   const colors = Array(LENGTH), crack = Array(LENGTH).fill(0), colorBand = Array(LENGTH).fill(0);
   const phase = (draft.material.seed % 997) / 997 * Math.PI * 2;
+  const variety = draft.material.variety;
+  const jadePalette = jadeVariety(draft.material)?.palette;
+  const varietyBand = varietyBands[variety];
   const spot = { x: .12 * Math.sin(phase), y: .12 * Math.cos(phase * 1.7), radius: .045 };
   const paths = (draft.motifs ? compositionPaths(draft.motifs) : guidePaths(draft.shape, draft.pattern))
     .map(path => path.map(point => worldPoint(point.x, point.y, draft.layout)));
@@ -128,11 +142,13 @@ function geometry(draft) {
     original[index] = Number(Math.hypot(px, py) < .475 + .006 * Math.sin(angle * 5 + phase));
     const local = localPoint(x + .5, y + .5, draft.layout);
     target[index] = Number(Boolean(original[index]) && insideShape(local.x, local.y, draft.shape, draft.sealFace));
-    const band = Math.abs(px * .72 + py * .45 - .075 * Math.sin(py * 9 + phase)) < .075;
-    const darkSpot = Math.hypot(px - spot.x, py - spot.y) < spot.radius;
+    const ribbon = px * .72 + py * .45 - .075 * Math.sin(py * 9 + phase);
+    const band = varietyBand?.(px, py, ribbon, phase) ?? Math.abs(ribbon) < .075;
+    const darkSpot = Math.hypot(px - spot.x, py - spot.y) < spot.radius
+      || (variety === 'speckle' || variety === 'spinach') && (x * 113 ^ y * 191) % 29 < 2;
     colorBand[index] = Number(band);
     crack[index] = Number(original[index] && px > .25 && Math.abs(py - .12 - .25 * px - .013 * Math.sin(px * 40 + phase)) < .008);
-    const palette = draft.material.material === 'nephrite'
+    const palette = jadePalette ? jadePalette[darkSpot ? 2 : band ? 1 : 0] : draft.material.material === 'nephrite'
       ? darkSpot ? [100, 123, 85] : band ? [214, 221, 176] : [169, 190, 146]
       : darkSpot ? [35, 88, 66] : band ? [126, 191, 130] : [65, 134, 101];
     const grain = ((x * 13 + y * 7 + draft.material.seed % 23) % 9) - 4;

@@ -18,7 +18,7 @@ test('craft tool shortcuts map one-based keys to the current tool list', () => {
 
 test('shortcut metadata exposes only real action keys for accessible hints', () => {
   assert.equal(shortcutKeyForAction('inventory'), 'B');
-  assert.equal(shortcutKeyForAction('pickaxe'), 'E');
+  assert.equal(shortcutKeyForAction('pickaxe'), null);
   assert.equal(shortcutKeyForAction('close'), null);
   assert.equal(shortcutKeyForAction(), null);
 });

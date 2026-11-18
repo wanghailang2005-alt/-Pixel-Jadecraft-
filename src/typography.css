@@ -51,12 +51,6 @@ dialog.settings-panel header h2 {
   font-size: 24px;
   line-height: 24px;
 }
-.landscape-menu-actions button {
-  font-size: 24px;
-  height: 25px;
-  line-height: 25px;
-  letter-spacing: 0;
-}
 .reference-title,
 .reference-motto,
 .polish-heading h1,
@@ -77,13 +71,6 @@ dialog.settings-panel header h2 {
 }
 .reference-scene-tag h2,
 .reference-jade-list button span,
-.reference-tabs button,
-.reference-patterns button,
-.reference-preview h3,
-.reference-preview p,
-.reference-vitals,
-.reference-level,
-.reference-craft-actions button,
 .mine-controls {
   font-size: 12px;
 }
@@ -102,3 +89,10 @@ dialog.settings-panel header h2 {
     transform: translateX(2px);
   }
 }
+
+.empty-next-step { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 12px; background: #223b2e; border: 2px solid #9a8050; color: #f0dbab; font-size: 14px; }
+.empty-next-step p { margin: 0; }
+dialog > header [data-action="close"] { min-height: 34px; padding-inline: 12px; border: 1px solid #997249; background: #41291e; color: #f3dcad; font-size: 14px; }
+dialog .dialog-actions .quiet, dialog .dialog-actions [data-action="close"] { border-color: #9c784e; background: #463125; color: #e9d5ab; }
+dialog button:disabled { box-shadow: none; cursor: default; }
+dialog button:focus-visible, dialog summary:focus-visible { outline: 2px solid #f6d18b; outline-offset: 3px; }

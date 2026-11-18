@@ -42,3 +42,18 @@
 - 不变量：保留原有加工入口、纹样选择、真实进度、存档状态和 DOM 无遮挡布局。
 - 生产预览四尺寸截图：`workshop-title-1280x720.png`、`workshop-title-1024x768.png`、`workshop-title-800x700.png`、`workshop-title-640x700.png`，均位于 `.tmp/validation/2026-11-18-final-polish/`，未进入 Git。
 - 结果：四尺寸均可读，主标题与任务书要求一致，窄宽窗口未出现溢出或按钮遮挡。
+
+## 2026-11-18 任务包 2 · 工坊人物与桌面样板
+
+- 师傅在场景像素坐标中重新绘制。近脚踩在桌后左侧的地砖上，远腿由从原背景取样的工作台前景遮住。肩、背和腰形成向桌面倾下的轮廓，一手按稳玉璧，另一手握凿。凿尖在落凿相位接触玉璧上缘，抬凿期间脚和稳玉手的位置固定。减弱动效时显示落凿相位。
+- 样板用 1–2 场景像素处理发丝、袖褶、指节和玉边细纹。主亮部朝左上灯光，衣褶暗面偏冷，玉璧用浅绿亮边、青绿厚度、深色孔壁和贴桌接触阴影区分材质。人物与玉料为 `src/workshop-art.js` 内手工绘制的 Phaser 图形，木纹前景取自仓库原有 `workshop-isometric-v1.png`。
+- 从工作台进入玉稿时，开始按钮位于弹窗页脚。校验查找范围改为整个弹窗，使工作台可以进入琢形、保存并返回。渲染层不读写存档，现有草稿使用相同的姿态与遮挡。
+- `node --test src/workshop-pose.test.js` 4/4 通过。工坊绘制改动后的 `npm test -- --test-reporter=dot` 145/145 通过。页脚按钮修复后，`node --test src/creative-integration.test.js src/workshop-pose.test.js` 14/14 通过，`npm run build` 通过。
+- 独立 Chrome 生产预览启用减弱动效。800×700 从开启旅程进入工坊，确认空草稿进度条隐藏。640×700 经过师傅赠玉、打开鉴赏、进入玉璧琢形、保存返回、刷新和继续旅程，确认草稿进度恢复。两尺寸工坊首屏均显示右栏入口和底部对白，无横向溢出。两图均检查了近脚落在石地、躯干从桌后俯向桌面、手指稳玉与凿尖接触。
+- 截图保存于 `.tmp/validation/2026-11-18-final-polish/`，文件为 `workshop-master-800x700.png`、`workshop-master-640x700.png`。
+
+## 2026-11-18 站姿与桌沿复验
+
+- 老师傅沿用 `master-carver-v1.png` 的五官、发髻、头颈和衣领。胸腰在场景坐标内自然微倾，双脚落点位于桌后，桌台前景遮住腰下衣袍和双脚。前伸的双臂单独叠在桌上，一手按青玉璧，另一手在落凿相位把凿尖抵在璧面。
+- 左侧鉴赏标签居中显示「查看原石特征」。800×700 下工艺栏四个按钮同排，右侧无草稿时收合预览区，有草稿时恢复预览和进度。
+- `node --test src/workshop-pose.test.js src/creative-integration.test.js` 14/14，`npm run build` 通过。独立 Chrome 生产预览检查新档、赠玉、进入琢形、保存返回和刷新继续。800×700 减弱动效截图为 `.tmp/validation/2026-11-18-final-polish/workshop-master-upright-800x700.png`。

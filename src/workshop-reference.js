@@ -1,3 +1,4 @@
+import { workshopNextStep, workshopMaterials } from './state.js';
 import { CODEX, icon } from './icons.js';
 import './workshop-reference.css';
 import { drawArtisanPiece } from './piece-renderer.js';
@@ -15,8 +16,8 @@ const JADE_TYPES = [
 ];
 const PATTERNS = ['cloud', 'dragon', 'grain'];
 const PATTERN_NAMES = { cloud: '云纹', dragon: '龙纹', grain: '谷纹' };
-const TOOLS = ['magnifier', 'scales', 'pickaxe', 'chisel'];
-const TOOL_NAMES = { magnifier: '观玉', scales: '行囊', pickaxe: '寻玉', chisel: '琢玉' };
+const TOOLS = ['magnifier', 'scales', 'chisel'];
+const TOOL_NAMES = { magnifier: '观玉', scales: '行囊', chisel: '琢玉' };
 const DEFAULT_DIALOGUE = [
   '琢玉之要，在于听懂玉石的心声。',
   '细看石中纹理，你想让它化作怎样的纹样？',
@@ -128,8 +129,8 @@ export function createWorkshopReference({ onAction = () => {}, getState = () => 
     <div class="reference-motto">因材施艺</div>
     <section class="reference-panel reference-player" aria-labelledby="player-hud-title">${corners()}<h2 id="player-hud-title" class="reference-panel-title">学徒状态</h2><div class="reference-vitals"><div>原石： <b>0</b> / 12</div><div>作品： <b>0</b> 件</div><div>灵感： <b>0</b> 则</div></div><div class="reference-master-portrait master-portrait" aria-label="老师傅头像"></div><span class="reference-level">首展：0 / 3</span></section>
     <section class="reference-panel reference-inventory" aria-labelledby="inventory-title">${corners()}<h2 id="inventory-title" class="reference-panel-title">玉材与图鉴</h2><div class="reference-tabs" role="tablist" aria-label="玉材与图鉴"><button role="tab" id="jade-types-tab" data-tab="jade" aria-controls="reference-jade-list" aria-selected="true">玉材种类</button><button role="tab" id="tables-tab" data-tab="tables" aria-controls="reference-codex-list" aria-selected="false">器物图鉴</button></div><div class="reference-jade-list" id="reference-jade-list" role="tabpanel" aria-labelledby="jade-types-tab">${JADE_TYPES.map((jade, index) => `<button data-jade="${jade.id}" aria-pressed="${jade.id === 'green'}"><canvas width="32" height="32" data-bead="${jade.id}" aria-hidden="true"></canvas><span>${index + 1}. ${jade.name}</span></button>`).join('')}</div><div class="reference-codex-list" id="reference-codex-list" role="tabpanel" aria-labelledby="tables-tab" hidden>${CODEX.map(item => `<button data-codex="${item.id}" title="${item.name}">${icon(item.id)}<span>${item.name}</span></button>`).join('')}</div><div class="reference-tools" aria-label="工坊工具">${TOOLS.map(tool => `<button data-tool="${tool}" title="${TOOL_NAMES[tool]}" aria-label="${TOOL_NAMES[tool]}" aria-pressed="${tool === 'magnifier'}"><canvas width="32" height="32" data-tool-icon="${tool}" aria-hidden="true"></canvas><span>${TOOL_NAMES[tool]}</span></button>`).join('')}</div></section>
-    <section class="reference-panel reference-crafting" aria-labelledby="crafting-title">${corners()}<h2 id="crafting-title" class="reference-panel-title"><small class="reference-panel-kicker">快捷预设</small><span>琢玉成器</span></h2><div class="reference-preview"><h3>我的玉稿</h3><canvas width="32" height="32" data-preview aria-label="当前玉稿预览"></canvas><p>玉璧</p></div><div class="reference-patterns" aria-label="雕刻纹样">${PATTERNS.map(pattern => `<button data-pattern="${pattern}" aria-pressed="${pattern === 'dragon'}"><canvas width="32" height="32" data-pattern-icon="${pattern}" aria-hidden="true"></canvas><span>${PATTERN_NAMES[pattern]}</span></button>`).join('')}</div><div class="reference-progress" role="progressbar" aria-label="加工进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div data-progress-fill></div><span data-progress-label>加工进度：0%</span></div><div class="reference-craft-actions"><button data-reference="generate" class="reference-generate">开始创作</button><button data-reference="back" class="reference-back">观名作</button></div></section>
-    <section class="reference-scene-tag reference-raw"><h2>鉴赏台 · 选择玉料</h2><div><button data-reference="raw-white" title="点击前往鉴赏台 · 和田玉"><canvas width="32" height="32" data-raw="white" aria-hidden="true"></canvas></button><button data-reference="raw-green" title="点击前往鉴赏台 · 翡翠"><canvas width="32" height="32" data-raw="green" aria-hidden="true"></canvas></button></div><p>点击前往鉴赏　和田玉 / 翡翠</p></section>
+    <section class="reference-panel reference-crafting" aria-labelledby="crafting-title">${corners()}<h2 id="crafting-title" class="reference-panel-title"><small class="reference-panel-kicker">快捷预设</small><span>琢玉成器</span></h2><div class="reference-preview" hidden><h3>当前草稿</h3><canvas width="32" height="32" data-preview aria-label="当前玉稿预览"></canvas><p></p></div><div class="reference-patterns" aria-label="雕刻纹样">${PATTERNS.map(pattern => `<button data-pattern="${pattern}" aria-pressed="${pattern === 'dragon'}"><canvas width="32" height="32" data-pattern-icon="${pattern}" aria-hidden="true"></canvas><span>${PATTERN_NAMES[pattern]}</span></button>`).join('')}</div><div class="reference-progress" role="progressbar" aria-label="加工进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div data-progress-fill></div><span data-progress-label>加工进度：0%</span></div><div class="reference-craft-actions"><button data-reference="generate" class="reference-generate">开始创作</button></div></section>
+    <section class="reference-scene-tag reference-raw"><h2>查看原石特征</h2><div><button data-reference="raw-white" title="点击前往鉴赏台 · 和田玉"><canvas width="32" height="32" data-raw="white" aria-hidden="true"></canvas></button><button data-reference="raw-green" title="点击前往鉴赏台 · 翡翠"><canvas width="32" height="32" data-raw="green" aria-hidden="true"></canvas></button></div></section>
     <button class="reference-scene-tag reference-bench" data-reference="bench" aria-label="玉雕工作台，开始或继续创作">玉雕<br>工作台</button>
     <section class="reference-scene-tag reference-finished"><h2>成品陈列</h2><div data-finished-shelf></div><p>成品架</p></section>
     <button class="reference-dialogue" data-reference="dialogue" aria-label="师傅对话，点击继续">${corners()}<span class="reference-dialogue-line"><b>老师傅：</b> <span data-dialogue-first></span></span><span class="reference-dialogue-line" data-dialogue-second></span><span class="reference-dialogue-next" aria-hidden="true">▼</span></button>
@@ -144,7 +145,6 @@ export function createWorkshopReference({ onAction = () => {}, getState = () => 
   let dialogue = [...DEFAULT_DIALOGUE];
   let dialogueChars = 0;
   let dialogueElapsed = 0;
-  let dialogueIndex = 0;
   let frame = null;
   let lastTime = null;
   const pauseReasons = new Set();
@@ -169,7 +169,6 @@ export function createWorkshopReference({ onAction = () => {}, getState = () => 
     element.querySelector('[data-progress-fill]').style.width = `${percent}%`;
     element.querySelector('[data-progress-label]').textContent = `加工进度：${percent}%`;
     element.querySelector('.reference-progress').setAttribute('aria-valuenow', percent);
-    drawIcon(element.querySelector('[data-preview]'), 'bi', currentJade(), selectedPattern, progress / 100);
   }
   function updateShelf() {
     const shelf = element.querySelector('[data-finished-shelf]');
@@ -183,7 +182,8 @@ export function createWorkshopReference({ onAction = () => {}, getState = () => 
       if(piece.artisan)drawArtisanPiece(canvas.getContext('2d'),piece.artisan,{size:32});
       else drawIcon(canvas,piece.shape==='bi'?'bi':'shelf-fish',JADE_TYPES[piece.material==='nephrite'?0:1],piece.pattern);
     });
-    element.querySelector('.reference-finished p').textContent=pieces.length?'我的作品':'名作样本';
+    element.querySelector('.reference-finished h2').textContent = pieces.length ? '成品陈列' : '示例预览';
+    element.querySelector('.reference-finished p').textContent = pieces.length ? '我的作品' : '名作样本';
   }
   function updateSelection() {
     const state = getState();
@@ -191,7 +191,9 @@ export function createWorkshopReference({ onAction = () => {}, getState = () => 
       progress = state.crafting?.progress ?? 0;
       element.querySelector('.reference-vitals').innerHTML = `<div>原石： <b>${state.inventory.length}</b> / 12</div><div>作品： <b>${state.pieces.length}</b> 件</div><div>灵感： <b>${state.museum?.inspirations.length ?? 0}</b> 则</div>`;
       element.querySelector('.reference-level').textContent = `首展：${state.exhibits.filter(Boolean).length} / 3`;
-      element.querySelector('[data-reference="generate"]').textContent = state.crafting ? '继续创作' : '开始创作';
+      const next = workshopNextStep(state);
+      element.querySelector('[data-reference="generate"]').textContent = next.label;
+      element.querySelector('[data-reference="dialogue"]').setAttribute('aria-label', `师傅对话：${next.label}`);
       element.querySelector('.reference-progress').hidden = !state.crafting;
     }
 
@@ -207,13 +209,17 @@ export function createWorkshopReference({ onAction = () => {}, getState = () => 
     element.querySelector('[data-reference="generate"]').disabled = false;
     element.classList.toggle('is-generating', false);
     updateProgress(); updateShelf();
-    const artwork = state?.crafting?.artisan ?? state?.pieces.at(-1)?.artisan;
-    element.querySelector('.reference-preview p').textContent = `${PATTERN_NAMES[selectedPattern]} · 玉璧`;
-    if(artwork) {
-      const canvas=element.querySelector('[data-preview]');const context=canvas.getContext('2d');
-      context.clearRect(0,0,32,32);drawArtisanPiece(context,artwork,{size:32});
-      element.querySelector('.reference-preview p').textContent = ({bi:'玉璧',fish:'玉鱼佩',seal:'玉印'})[artwork.shape];
-    }
+    const draft = state?.crafting;
+    const preview = element.querySelector('.reference-preview');
+    preview.hidden = !draft?.shape;
+    if (!draft?.shape) return;
+    const canvas = preview.querySelector('canvas');
+    if (draft.artisan) {
+      const context = canvas.getContext('2d');
+      context.clearRect(0, 0, 32, 32);
+      drawArtisanPiece(context, draft.artisan, { size: 32 });
+    } else drawIcon(canvas, draft.shape, JADE_TYPES[draft.material === 'jadeite' ? 1 : 0], selectedPattern, progress / 100);
+    preview.querySelector('p').textContent = ({ bi: '玉璧', fish: '玉鱼佩', seal: '玉印' })[draft.shape];
   }
   function tick(now) {
     frame = null;
@@ -243,18 +249,18 @@ export function createWorkshopReference({ onAction = () => {}, getState = () => 
     }
     if (button.dataset.tool) {
       selectedTool = button.dataset.tool; updateSelection();
-      onAction(({magnifier:'inspect',scales:'inventory',pickaxe:'mine',chisel:'make'})[selectedTool]);
+      onAction(({magnifier:'inspect',scales:'inventory',chisel:'make'})[selectedTool]);
     }
     if (button.dataset.pattern) { selectedPattern = button.dataset.pattern; updateSelection(); announce(`已选择${PATTERN_NAMES[selectedPattern]}。`); }
     if (button.dataset.tab) { activeTab = button.dataset.tab; updateSelection(); }
     if (button.dataset.codex) onAction('codex');
     const action = button.dataset.reference;
-    if (action === 'generate') {
+    if (action === 'generate' || action === 'dialogue') {
+      const state = getState();
+      if (!state) return;
+      const next = workshopNextStep(state);
       const material = selectedJade === 'white' ? 'nephrite' : 'jadeite';
-      onAction('make', { pattern: selectedPattern, materialId:getState()?.inventory.find(p=>p.material===material)?.id });
-    }
-    if (action === 'back') {
-      onAction('museum');
+      onAction(next.action, { pattern: selectedPattern, materialId: workshopMaterials(state).find(item => item.material === material)?.id });
     }
     if (action === 'bench') onAction('craft');
     if (action === 'raw-white' || action === 'raw-green') {
@@ -262,13 +268,6 @@ export function createWorkshopReference({ onAction = () => {}, getState = () => 
       onAction('inspect');
     }
     if (action === 'shelf') onAction('museum');
-    if (action === 'dialogue') {
-      if (dialogueChars < dialogue.join('').length) { dialogueChars = dialogue.join('').length; updateDialogue(); }
-      else {
-        dialogueIndex = (dialogueIndex + 1) % 2;
-        say(dialogueIndex ? ['先选玉材，再为它挑选合适的纹样。', '先看名作，再到工作台留下自己的刻痕。'] : [...DEFAULT_DIALOGUE]);
-      }
-    }
   });
   element.addEventListener('keydown', event => {
     if (!event.target.matches('[data-tab]') || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
@@ -288,20 +287,8 @@ export function createWorkshopReference({ onAction = () => {}, getState = () => 
   function updateGuidance() {
     const state = getState();
     if (!state) return;
-    let lines;
-    if (!state.inventory.length && !state.pieces.length && !state.crafting) {
-      lines = ['先去青岚矿洞，寻一块属于你的玉。', '带回工坊，我们一起观察石中的纹理。'];
-    } else if (state.observations < 3) {
-      lines = ['有了原石，先在鉴赏台细看它的模样。', '移动灯光看色带，把观察带进你的玉稿。'];
-    } else if (state.crafting) {
-      lines = ['工作台上的玉器，正等你继续琢磨。', '点“创作”接着做，松开工具就会保存。'];
-    } else if (!['bi', 'fish', 'seal'].every(shape => state.pieces.some(piece => piece.shape === shape))) {
-      lines = ['识玉之后，便可以动手琢玉成器。', '玉璧、玉鱼佩与玉印，各有一番意趣。'];
-    } else if (state.exhibits.filter(Boolean).length < 3) {
-      lines = ['三器已成，为它们留下一句心意吧。', '点“落款”，再去展厅布置你的首展。'];
-    } else {
-      lines = ['三器齐备，温润成展。你已走完首展之约。', '继续探索，或把作品图片留作纪念吧。'];
-    }
+    const step = workshopNextStep(state);
+    const lines = [step.hint, `下一步：${step.label}`];
     const next = lines.join('');
     if (next !== guidance) { guidance = next; say(lines); }
   }
@@ -317,7 +304,7 @@ export function createWorkshopReference({ onAction = () => {}, getState = () => 
     },
     reset() {
       selectedJade = 'green'; selectedPattern = 'dragon'; selectedTool = 'magnifier'; activeTab = 'jade'; progress = 0;
-      dialogueIndex = 0; lastTime = null;
+      lastTime = null;
       guidance = '';
       updateShelf(); updateSelection(); say([...DEFAULT_DIALOGUE]);
     },

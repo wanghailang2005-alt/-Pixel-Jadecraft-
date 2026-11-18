@@ -12,7 +12,7 @@ export const MUSEUM_ROOMS = Object.freeze([
   { id: 'materials', title: '山川藏玉', subtitle: '认识玉材', description: '观察颜色、结构与天然纹理，让一块石头先告诉你它的特点。' },
   { id: 'heritage', title: '千年玉事', subtitle: '历代名作', description: '从古老的玉龙到山水玉雕，沿着器物的形状寻找它们留下的故事。' },
   { id: 'masters', title: '匠心天工', subtitle: '大师与集体创作', description: '看看匠人怎样顺着玉色安排山川、花叶和云龙，把观察带回自己的工作台。' },
-  { id: 'studio', title: '我的玉展', subtitle: '你的原石与作品', description: '收藏亲手采集的原石，陈列自己的作品，为每一次取舍写下展签。' },
+  { id: 'studio', title: '我的收藏', subtitle: '你的原石与作品', description: '查看原石与全部成品。要布置三个正式展位，请前往我的展厅。' },
 ]);
 
 const ORIGINAL_MUSEUM_EXHIBITS = [
@@ -110,7 +110,7 @@ const ORIGINAL_MUSEUM_EXHIBITS = [
     summary: '深绿部分化作菜叶，白色部分成为菜梗，天然颜色和材料特点一起进入造型。',
     story: '工匠将白色部位的裂痕与杂质融入白菜茎部的形象，菜叶上的昆虫又增添田园气息。它原先是宫殿陈设盆景的一部分。',
     lookFor: ['白梗与绿叶的分界', '层层包裹的叶片', '叶端的小昆虫'],
-    technique: { id: 'borrow-imperfection', name: '借瑕成趣', hint: '创作练习：把浅色裂纹借作叶脉或水纹，让材料特点成为设计的一部分。' },
+    technique: { id: 'borrow-imperfection', name: '顺色取形', hint: '创作练习：白菜的绿叶与白梗顺着原有的色界分开。沿你的色带移动纸样，让浅色顺着鱼背或穿过云纹，再比较留下了哪一段。' },
     shape: 'cabbage', palette: ['#245337', '#76A766', '#E7E5C8'],
     source: { title: '国立故宫博物院 · 翠玉白菜', url: 'https://digitalarchive.npm.gov.tw/Collection/Detail/3?dep=U' },
     sourceStatus: '已核对博物馆原文；文字来源标注CC BY 4.0',

@@ -1,3 +1,4 @@
+import { workshopMaterials } from './state.js';
 import { PolishingSurface, SURFACE_SIZE, FINISH_THRESHOLD } from './polishing.js';
 import './crafting.css';
 
@@ -78,7 +79,7 @@ export function createCraftingView({ store, show, button, notify = () => {} }) {
     const crafting = store.state.crafting;
     if (!crafting) { showMaterials(); return; }
     if (!MATERIAL_NAMES[crafting.material] || !STAGES[crafting.step] || !SHAPE_NAMES[crafting.shape]) {
-      show('继续玉器制作', '<div class="crafting-view"><p>这份早期记录只保存了阶段和百分比，缺少实际玉材信息。可以结束这条记录，再从行囊中选择原石开始制作。</p><button data-crafting-legacy>结束旧记录，重新选玉</button></div>', button('返回工坊', 'close'), true);
+      show('继续玉器制作', '<div class="crafting-view"><p>这份早期记录只保存了阶段和百分比，缺少实际玉材信息。可以结束这条记录，再从工坊玉料库选料开始制作。</p><button data-crafting-legacy>结束旧记录，重新选玉</button></div>', button('返回工坊', 'close'), true);
       document.querySelector('[data-crafting-legacy]').onclick = () => {
         if (store.clearLegacyCrafting()) open();
       };
@@ -88,8 +89,8 @@ export function createCraftingView({ store, show, button, notify = () => {} }) {
   }
 
   function showMaterials() {
-    const materials = store.state.inventory;
-    show('琢玉成器', `<div class="crafting-view crafting-selection"><div class="crafting-selection-art" aria-hidden="true">璧</div><section><h3>从一块原石开始</h3><p>选择玉料，依次完成琢形、雕纹和抛光。每个阶段达到 75% 后，可以继续精修或进入下一步。</p><p>开始制作会取出一块原石，加工进度可以保存并继续。</p>${materials.length ? `<label for="crafting-material">选择玉料</label><select id="crafting-material">${materials.map(item => `<option value="${escape(item.id)}">${MATERIAL_NAMES[item.material] ?? '玉料'}原石</option>`).join('')}</select><label for="crafting-shape">选择器型</label><select id="crafting-shape">${Object.entries(SHAPE_NAMES).map(([id, name]) => `<option value="${id}">${name}</option>`).join('')}</select><button class="primary" data-crafting-start>开始制作</button>` : '<p class="crafting-empty">行囊中还没有原石。先前往矿洞寻一块玉，再回工坊制作。</p>'}</section></div>`, button('返回工坊', 'close'), true);
+    const materials = workshopMaterials(store.state);
+    show('琢玉成器', `<div class="crafting-view crafting-selection"><div class="crafting-selection-art" aria-hidden="true">璧</div><section><h3>从一块原石开始</h3><p>选择玉料，依次完成琢形、雕纹和抛光。每个阶段达到 75% 后，可以继续精修或进入下一步。</p><p>新加工不消耗行囊原石，进度可以保存并继续。</p>${materials.length ? `<label for="crafting-material">选择玉料</label><select id="crafting-material">${materials.map(item => `<option value="${escape(item.id)}">${escape(item.label ?? MATERIAL_NAMES[item.material] ?? '玉料')}原石</option>`).join('')}</select><label for="crafting-shape">选择器型</label><select id="crafting-shape">${Object.entries(SHAPE_NAMES).map(([id, name]) => `<option value="${id}">${name}</option>`).join('')}</select><button class="primary" data-crafting-start>开始制作</button>` : '<p class="crafting-empty">请先与师傅对话领取赠玉，再从工坊选料。</p>'}</section></div>`, button('返回工坊', 'close'), true);
     const dialog = document.querySelector('dialog');
     const start = dialog.querySelector('[data-crafting-start]');
     if (start) start.onclick = () => {
@@ -242,7 +243,7 @@ export function createCraftingView({ store, show, button, notify = () => {} }) {
     root.querySelector('[data-crafting-save]').onclick = () => { endStroke(); if (!changed) dialog.close(); };
     root.querySelector('[data-crafting-cancel]').onclick = () => {
       endStroke();
-      if (store.cancelCrafting()) { notify('原石已返还行囊。'); open(); }
+      if (store.cancelCrafting()) { notify(crafting.reusable ? '已取消加工，行囊原石未消耗。' : '旧稿预留的原石已返还行囊。'); open(); }
       else notify('行囊已满，请先腾出空位，再返还原石。');
     };
     root.querySelector('[data-crafting-next]').onclick = () => {

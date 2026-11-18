@@ -12,7 +12,7 @@ test('legacy placeholder work can be ended explicitly while keeping its inventor
   store.importSave(JSON.stringify(legacy));
   assert.equal(store.clearLegacyCrafting(), true);
   assert.equal(store.state.crafting, null);
-  assert.deepEqual(store.state.inventory, legacy.inventory);
+  assert.deepEqual(store.state.inventory.slice(0, 1), legacy.inventory);
   assert.equal(store.startCrafting('legacy-raw', 'fish'), true);
   assert.equal(store.clearLegacyCrafting(), false);
 });
@@ -25,7 +25,8 @@ function setup() {
   };
   const store = new GameStore(disk);
   store.startNew();
-  store.addMaterial('nephrite', 'raw-1');
+  store.state.inventory.pop();
+  assert.equal(store.addMaterial('nephrite', 'raw-1'), true);
   return { store, disk };
 }
 
@@ -34,14 +35,16 @@ function finishStep(store) {
   assert.equal(store.advanceCrafting(), true);
 }
 
-test('crafting reserves one chosen raw material and duplicate starts preserve its identity', () => {
+test('crafting allocates a unique work ID without consuming the chosen material', () => {
   const { store } = setup();
   const revision = store.sessionRevision;
   assert.equal(store.startCrafting('missing'), false);
   assert.equal(store.startCrafting('raw-1'), true);
-  assert.equal(store.state.inventory.length, 0);
+  assert.equal(store.state.inventory.length, 12);
+  const { materialId } = store.state.crafting;
+  assert.notEqual(materialId, 'raw-1');
   assert.deepEqual(store.state.crafting, {
-    materialId: 'raw-1', material: 'nephrite', shape: 'bi',
+    materialId, material: 'nephrite', shape: 'bi', reusable: true,
     step: 'shape', progress: 0, tool: 'chisel', coverage: '',
   });
   const before = store.exportSave();
@@ -52,7 +55,7 @@ test('crafting reserves one chosen raw material and duplicate starts preserve it
 
 test('crafting mutations require an active workshop and keep unsupported legacy work readable', () => {
   const { store } = setup();
-  store.navigate('mine');
+  store.navigate('gallery');
   assert.equal(store.startCrafting('raw-1'), false);
   store.navigate('workshop');
   assert.equal(store.startCrafting('raw-1'), true);
@@ -61,7 +64,7 @@ test('crafting mutations require an active workshop and keep unsupported legacy 
   assert.equal(store.advanceCrafting(), false);
   assert.equal(store.cancelCrafting(), false);
   store.resume();
-  store.navigate('mine');
+  store.navigate('gallery');
   assert.equal(store.updateCrafting(75, COVERAGE), false);
   assert.equal(store.advanceCrafting(), false);
   assert.equal(store.cancelCrafting(), false);
@@ -102,9 +105,10 @@ test('crafting validates coverage/progress and unchanged updates avoid another d
   assert.equal(disk.getItem(SAVE_KEY), saved);
 });
 
-test('crafting completes three distinct stages and settles one piece using the reserved raw ID', () => {
+test('crafting completes three distinct stages and settles one piece using the draft ID', () => {
   const { store, disk } = setup();
   store.startCrafting('raw-1');
+  const { materialId } = store.state.crafting;
   finishStep(store);
   assert.equal(store.state.crafting.step, 'carve');
   assert.equal(store.state.crafting.progress, 0);
@@ -115,9 +119,9 @@ test('crafting completes three distinct stages and settles one piece using the r
   assert.equal(store.state.crafting.tool, 'cloth');
   finishStep(store);
   assert.equal(store.state.crafting, null);
-  assert.deepEqual(store.state.pieces, [{ id: 'raw-1', material: 'nephrite', shape: 'bi' }]);
+  assert.deepEqual(store.state.pieces, [{ id: materialId, material: 'nephrite', shape: 'bi' }]);
   assert.deepEqual(store.state.discoveries, ['bi']);
-  assert.equal(store.state.inventory.length, 0);
+  assert.equal(store.state.inventory.length, 12);
   const saved = disk.getItem(SAVE_KEY);
   assert.equal(store.advanceCrafting(), false);
   assert.equal(store.cancelCrafting(), false);
@@ -125,7 +129,7 @@ test('crafting completes three distinct stages and settles one piece using the r
   assert.deepEqual(new GameStore(disk).state.pieces, store.state.pieces);
 });
 
-test('crafting resumes persisted progress and cancel restores the same raw material', () => {
+test('crafting resumes persisted progress and cancel retains the same raw material', () => {
   const { store, disk } = setup();
   store.startCrafting('raw-1');
   store.updateCrafting(43, COVERAGE);
@@ -134,14 +138,16 @@ test('crafting resumes persisted progress and cancel restores the same raw mater
   assert.deepEqual(restored.state.crafting, store.state.crafting);
   assert.equal(restored.cancelCrafting(), true);
   assert.equal(restored.state.crafting, null);
-  assert.deepEqual(restored.state.inventory, [{ id: 'raw-1', material: 'nephrite' }]);
+  assert.deepEqual(restored.state.inventory.filter(item => !item.variety), [{ id: 'raw-1', material: 'nephrite' }]);
   assert.equal(restored.cancelCrafting(), false);
 });
 
-test('crafting cancel retains work when the bag is full and works after a slot becomes free', () => {
+test('legacy reserved drafts retain work when a full bag cannot take the stone back', () => {
   const { store } = setup();
-  store.startCrafting('raw-1');
-  for (let index = 0; index < 12; index++) store.addMaterial('jadeite', `extra-${index}`);
+  const saved = structuredClone(store.state);
+  saved.inventory = Array.from({ length: 12 }, (_, index) => ({ id: `extra-${index}`, material: 'jadeite' }));
+  saved.crafting = { materialId: 'raw-1', material: 'nephrite', shape: 'bi', step: 'shape', progress: 0, tool: 'chisel', coverage: '' };
+  store.importSave(JSON.stringify(saved));
   const before = store.exportSave();
   assert.equal(store.cancelCrafting(), false);
   assert.equal(store.exportSave(), before);
@@ -165,8 +171,8 @@ test('new crafting schema rejects partial fields, invalid material, coverage and
   }
   const partial = { materialId: 'raw-1', step: 'shape', progress: 0, tool: 'chisel', material: 'nephrite' };
   assert.throws(() => validateState({ ...valid, crafting: partial }));
-  assert.throws(() => validateState({ ...valid, inventory: [{ id: 'raw-1', material: 'nephrite' }] }));
-  assert.throws(() => validateState({ ...valid, pieces: [{ id: 'raw-1', material: 'nephrite', shape: 'bi' }] }));
+  assert.throws(() => validateState({ ...valid, inventory: [{ id: valid.crafting.materialId, material: 'nephrite' }] }));
+  assert.throws(() => validateState({ ...valid, pieces: [{ id: valid.crafting.materialId, material: 'nephrite', shape: 'bi' }] }));
 });
 
 test('crafting settlement keeps a single dirty result on write failure and persists on retry', () => {
@@ -189,11 +195,10 @@ test('crafting settlement keeps a single dirty result on write failure and persi
 
 test('all three supported shapes complete, unlock their codex entries and satisfy the three-piece task', () => {
   const { store, disk } = setup();
-  store.addMaterial('jadeite', 'raw-2');
-  store.addMaterial('nephrite', 'raw-3');
+  const materials = ['raw-1', ...store.state.inventory.slice(0, 2).map(item => item.id)];
   const shapes = ['bi', 'fish', 'seal'];
   for (const [index, shape] of shapes.entries()) {
-    assert.equal(store.startCrafting(`raw-${index + 1}`, shape), true);
+    assert.equal(store.startCrafting(materials[index], shape), true);
     assert.equal(store.state.crafting.shape, shape);
     assert.equal(validateState(store.state).crafting.shape, shape);
     finishStep(store);
@@ -203,7 +208,7 @@ test('all three supported shapes complete, unlock their codex entries and satisf
     assert.ok(store.state.discoveries.includes(shape));
     assert.equal(tasks(store.state)[2].done, index === 2);
   }
-  assert.equal(store.state.inventory.length, 0);
+  assert.equal(store.state.inventory.length, 12);
   assert.deepEqual(store.state.discoveries, shapes);
   const restored = new GameStore(disk);
   assert.deepEqual(restored.state.pieces.map(piece => piece.shape), shapes);

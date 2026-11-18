@@ -1,5 +1,5 @@
 export const GLOBAL_SHORTCUTS = Object.freeze({ b: 'inventory', j: 'tasks', g: 'codex', m: 'mute', f: 'fullscreen' });
-export const ACTION_SHORTCUTS = Object.freeze({ inventory: 'B', tasks: 'J', codex: 'G', mute: 'M', fullscreen: 'F', pickaxe: 'E' });
+export const ACTION_SHORTCUTS = Object.freeze({ inventory: 'B', tasks: 'J', codex: 'G', mute: 'M', fullscreen: 'F' });
 
 export function resolveGlobalShortcut(key) {
   return GLOBAL_SHORTCUTS[String(key ?? '').toLowerCase()] ?? null;

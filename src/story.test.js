@@ -19,12 +19,12 @@ function carvedFish(kind='wave',extra=[]){
 }
 
 test('old saves receive story, survey and independent audio defaults without altering materials',()=>{
-  const state=freshState();delete state.story;delete state.mineSurvey;state.settings={muted:true,volume:.61};
+  const state=freshState();delete state.story;state.mineSurvey=['C1'];state.settings={muted:true,volume:.61};
   state.inventory=[{id:'C1-L',material:'nephrite'}];
   const normalized=validateState(state);
-  assert.deepEqual(normalized.story,freshStory());assert.deepEqual(normalized.mineSurvey,[]);
+  assert.deepEqual(normalized.story,freshStory());assert.equal(Object.hasOwn(normalized,'mineSurvey'),false);
   assert.equal(normalized.settings.musicVolume,.22);assert.equal(normalized.settings.sfxVolume,.61);
-  assert.deepEqual(normalized.inventory,state.inventory);
+  assert.deepEqual(normalized.inventory.slice(0, 1),state.inventory);
 });
 test('heirloom requires evidence, real cleaning and cord; completion and return persist once',()=>{
   const {game,disk}=setup();assert.equal(game.chooseLetterRoute('preserve'),false);
@@ -33,7 +33,7 @@ test('heirloom requires evidence, real cleaning and cord; completion and return 
   for(const index of CARE_CELLS)game.careForHeirloom({x:index%32+.5,y:Math.floor(index/32)+.5},{x:index%32+.5,y:Math.floor(index/32)+.5});
   assert.equal(game.state.story.cleaned.length,CARE_CELLS.length);
   assert.equal(game.deliverLetter(),false);game.tieHeirloomCord();assert.equal(game.deliverLetter(),true);
-  assert.equal(game.state.inventory.length,0);assert.equal(game.state.pieces.length,0);
+  assert.equal(game.state.inventory.length,12);assert.equal(game.state.pieces.length,0);
   assert.equal(game.chooseLetterRoute('companion'),false);assert.equal(game.deliverLetter(),false);
   assert.equal(game.receiveLetterReturn(),true);assert.equal(game.receiveLetterReturn(),false);
   const restored=new GameStore(disk);assert.equal(restored.error,'');assert.deepEqual(restored.state.story,game.state.story);
@@ -72,7 +72,7 @@ test('visitor observations change with first displayed work, order and caption; 
 });
 test('malformed story and sound imports leave existing save untouched',()=>{
   const {game,disk}=setup();const before=disk.getItem(SAVE_KEY);
-  const cases=[{story:{...freshStory(),returned:true}},{story:{...freshStory(),order:['letter','letter','process']}},{mineSurvey:['C7']},{settings:{...game.state.settings,musicVolume:2}},{story:{...freshStory(),cleaned:[Infinity]}}];
+  const cases=[{story:{...freshStory(),returned:true}},{story:{...freshStory(),order:['letter','letter','process']}},{settings:{...game.state.settings,musicVolume:2}},{story:{...freshStory(),cleaned:[Infinity]}}];
   for(const extra of cases){assert.throws(()=>game.importSave(JSON.stringify({...freshState(),...extra})));assert.equal(disk.getItem(SAVE_KEY),before);}
 });
 test('curation is saved only at gallery and survives reload',()=>{

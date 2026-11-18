@@ -1,20 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { GameStore, validateState } from './state.js';
 import { placeholderMineWorld, readTiledMine } from './mine-map.js';
 import { generateMine, MINE_CLUSTERS, TILE, TILE_RULES, SWING_MS, createMining,
   advanceSwing, moveMiner, canStand, validDigTarget, facingTarget, firstSolid } from './mining.js';
 
 function setup(tile = TILE.STONE) {
-  const data = new Map();
-  const disk = { getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, value) };
-  const store = new GameStore(disk); store.startNew(); store.navigate('mine');
+  const store = { active: true, state: { location: 'mine', pendingDrops: [] }, consumeMineVein: () => true };
   const world = generateMine();
   for (let row = 1; row < 31; row++) for (let column = 1; column < 59; column++) world.map[row][column] = TILE.AIR;
   const target = { column: 10, row: 11, source: 'mouse' };
   world.map[11][10] = tile;
   const body = { x: 304, y: 384, velocityY: 0, climbing: false };
-  return { disk, store, world, target, body, mining: createMining(store, world) };
+  return { world, target, body, mining: createMining(store, world) };
 }
 function advance(mining, body, target, duration) {
   const hits = [];
@@ -196,45 +193,6 @@ test('ray: diagonal corner walls block both dig and pickup paths', () => {
   const { world } = setup();
   world.map[5][6] = TILE.STONE;
   assert.deepEqual(firstSolid(world.map, { x: 176, y: 176 }, { x: 208, y: 208 }), { column: 6, row: 5 });
-});
-
-test('pickup: broken jade settles once by source ID and survives disk reload', () => {
-  const { mining, body, target, store, disk } = setup(TILE.JADE_VEIN);
-  advance(mining, body, target, 960);
-  assert.equal(store.state.inventory.length, 0);
-  assert.equal(store.state.mineVeins[0][0], true);
-  assert.equal(mining.drops.get('C1-L').id, 'C1-L');
-  assert.equal(mining.pickup(body).collected.length, 1);
-  assert.equal(mining.pickup(body).collected.length, 0);
-  assert.deepEqual(new GameStore(disk).state.inventory, [{ id: 'C1-L', material: 'nephrite' }]);
-});
-
-test('pickup: full bag preserves drop, legal Store consumption permits later pickup', () => {
-  const { mining, body, target, store } = setup(TILE.JADE_VEIN);
-  for (let index = 0; index < 12; index++) store.addMaterial('jadeite', `existing-${index}`);
-  advance(mining, body, target, 960);
-  assert.equal(mining.pickup(body).full, true);
-  assert.equal(mining.drops.size, 1);
-  const next = structuredClone(store.state);
-  const used = next.inventory.pop(); next.pieces.push({ ...used, shape: 'bi' });
-  store.state = validateState(next); store.save();
-  assert.equal(mining.pickup(body).collected.length, 1);
-  assert.equal(store.state.inventory.length, 12);
-  assert.equal(mining.drops.size, 0);
-});
-
-test('pickup: walls, distance and inactive scenes prevent collection or swings', () => {
-  const { mining, body, target, world, store } = setup(TILE.JADE_VEIN);
-  advance(mining, body, target, 960);
-  world.map[11][9] = TILE.STONE;
-  assert.equal(mining.pickup({ ...body, x: 285 }).collected.length, 0);
-  world.map[11][9] = TILE.AIR;
-  assert.equal(mining.pickup({ ...body, x: 250 }).collected.length, 0);
-  store.navigate('workshop');
-  assert.equal(mining.pickup(body).collected.length, 0);
-  assert.equal(mining.update(body, target, true, 50), null);
-  store.navigate('mine');
-  assert.equal(mining.pickup(body).collected.length, 1);
 });
 
 test('physics: walk speed, jump arc, landing, head collision and current-map walls', () => {

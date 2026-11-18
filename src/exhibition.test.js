@@ -141,10 +141,13 @@ test('customization and exhibit write failures keep recoverable dirty progress w
 
 test('adding a material with the ID reserved by crafting returns false without mutating the session', () => {
   const { store } = setup();
-  store.addMaterial('jadeite', 'reserved-ore');
+  store.state.inventory.pop();
+  assert.equal(store.addMaterial('jadeite', 'reserved-ore'), true);
   store.startCrafting('reserved-ore');
+  const { materialId } = store.state.crafting;
+  store.state.inventory.shift(); // Exercise the reserved-ID guard with an available slot.
   const before = store.exportSave();
-  assert.doesNotThrow(() => assert.equal(store.addMaterial('jadeite', 'reserved-ore'), false));
+  assert.doesNotThrow(() => assert.equal(store.addMaterial('jadeite', materialId), false));
   assert.equal(store.exportSave(), before);
-  assert.equal(store.state.inventory.length, 0);
+  assert.equal(store.state.inventory.length, 11);
 });

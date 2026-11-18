@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { generateMine, moveMiner, WALK_SPEED, TILE, createMining } from './mining.js';
+import { generateMine, moveMiner, WALK_SPEED, TILE } from './mining.js';
 import { GameStore, freshState, SAVE_KEY } from './state.js';
 import { mineRouteHint } from './mine-exploration.js';
 
@@ -42,19 +42,22 @@ test('entrance: actual walking and climbing from the new spawn reaches every ori
   }
 });
 
-test('entrance: an old C4 waiting drop keeps its position, remains finite, and can still be recovered',()=>{
-  const old=freshState();old.location='mine';old.mineVeins[3]=[true,false];old.mineSurvey=['C4'];
-  old.pendingDrops=[{id:'C4-L',material:'jadeite',x:656,y:688}];
-  const disk=new Map([[SAVE_KEY,JSON.stringify(old)]]);
-  const store=new GameStore({getItem:k=>disk.get(k)??null,setItem:(k,v)=>disk.set(k,v)});store.resume();
-  const world=generateMine({mineVeins:store.state.mineVeins}),mining=createMining(store,world);
-  assert.deepEqual(mining.drops.get('C4-L'),old.pendingDrops[0]);
-  assert.equal(world.map[21][20],TILE.AIR);assert.equal(world.map[21][21],TILE.JADE_VEIN);
-  // Reopen the headroom above this old waiting drop, as on the existing map.
-  world.map[20][20]=TILE.AIR;
-  const body={x:656,y:704};assert.ok(world.canStand(body.x,body.y));
-  assert.equal(mining.pickup(body).collected.length,1);
-  assert.equal(mining.pickup(body).collected.length,0);
-  assert.deepEqual(store.state.inventory,[{id:'C4-L',material:'jadeite'}]);
-  assert.equal(store.state.pendingDrops.length,0);
+test('migration discards a waiting C4 drop while keeping already collected jade', () => {
+  const old = freshState();
+  old.location = 'mine';
+  old.mineVeins = Array.from({ length: 6 }, () => [false, false]);
+  old.mineVeins[3] = [true, true];
+  old.mineSurvey = ['C4'];
+  old.inventory = [{ id: 'C4-R', material: 'nephrite' }];
+  old.pendingDrops = [{ id: 'C4-L', material: 'jadeite', x: 656, y: 688 }];
+  const disk = new Map([[SAVE_KEY, JSON.stringify(old)]]);
+  const store = new GameStore({ getItem: key => disk.get(key) ?? null, setItem: (key, value) => disk.set(key, value) });
+  store.resume();
+  assert.equal(store.state.location, 'workshop');
+  assert.equal(store.state.inventory.length, 12);
+  assert.deepEqual(store.state.inventory.slice(0, 1), old.inventory);
+  assert.equal(store.state.inventory.some(item => item.id === 'C4-L'), false);
+  assert.equal(Object.hasOwn(store.state, 'pendingDrops'), false);
+  assert.equal(Object.hasOwn(store.state, 'mineVeins'), false);
+  assert.equal(Object.hasOwn(store.state, 'mineSurvey'), false);
 });

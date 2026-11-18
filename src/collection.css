@@ -176,9 +176,33 @@ dialog:has(.collection-customize) > .dialog-body { padding: 18px; background: re
 .collection-customize .collection-rework label { margin: 0; }
 .collection-customize .collection-rework button { background: #68482b; border-color: #b39459; min-height: 32px; }
 .collection-customize .collection-rework small { font-size: 12px; line-height: 1.6; }
-@media (max-width: 780px) {
-  .collection-customize { grid-template-columns: 1fr; gap: 22px; }
-  .collection-customize .collection-preview { grid-row: 1; }
-  .collection-customize .collection-preview canvas { max-width: 480px; }
-  .collection-customize .collection-controls { width: 100%; max-width: 480px; justify-self: center; }
+@media (max-width: 820px) {
+  .collection-customize { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 14px; }
+  .collection-customize .collection-preview { grid-row: auto; }
+  .collection-customize .collection-preview canvas { max-width: 300px; }
+  .collection-customize .collection-controls { padding: 10px; border-width: 5px; }
+}
+
+.collection-view { font-size: 14px; }
+.collection-customize .collection-controls::before { content: none; }
+.collection-customize .collection-preview { position: sticky; top: 0; }
+.collection-customize .collection-preview .collection-live-blessing { background: #e2c892; color: #39281a; font: 16px/1.5 var(--font-game); padding: 7px; overflow-wrap: anywhere; border: 3px double #9f713e; }
+.collection-extras { margin-top: 8px; padding: 7px 0 0; border-top: 1px solid #70865b; color: #d9cfad; }
+.collection-extras summary { cursor: pointer; }
+.collection-extras [data-collection-seal] { margin-top: 8px; }
+.collection-customize .collection-actions button[data-collection-save] { background: #c7a563; border-color: #e9cf95; color: #292919; }
+.collection-plaque dt, .collection-plaque dd, .collection-plaque p { font-size: 13px; }
+.collection-exhibit .collection-actions button { min-height: 34px; }
+.collection-exhibit-start { margin-bottom: 14px; }
+.collection-curation { margin: 18px 0 0; }
+@media (max-width: 720px) {
+  .collection-exhibit { display: grid; grid-template-columns: minmax(96px, .64fr) minmax(0, 1fr); gap: 5px 12px; align-items: center; }
+  .collection-exhibit h3 { grid-column: 1 / -1; margin: 0; font-size: 19px; text-align: left; }
+  .collection-exhibit .collection-plaque { margin: 0; }
+  .collection-slot-controls, .collection-preview .collection-work-caption { grid-column: 1 / -1; }
+}
+@media (max-width: 490px) {
+  .collection-customize { grid-template-columns: 1fr; }
+  .collection-customize .collection-preview { grid-row: 1; position: static; }
+  .collection-customize .collection-preview canvas { max-width: 210px; }
 }

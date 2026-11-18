@@ -1,3 +1,4 @@
+import { jadeVariety } from './jade-varieties.js';
 import './collection.css';
 import { drawArtisanPiece } from './piece-renderer.js';
 import { getCraftSurface } from './craft-model.js';
@@ -6,6 +7,7 @@ import { mountStoryCuration } from './story-view.js';
 import { MOTIFS } from './motifs.js';
 import { downloadBlob } from './export.js';
 import { memorialCardLayout } from './memorial-card.js';
+import { workCaption } from './work-caption.js';
 
 const SHAPES = { bi: '玉璧', fish: '玉鱼佩', seal: '玉印' };
 const MATERIALS = { nephrite: '和田玉', jadeite: '翡翠' };
@@ -14,7 +16,8 @@ const COLORS = { natural: '本色', celadon: '青碧', emerald: '翠绿' };
 const escape = value => String(value).replace(/[&<>"']/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 })[character]);
-const pieceName = piece => `${MATERIALS[piece.material] ?? '玉材'} · ${SHAPES[piece.shape] ?? '玉器'}`;
+const pieceMaterialName = piece => jadeVariety(piece.artisan?.material)?.name ?? MATERIALS[piece.material] ?? '玉材';
+const pieceName = piece => `${pieceMaterialName(piece)} · ${SHAPES[piece.shape] ?? '玉器'}`;
 // A composed design keeps a legacy pattern key for save compatibility. Show
 // its actual design components instead of presenting that key as the artwork.
 const patternLabel = piece => piece.artisan?.motifs?.length
@@ -100,12 +103,10 @@ function drawCollectionWorkbench(context) {
   // Low display cradle aligns with the actual jade's lower edge.
   polygon([[135, 326], [343, 326], [352, 340], [127, 340]], '#352a20');
   rect(140, 322, 199, 6, '#695034'); rect(144, 322, 191, 2, '#ba985f');
-  // Writing plaque and lower paper for the saved blessing.
+  // Header and inscription on the display stand.
   rect(54, 16, 373, 39, '#4e3424'); rect(58, 20, 365, 31, '#1e372b');
   rect(57, 19, 367, 2, '#b58b52'); rect(57, 51, 367, 2, '#b58b52');
   rect(103, 354, 274, 23, '#2b241a'); rect(107, 357, 266, 1, '#a58550');
-  rect(58, 385, 365, 70, '#e0c38d'); rect(58, 385, 365, 3, '#f1dba7'); rect(58, 453, 365, 3, '#b29361');
-  for (const x of [51, 423]) { rect(x, 383, 7, 74, '#755033'); rect(x + 1, 384, 3, 72, '#bd945d'); }
 }
 
 /** Draws the stored surface. Only the customization view uses the room setting. */
@@ -134,7 +135,7 @@ export function drawCollectionPiece(canvas, piece, { artifactOnly = false, prese
       const size = Math.min(270 * n / Math.max(1, right-left+1), 220 * n / Math.max(1, bottom-top+1));
       position = { x:240-(left+right+1)*size/n/2, y:322-(bottom+1)*size/n, size };
     }
-    drawArtisanPiece(context,piece.artisan,{...position,light:piece.displayLight??-.65});
+    drawArtisanPiece(context,piece.artisan,{...position,light:piece.displayLight??-.65,detail:true});
   } else {
   const natural = piece.material === 'nephrite' ? ['#c0d3a7', '#8ba97d', '#516e4f'] : ['#8ad3a1', '#389970', '#1d6149'];
   const palette = piece.color === 'celadon' ? ['#c0e0cf', '#70b3a0', '#396e63']
@@ -207,17 +208,20 @@ export function drawMemorialCard(canvas, piece) {
   rect(12, 12, width - 24, height - 24, '#d9bd83');
   rect(18, 18, width - 36, height - 36, '#4b3023');
   rect(24, 24, width - 48, height - 48, '#203d31');
-  // Pixel cloud corners and a restrained key-fret border.
-  for (const [x, y] of [[30, 30], [width - 50, 30], [30, height - 50], [width - 50, height - 50]]) {
-    rect(x, y, 20, 4, '#b99156'); rect(x, y, 4, 20, '#b99156'); rect(x + 8, y + 8, 8, 4, '#6a4930');
+  // Mirror the stepped brass corners on the four sides of the wood frame.
+  for (const [x, y, sx, sy] of [[24, 24, 1, 1], [width - 24, 24, -1, 1], [24, height - 24, 1, -1], [width - 24, height - 24, -1, -1]]) {
+    c.save(); c.translate(x, y); c.scale(sx, sy);
+    rect(0, 0, 44, 36, '#4b3023');
+    for (const [dx, dy, w, h] of [[0,0,44,4],[0,4,4,32],[8,8,28,4],[8,12,4,16],[16,16,12,4],[24,20,4,8],[16,24,8,4]]) rect(dx, dy, w, h, '#b99156');
+    c.restore();
   }
   const cloud = (x, y) => {
     for (const [dx, dy, w, h, color] of [[0, 8, 24, 4, '#b99156'], [4, 4, 8, 4, '#b99156'], [12, 0, 8, 4, '#c9a468'], [20, 4, 8, 4, '#b99156'], [8, 12, 16, 4, '#6a4930']]) rect(x + dx, y + dy, w, h, color);
   };
-  cloud(72, 28); cloud(width - 102, 28); cloud(72, height - 52); cloud(width - 102, height - 52);
-  for (let x = 52; x < width - 52; x += 28) { rect(x, 34, 12, 2, '#8b6b43'); rect(x, height - 38, 12, 2, '#8b6b43'); }
+  cloud(76, 28); cloud(width - 104, 28); cloud(76, height - 44); cloud(width - 104, height - 44);
+  for (let x = 112; x < width - 112; x += 28) { rect(x, 34, 12, 2, '#8b6b43'); rect(x, height - 38, 12, 2, '#8b6b43'); }
   // A stepped meander keeps the export legible at thumbnail size.
-  for (let x = 54; x < width - 58; x += 20) {
+  for (let x = 100; x < width - 100; x += 20) {
     rect(x, 42, 8, 2, '#c39a5d'); rect(x + 8, 42, 2, 8, '#c39a5d');
     rect(x + 10, 48, 8, 2, '#6e4d32'); rect(x + 18, 42, 2, 8, '#6e4d32');
   }
@@ -242,7 +246,7 @@ export function drawMemorialCard(canvas, piece) {
   rect(52, 308, 366, 136, '#452a1f'); rect(60, 318, 350, 112, '#a2693b');
   for (const [x, y, w] of [[74, 336, 112], [210, 326, 156], [92, 376, 88], [228, 390, 126]]) { line(x, y, x + w, y, '#c08a4e'); line(x + 12, y + 7, x + Math.floor(w * .7), y + 7, '#734728', 1); }
   rect(66, 430, 338, 8, '#d29a59');
-  if (piece.artisan) drawArtisanPiece(c, piece.artisan, { x: 126, y: 274, size: 210, light: -.2 });
+  if (piece.artisan) drawArtisanPiece(c, piece.artisan, { x: 126, y: 274, size: 210, light: -.2, detail: true });
   else {
     const artifact = document.createElement('canvas');
     drawCollectionPiece(artifact, piece, { artifactOnly: true });
@@ -253,7 +257,7 @@ export function drawMemorialCard(canvas, piece) {
   rect(442, 76, 230, 368, '#ead2a2'); rect(450, 84, 214, 352, '#f2ddb0');
   c.strokeStyle = '#9a6f42'; c.lineWidth = 3; c.strokeRect(450, 84, 214, 352);
   text('一器一心意', 557, 102, 24, '#563522', 'center'); line(474, 138, 640, 138, '#b38a53', 2);
-  text('材质', 474, 158, 14, '#805a37'); text(`${MATERIALS[piece.material] ?? '玉材'} · ${SHAPES[piece.shape] ?? '玉器'}`, 474, 181, 17, '#493323');
+  text('材质', 474, 158, 14, '#805a37'); text(`${pieceMaterialName(piece)} · ${SHAPES[piece.shape] ?? '玉器'}`, 474, 181, 17, '#493323');
   text('工艺', 474, 218, 14, '#805a37'); text(`${layout.finish} · 三阶手作`, 474, 241, 17, '#493323');
   text('纹样', 474, 278, 14, '#805a37'); text(patternLabel(piece), 474, 301, 15, '#493323');
   text('落款', 474, 338, 14, '#805a37');
@@ -278,13 +282,13 @@ export function createCollectionView({ store, show, button, notify = () => {}, o
   function empty(title, text) {
     show(title, `<div class="collection-view collection-empty"><h3>等待第一件作品</h3><p>${text}</p></div>`, button('返回', 'close'), true);
   }
-  function customize() {
+  function customize(id = selectedId) {
     const pieces = store.state.pieces;
     if (!pieces.length) { empty('玉器定制', '先在工坊完成一件玉器，再来挑选纹样、配色和祝福语。'); return; }
-    const piece = pieces.find(item => item.id === selectedId) ?? pieces[pieces.length - 1];
+    const piece = pieces.find(item => item.id === id) ?? pieces[pieces.length - 1];
     selectedId = piece.id;
     const draft = { ...piece, pattern: piece.pattern ?? 'cloud', color: piece.color ?? 'natural', blessing: piece.blessing ?? '' };
-    show('一器一心意', `<div class="collection-view collection-customize"><section class="collection-controls"><label for="collection-piece">选择成品</label><select id="collection-piece">${pieces.map(item => `<option value="${escape(item.id)}" ${item.id === piece.id ? 'selected' : ''}>${pieceName(item)}</option>`).join('')}</select><label for="collection-pattern">纹样</label><select id="collection-pattern">${options(PATTERNS, draft.pattern)}</select><label for="collection-color">配色</label><select id="collection-color">${options(COLORS, draft.color)}</select><label for="collection-blessing">祝福语 <span data-collection-count></span></label><input id="collection-blessing" type="text" autocomplete="off" aria-describedby="collection-blessing-hint"><p id="collection-blessing-hint">最多 24 个字，随作品一同保存。</p><div class="collection-actions"><button data-collection-save class="primary">保存落款与纹样</button><button data-collection-export>导出纪念卡 PNG</button></div><p class="collection-feedback" role="status" aria-live="polite"></p></section><section class="collection-preview"><canvas width="480" height="480" aria-label="玉器定制预览"></canvas><div class="collection-ambient-smoke" aria-hidden="true"><i></i><i></i><i></i></div><p>选择纹样与玉色，为作品留下一句心意。</p></section></div>`, button('返回工坊', 'close'), true);
+    show('一器一心意', `<div class="collection-view collection-customize"><section class="collection-controls"><label for="collection-piece">选择成品</label><select id="collection-piece">${pieces.map(item => `<option value="${escape(item.id)}" ${item.id === piece.id ? 'selected' : ''}>${pieceName(item)}</option>`).join('')}</select><label for="collection-pattern">纹样</label><select id="collection-pattern">${options(PATTERNS, draft.pattern)}</select><label for="collection-color">配色</label><select id="collection-color">${options(COLORS, draft.color)}</select><label for="collection-blessing">祝福语 <span data-collection-count></span></label><input id="collection-blessing" type="text" autocomplete="off" aria-describedby="collection-blessing-hint"><p id="collection-blessing-hint">最多 24 个字，随作品一同保存。</p><div class="collection-actions"><button data-collection-save class="primary">保存落款与纹样</button><button data-collection-export>导出纪念卡 PNG</button></div><p class="collection-feedback" role="status" aria-live="polite"></p></section><section class="collection-preview"><canvas width="480" height="480" aria-label="玉器定制预览"></canvas><div class="collection-ambient-smoke" aria-hidden="true"><i></i><i></i><i></i></div><p class="collection-live-blessing" data-preview-blessing></p>${workCaption(piece,store.state.story).map(line=>`<p class="collection-work-caption">${escape(line)}</p>`).join('')}</section></div>`, button('返回工坊', 'close'), true);
     const root = document.querySelector('dialog .collection-view');
     const canvas = root.querySelector('canvas');
     const blessingInput = root.querySelector('#collection-blessing');
@@ -295,14 +299,18 @@ export function createCollectionView({ store, show, button, notify = () => {}, o
       patternSelect.innerHTML = options({ [draft.pattern]: patternLabel(piece) }, draft.pattern);
       patternSelect.disabled=true;
       root.querySelector('#collection-color').disabled=true;
-      root.querySelector('.collection-preview p').textContent='天然色带、亲手刻线与局部光泽已保留。改变器型或纹样请返工。';
       feedback.textContent=evaluateCommission(piece,store.state).find(item=>item.fulfilled)?.feedback ?? '这件玉里保留了你的每一笔。';
     }
+    const extras=document.createElement('details');extras.className='collection-extras';
+    extras.innerHTML='<summary>试印与返工</summary>';
     const rework=document.createElement('div');rework.className='collection-rework';
+    if(piece.shape!=='seal'||!piece.artisan?.completed)extras.querySelector('summary').textContent='器型返工';
     rework.innerHTML=`<label for="rework-shape">重新设计器型</label><select id="rework-shape">${options(SHAPES,piece.shape)}</select><button data-rework>保存原作，开始返工</button><small>返工期间原作会暂时撤展。取消返工可恢复原作。</small>`;
-    root.querySelector('.collection-controls').append(rework);
+    extras.append(rework);
+    root.querySelector('.collection-controls').append(extras);
     if(piece.shape==='seal'&&piece.artisan?.completed){const print=document.createElement('button');print.textContent='取出玉印，试印成谱';print.dataset.collectionSeal='';print.onclick=()=>onSeal(piece);rework.before(print);}
     rework.querySelector('[data-rework]').onclick=()=>onRework(piece.id,rework.querySelector('select').value);
+    const blessingPreview = root.querySelector('[data-preview-blessing]');
     function preview() {
       draft.pattern = root.querySelector('#collection-pattern').value;
       draft.color = root.querySelector('#collection-color').value;
@@ -313,7 +321,8 @@ export function createCollectionView({ store, show, button, notify = () => {}, o
       root.querySelector('[data-collection-export]').disabled = count > 24;
       blessingInput.setAttribute('aria-invalid', String(count > 24));
       feedback.textContent = count > 24 ? '祝福语超过 24 个字，请缩短后保存。' : piece.artisan ? evaluateCommission(piece,store.state).find(item=>item.fulfilled)?.feedback ?? '这件玉里保留了你的每一笔。' : '';
-      drawCollectionPiece(canvas, draft, { presentation: 'workbench' });
+      blessingPreview.textContent = draft.blessing || '尚未落款';
+      drawCollectionPiece(canvas, { ...draft, blessing: '' }, { presentation: 'workbench' });
     }
     root.querySelector('#collection-piece').onchange = event => { selectedId = event.target.value; customize(); };
     root.querySelector('#collection-pattern').onchange = preview;
@@ -341,23 +350,30 @@ export function createCollectionView({ store, show, button, notify = () => {}, o
     preview();
   }
 
-  function exhibit() {
+  function exhibit({ pieceId, focusSlot = false } = {}) {
     const pieces = store.state.pieces;
     if (!pieces.length) {
-      if(store.state.story.delivery){show('旧玉故事 · 一封来信的展览','<div class="collection-view"><p>先展出旧玉的经历与来信。完成自己的作品后，还能将它们放入三个展位。</p></div>',button('回工坊创作','workshop')+button('返回展厅','close'),true);mountStoryCuration(document.querySelector('dialog .collection-view'),store);}
-      else empty('展厅布置', '完成第一件玉器后，可以在这里选择三个展位，为作品布置一场小展。');
+      if(store.state.story.delivery){show('旧玉故事 · 一封来信的展览','<div class="collection-view"><p>先展出旧玉的经历与来信。完成自己的作品后，还能将它们放入三个展位。</p></div>',button('去工坊制作','make','primary')+button('返回展厅','close'),true);mountStoryCuration(document.querySelector('dialog .collection-view'),store);}
+      else show('我的展厅', '<div class="collection-empty"><h3>还没有成品</h3><p>完成第一件玉器后，就能为它挑一个展位。</p></div>', button('去工坊制作', 'make', 'primary'), true);
       return;
     }
-    show('布置你的玉展', `<div class="collection-view"><p class="collection-exhibit-hint">将作品放入展位。同一件作品换到新展位时，会从原位置移走。</p><div class="collection-exhibits">${store.state.exhibits.map((id, index) => {
+    const exhibited = store.state.exhibits;
+    const preferred = exhibited.indexOf(pieceId);
+    const firstEmpty = exhibited.indexOf(null);
+    const targetSlot = preferred >= 0 ? preferred : Math.max(0, firstEmpty);
+    show('我的展厅 · 布置展位', `<div class="collection-view"><div class="collection-exhibit-start empty-next-step"><p>${exhibited.some(Boolean) ? '作品换展位时会从原位置移走。' : `已有 ${pieces.length} 件成品可陈列，为作品选一个展位。`}</p><button data-collection-start class="primary">选择作品陈列</button></div><div class="collection-exhibits">${store.state.exhibits.map((id, index) => {
       const piece = pieces.find(item => item.id === id);
       const finish = piece?.artisan?.finish === 'satin' ? '柔光抛磨' : piece ? '局部亮面' : '尚未加工';
-      return `<section class="collection-exhibit"><h3>展位 ${index + 1}</h3><canvas width="480" height="480" data-collection-slot="${index}" aria-label="展位 ${index + 1} ${piece ? pieceName(piece) : '空展位'}"></canvas><div class="collection-plaque"><strong>${piece ? pieceName(piece) : '静候一件玉器'}</strong><dl><div><dt>材质</dt><dd>${piece ? MATERIALS[piece.material] ?? '玉材' : '待选'}</dd></div><div><dt>工艺</dt><dd>${finish}</dd></div><div><dt>纹样</dt><dd>${piece ? escape(patternLabel(piece)) : '待选'}</dd></div></dl><p>${escape(piece?.blessing ?? (piece ? '尚未留下落款。' : '把完成的作品放入展位，再为它写一句话。'))}</p></div><label for="exhibit-piece-${index}">选择作品</label><select id="exhibit-piece-${index}">${pieces.map(item => `<option value="${escape(item.id)}" ${item.id === id ? 'selected' : ''}>${pieceName(item)}</option>`).join('')}</select><div class="collection-actions"><button data-collection-place="${index}" class="primary">陈列</button><button data-collection-remove="${index}" ${piece ? '' : 'disabled'}>撤展</button></div></section>`;
+      return `<section class="collection-exhibit"><h3>展位 ${index + 1}</h3><canvas width="480" height="480" data-collection-slot="${index}" aria-label="展位 ${index + 1} ${piece ? pieceName(piece) : '空展位'}"></canvas><div class="collection-plaque"><strong>${piece ? pieceName(piece) : '静候一件玉器'}</strong><dl><div><dt>材质</dt><dd>${piece ? pieceMaterialName(piece) : '待选'}</dd></div><div><dt>工艺</dt><dd>${finish}</dd></div><div><dt>纹样</dt><dd>${piece ? escape(patternLabel(piece)) : '待选'}</dd></div></dl><p>${escape(piece?.blessing ?? (piece ? '尚未留下落款。' : '把完成的作品放入展位，再为它写一句话。'))}</p>${workCaption(piece,store.state.story).map(line=>`<p class="collection-work-caption">${escape(line)}</p>`).join('')}</div><div class="collection-slot-controls"><label for="exhibit-piece-${index}">选择作品</label><select id="exhibit-piece-${index}">${pieces.map(item => `<option value="${escape(item.id)}" ${item.id === (index === targetSlot && pieceId ? pieceId : id) ? 'selected' : ''}>${pieceName(item)}</option>`).join('')}</select><div class="collection-actions"><button data-collection-place="${index}" class="primary">陈列</button><button data-collection-remove="${index}" ${piece ? '' : 'disabled'}>撤展</button></div></div></section>`;
     }).join('')}</div><p class="collection-feedback" role="status" aria-live="polite"></p></div>`, button('返回展厅', 'close'), true);
     const root = document.querySelector('dialog .collection-view');
     const curation=document.createElement('section');curation.className='collection-curation';
     const exhibition=evaluateExhibition(store.state);
     curation.innerHTML=`<h3>${escape(exhibition.title)}</h3><div class="collection-curation-controls"><label>这次讲什么<select data-theme>${options({craft:'因材成器',nature:'山水自然',journey:'学徒的旅程'},store.state.museum.theme)}</select></label><label>展柜灯光<select data-light>${options({warm:'暖光',side:'侧光见层次',moon:'月色柔光'},store.state.museum.lighting)}</select></label></div><p>${escape(exhibition.summary)}</p>${exhibition.observations.map(text=>`<p>${escape(text)}</p>`).join('')}`;
-    root.prepend(curation);
+    root.append(curation);
+    const focusPicker = () => root.querySelector(`#exhibit-piece-${targetSlot}`).focus();
+    root.querySelector('[data-collection-start]').onclick = focusPicker;
+    if (focusSlot) focusPicker();
     mountStoryCuration(root,store);
     for(const input of curation.querySelectorAll('select')) input.onchange=()=>{store.configureExhibition(curation.querySelector('[data-theme]').value,curation.querySelector('[data-light]').value);exhibit();};
     root.querySelectorAll('[data-collection-slot]').forEach(canvas => {
@@ -375,7 +391,9 @@ export function createCollectionView({ store, show, button, notify = () => {}, o
       if (store.placeExhibit(index, id)) {
         exhibit();
         const message = store.dirty ? '陈列暂留本次游戏，请导出存档备份。' : id === null ? '作品已撤下。' : '作品已陈列。';
-        document.querySelector('dialog .collection-feedback').textContent = message;
+        const updated = document.querySelector('dialog .collection-view');
+        updated.querySelector('.collection-feedback').textContent = message;
+        updated.querySelector(`#exhibit-piece-${index}`).focus();
         notify(message);
       } else root.querySelector('.collection-feedback').textContent = '未能更新展位，请确认当前仍在展厅。';
     }

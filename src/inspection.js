@@ -14,7 +14,9 @@ const RITUAL_JADE_SOURCE = Object.freeze({
 export const MATERIAL_GUIDES = Object.freeze({
   nephrite: Object.freeze({
     name: '和田玉原石',
-    description: '本游戏的和田玉对应软玉。细密交织的矿物结构，让它适合琢制与抛光。',
+    description: '和田玉属于软玉，细密交织的矿物结构使它具有良好韧性。',
+    story: '在工坊的故事里，阿宁还想戴祖母留下的鱼佩。她请匠人换牢旧绳，也请把鱼腹的小划痕留住。',
+    practice: '做好取舍再下手。试把鱼佩纸样沿浅色带移动，看看哪一段能顺着鱼背留下。',
     hotspots: Object.freeze([
       { id: 'color', label: '看颜色', text: '软玉可呈白、黄、绿及褐黑等色。观察色调与分布，并结合其他特征认识材料。' },
       { id: 'structure', label: '看结构', text: '软玉属于角闪石类，细小纤维或针状晶体相互交织，具有良好韧性。' },
@@ -24,7 +26,9 @@ export const MATERIAL_GUIDES = Object.freeze({
   }),
   jadeite: Object.freeze({
     name: '翡翠原石',
-    description: '本游戏以硬玉质翡翠为材料范例。可以从颜色、透光表现和结构三个角度观察。',
+    description: '翡翠可从颜色分布、透光表现和颗粒结构三个角度观察。',
+    story: '清代宫廷曾把翠玉白菜放在盆景里观赏。工匠让这块翡翠的绿色成为菜叶，白色成为菜梗。',
+    practice: '学它顺色取形。切换两套纸样，比较原石哪一段浅色能留进器形。',
     hotspots: Object.freeze([
       { id: 'color', label: '看颜色', text: '翡翠有绿、紫、白、黑等多种颜色。观察画面中的色块与分布，记录你看到的特征。' },
       { id: 'structure', label: '看结构', text: '翡翠的颗粒结构可以细、中、粗，交织的晶体构成紧密的材料。游戏放大图为观察示意。' },

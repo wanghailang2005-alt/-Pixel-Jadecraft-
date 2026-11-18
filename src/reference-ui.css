@@ -357,3 +357,110 @@ dialog.settings-panel .dialog-actions button:disabled { background: #8a795b; col
   dialog.settings-panel .setting-row > label, dialog.settings-panel .setting-row > span { font-size: 12px; padding-inline: 6px; }
   dialog.settings-panel .dialog-actions { margin-inline: 15px; }
 }
+
+dialog.inventory-dialog .dialog-body {
+  padding: 12px clamp(12px, 3vw, 24px) 16px;
+}
+dialog.inventory-dialog .inventory-top {
+  padding-bottom: 10px;
+}
+dialog.inventory-dialog .inventory-layout {
+  grid-template-columns: minmax(0, 1.22fr) minmax(0, 1fr);
+  gap: clamp(8px, 2vw, 18px);
+  align-items: start;
+}
+dialog.inventory-dialog .inventory-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+dialog.inventory-dialog .slot {
+  height: 86px;
+  padding: 3px 1px;
+  gap: 0;
+}
+dialog.inventory-dialog .slot span {
+  line-height: 1.15;
+  font-size: clamp(10px, 1.38vw, 11px);
+}
+.inventory-dialog .slot .inventory-icon {
+  width: min(54px, 95%);
+  height: auto;
+  aspect-ratio: 1;
+}
+.inventory-dialog .slot-number {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  font: 10px monospace;
+  color: #d5b075;
+}
+dialog.inventory-dialog .uncollected {
+  position: relative;
+  border-color: #8b6d40;
+  background: #2d2117;
+  box-shadow: inset 0 0 10px #b38a3529;
+}
+dialog.inventory-dialog .uncollected.selected {
+  border-color: #e6bd78;
+}
+.codex-lock {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: 8px;
+  height: 6px;
+  border: 1px solid #cfa767;
+  background: #3a2c1c;
+}
+.codex-lock::before {
+  content: '';
+  position: absolute;
+  left: 1px;
+  bottom: 100%;
+  width: 4px;
+  height: 4px;
+  border: 1px solid #cfa767;
+  border-radius: 3px 3px 0 0;
+}
+dialog.inventory-dialog .inventory-hint {
+  margin: 9px 0 0;
+  line-height: 1.5;
+  font-size: 12px;
+}
+.inventory-dialog .item-detail {
+  padding: 9px 11px;
+  min-height: 0;
+  gap: 6px;
+}
+.inventory-dialog .detail-art {
+  height: 128px;
+  margin: 0;
+  background: radial-gradient(ellipse, #433221, #22170f 75%);
+  border-color: #927249;
+}
+.inventory-dialog .detail-art .inventory-icon {
+  width: 124px;
+  height: 124px;
+}
+.inventory-dialog .item-detail h3 {
+  margin: 0;
+  font-size: 19px;
+}
+.inventory-dialog .item-detail p {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.inventory-dialog .detail-trace {
+  margin: 0;
+  gap: 3px;
+}
+.inventory-dialog .item-detail small a {
+  color: #ddbb82;
+}
+dialog.inventory-dialog .dialog-actions {
+  padding-block: 7px;
+}
+@media (max-width: 470px) {
+  dialog.inventory-dialog .inventory-layout { grid-template-columns: 1fr; }
+  dialog.inventory-dialog .inventory-tabs button { min-width: 0; }
+}

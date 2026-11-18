@@ -1,8 +1,28 @@
 import { getCraftSurface } from './craft-model.js';
 
 const clamp = value => Math.max(0, Math.min(255, Math.round(value)));
+// Fine grain between the original surface cells keeps saved tool marks intact.
+function refineJadeTexture(texture) {
+  const fine = document.createElement('canvas');
+  fine.width = fine.height = 192;
+  const context = fine.getContext('2d');
+  context.imageSmoothingEnabled = false;
+  context.drawImage(texture, 0, 0, fine.width, fine.height);
+  const pixels = context.getImageData(0, 0, fine.width, fine.height);
+  for (let y = 0; y < fine.height; y++) for (let x = 0; x < fine.width; x++) {
+    const index = (y * fine.width + x) * 4;
+    if (!pixels.data[index + 3]) continue;
+    const grain = (((x * 73) ^ (y * 151)) % 17 - 8) * .65;
+    pixels.data[index] += grain;
+    pixels.data[index + 1] += grain;
+    pixels.data[index + 2] += grain * .8;
+  }
+  context.putImageData(pixels, 0, 0);
+  return fine;
+}
+
 /** One renderer for the workbench, collection, exhibition and downloaded artwork. */
-export function drawArtisanPiece(context, draft, { x=0, y=0, size=320, light=-.65, guide=false, raw=false, design=false } = {}) {
+export function drawArtisanPiece(context, draft, { x=0, y=0, size=320, light=-.65, guide=false, raw=false, design=false, detail=false } = {}) {
   const surface = getCraftSurface(draft), n=surface.size;
   const texture = document.createElement('canvas'); texture.width=texture.height=n;
   const tc=texture.getContext('2d'), data=tc.createImageData(n,n);
@@ -39,9 +59,10 @@ export function drawArtisanPiece(context, draft, { x=0, y=0, size=320, light=-.6
   for(let py=3;py<n-3;py+=7) for(let px=3;px<n-3;px+=9) {
     const i=py*n+px; if(exists(i)&&((px*13+py*7+(light>0?3:0))%29===0)) tc.fillRect(px,py,1,1);
   }
+  const painted = detail ? refineJadeTexture(texture) : texture;
   context.save(); context.imageSmoothingEnabled=false;
-  context.globalAlpha=.3; context.drawImage(texture,x+size*.022,y+size*.035,size,size);
-  context.globalAlpha=1; context.drawImage(texture,x,y,size,size);
+  context.globalAlpha=.3; context.drawImage(painted,x+size*.022,y+size*.035,size,size);
+  context.globalAlpha=1; context.drawImage(painted,x,y,size,size);
   if(guide) {
     const scale=size/n; context.fillStyle='#f0dc9c';
     if(draft.stage==='shape'||design) {

@@ -224,3 +224,9 @@ blockquote { margin: 0 0 18px; padding: 13px 16px; border-left: 2px solid #b19b6
 .mine-tools canvas { width:48px; height:48px; image-rendering:pixelated; }
 .mine-tools kbd { position:absolute; right:2px; bottom:1px; font-size:10px; }
 .mine-controls { position:absolute; right:24px; bottom:25px; margin:0; padding:8px 12px; color:#e8dcc0; background:#101c1be6; border-bottom:2px solid #8b7955; font-size:12px; letter-spacing:1px; }
+
+.location-note p { font-size: 17px; line-height: 1.28; color: #e0d9b4; }
+.location-note button { font-size: 18px; min-height: 40px; }
+.gallery-plaque strong { font-size: 16px; }
+.gallery-plaque.is-empty strong { font-size: 16px; }
+.gallery-plaque small { font-size: 14px; }

@@ -6,15 +6,10 @@ import galleryUrl from './assets/gallery-isometric-v1.png';
 import { decorateMenuScene } from './menu-art.js';
 import { drawScene, drawGalleryExhibits } from './scenery.js';
 import { PauseGate } from './pause.js';
-import { createMining } from './mining.js';
-import { preloadMine, createMineScene } from './mine-scene.js';
-import { WORKSHOP_CONTACT, WORKSHOP_PORTRAIT, workshopPose } from './workshop-pose.js';
+import { addWorkshopMaster } from './workshop-art.js';
 import { GALLERY_CASES, GALLERY_SPOTLIGHTS, spotlightFrame } from './gallery-lighting.js';
 
-export function createRuntime(store, feedback) {
-  let mining = null;
-  let sessionRevision = store.sessionRevision;
-  let collect = null;
+export function createRuntime(store) {
   const gate = new PauseGate();
   let ready = false;
   let current = null;
@@ -29,11 +24,6 @@ export function createRuntime(store, feedback) {
   function sync() {
     if (!ready) return;
     const next = desired();
-    if (sessionRevision !== store.sessionRevision) {
-      sessionRevision = store.sessionRevision;
-      mining = null;
-      if (current === 'mine') { game.scene.stop(current); current = null; }
-    }
     if (next === current) {
       if (current === 'gallery') game.scene.getScene('gallery').renderExhibits();
       syncPause();
@@ -52,7 +42,6 @@ export function createRuntime(store, feedback) {
       this.load.image('menu-landscape', menuUrl);
       this.load.image('master-carver', masterUrl);
       this.load.image('gallery-room', galleryUrl);
-      preloadMine(this);
     }
     create() { ready = true; sync(); this.scene.stop('boot'); }
   }
@@ -85,61 +74,19 @@ export function createRuntime(store, feedback) {
             });
           } });
         }
-        // The source is a square portrait with a narrow opaque character inside.
-        // Crop the transparent margins before sizing it so the character keeps
-        // its narrow portrait silhouette instead of being stretched sideways;
-        // the authored metrics below then scale and lean it over the jade.
-        const master = this.add.image(WORKSHOP_PORTRAIT.x, WORKSHOP_PORTRAIT.y, 'master-carver')
-          .setCrop(288, 22, 658, 1218)
-          .setOrigin(.5, 1)
-          .setDisplaySize(WORKSHOP_PORTRAIT.width, WORKSHOP_PORTRAIT.height)
-          .setRotation(WORKSHOP_PORTRAIT.rotation)
-          .setDepth(2);
-        const tool = this.add.graphics().setDepth(3);
-        const contact = this.add.graphics().setDepth(1.7);
-        contact.fillStyle(0x0a1711, .34);
-        contact.fillRect(WORKSHOP_CONTACT.shadowX, WORKSHOP_CONTACT.shadowY, WORKSHOP_CONTACT.shadowWidth, 5);
-        contact.fillStyle(0x9b794a, .46);
-        contact.fillRect(WORKSHOP_CONTACT.shadowX - 5, WORKSHOP_CONTACT.tableEdgeY, WORKSHOP_CONTACT.shadowWidth + 10, 2);
-        contact.fillStyle(0x6d9b73, .38);
-        contact.fillRect(WORKSHOP_CONTACT.x - 11, WORKSHOP_CONTACT.y - 5, 22, 2);
-        contact.fillStyle(0xc2dba4, .42);
-        contact.fillRect(WORKSHOP_CONTACT.x - 7, WORKSHOP_CONTACT.y - 3, 14, 2);
+        addWorkshopMaster(this);
         const glow = this.add.graphics().setDepth(1);
         for (const [x, y] of [[254, 150], [105, 218], [477, 150], [635, 218]]) {
           glow.fillStyle(0xffb347, .05); glow.fillRect(x - 25, y - 20, 50, 40);
           glow.fillStyle(0xffc66c, .07); glow.fillRect(x - 17, y - 25, 34, 50);
           glow.fillStyle(0xffd483, .08); glow.fillRect(x - 12, y - 15, 24, 30);
         }
-        const sparkles = this.add.graphics().setDepth(3);
-        const drawCraftContact = phase => {
-          // Four hand-cut poses. The tip meets the visible jade contact anchor.
-          const pose = workshopPose(phase);
-          const lift = pose.lift;
-          tool.clear();
-          tool.fillStyle(0x243b29); tool.fillRect(WORKSHOP_CONTACT.x - 1, 286 + lift, 9, 7);
-          tool.fillStyle(0x587447); tool.fillRect(WORKSHOP_CONTACT.x - 1, 286 + lift, 7, 3);
-          // The portrait already contains the master's hands. Keep only the
-          // small chisel/contact highlight here; drawing square skin blocks on
-          // top of the portrait made the hand look like a detached tile.
-          tool.fillStyle(0x6b492e); tool.fillRect(WORKSHOP_CONTACT.x + 4, 291 + lift, 3, 8);
-          tool.fillStyle(0xbabfac); tool.fillRect(WORKSHOP_CONTACT.x + 3, 297 + lift, 2, 4);
-          tool.fillStyle(0xe4dfbc); tool.fillRect(WORKSHOP_CONTACT.x + 3, 297 + lift, 1, 3);
-          sparkles.clear();
-          if (pose.impact) {
-            sparkles.fillStyle(0xd4e7ad, .9);
-            for (const [x, y] of [[WORKSHOP_CONTACT.x - 5, WORKSHOP_CONTACT.y - 2], [WORKSHOP_CONTACT.x + 6, WORKSHOP_CONTACT.y], [WORKSHOP_CONTACT.x + 3, WORKSHOP_CONTACT.y + 5]]) sparkles.fillRect(x, y, 2, 1);
-            sparkles.fillStyle(0x6eab77, .8); sparkles.fillRect(WORKSHOP_CONTACT.x - 8, WORKSHOP_CONTACT.y + 3, 2, 2);
-          }
-          master.setY(WORKSHOP_PORTRAIT.y + pose.masterY);
-        };
-        drawCraftContact(0);
-        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        if (!reducedMotion) {
+          const glowLevels = [1, .88, .94, .88];
           let phase = 0;
           this.time.addEvent({ delay: 220, loop: true, callback: () => {
-            phase = (phase + 1) % 4;
-            drawCraftContact(phase);
-            glow.setAlpha([1, .88, .94, .88][phase]);
+            phase = (phase + 1) % glowLevels.length;
+            glow.setAlpha(glowLevels[phase]);
           } });
         }
       } else if (key === 'gallery' && this.textures.exists('gallery-room')) {
@@ -208,17 +155,11 @@ export function createRuntime(store, feedback) {
       drawGalleryExhibits(this, this.exhibitLayer, store.state);
     }
   };
-  const MineScene = createMineScene({
-    store, feedback, paused: () => gate.paused,
-    getSession: factory => mining ??= createMining(store, factory()),
-    onReady: callback => { collect = callback; syncPause(); },
-    onStop: () => { collect = null; },
-  });
   game = new Phaser.Game({
     type: Phaser.AUTO, parent: 'canvas', width:960, height:540,
     backgroundColor:'#142623', pixelArt:true,
     scale:{ mode:Phaser.Scale.FIT, autoCenter:Phaser.Scale.CENTER_BOTH },
-    scene:[BootScene, ...['menu','workshop','gallery'].map(sceneClass), MineScene],
+    scene:[BootScene, ...['menu','workshop','gallery'].map(sceneClass)],
   });
   const onVisibility = () => { gate.set('hidden', document.hidden); syncPause(); };
   document.addEventListener('visibilitychange', onVisibility);
@@ -229,7 +170,6 @@ export function createRuntime(store, feedback) {
   onVisibility();
   return {
     sync,
-    collect() { if (!gate.paused) collect?.(); },
     setPaused(reason, value) { gate.set(reason,value); syncPause(); },
     destroy() {
       document.removeEventListener('visibilitychange', onVisibility);

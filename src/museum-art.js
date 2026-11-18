@@ -48,12 +48,13 @@ function inside(x, y, points) {
 function ellipse(x, y, cx, cy, rx, ry) { return ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1; }
 function pxline(ctx, x0, y0, x1, y1, color, width = 1) {
   ctx.fillStyle = color;
-  x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
+  const scale = ctx.canvas.width / SIZE;
+  x0 = Math.round(x0 * scale); y0 = Math.round(y0 * scale); x1 = Math.round(x1 * scale); y1 = Math.round(y1 * scale);
   const dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
   const dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
   let error = dx + dy;
   for (;;) {
-    ctx.fillRect(x0, y0, width, width);
+    ctx.fillRect(x0 / scale, y0 / scale, width, width);
     if (x0 === x1 && y0 === y1) break;
     const e = 2 * error;
     if (e >= dy) { error += dy; x0 += sx; }
@@ -78,9 +79,11 @@ function polygon(ctx, points, color) {
   }
 }
 function jade(ctx, mask, colors = DEFAULT, tone = () => 0) {
-  const palette = colors.map(rgb), pixels = ctx.createImageData(SIZE, SIZE);
+  const resolution = ctx.canvas.width, scale = resolution / SIZE;
+  const palette = colors.map(rgb), pixels = ctx.createImageData(resolution, resolution);
   const seed = Number(ctx.__museumSeed) || 0;
-  for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
+  for (let py = 0; py < resolution; py++) for (let px = 0; px < resolution; px++) {
+    const x = px / scale, y = py / scale;
     if (!mask(x, y)) continue;
     const edge = !mask(x - 2, y) || !mask(x, y - 2);
     const darkEdge = !mask(x + 2, y) || !mask(x, y + 2);
@@ -88,7 +91,7 @@ function jade(ctx, mask, colors = DEFAULT, tone = () => 0) {
       + Math.cos((y + seed % 31) / 21 - (x + seed % 17) / 31);
     const grain = Math.sin((x * 13 + y * 7 + seed % 101) / 19) * .16;
     const shade = edge ? 3 : darkEdge ? 0 : Math.max(1, Math.min(3, Math.round(1.8 + cloud * .37 + grain + tone(x, y))));
-    const index = (y * SIZE + x) * 4;
+    const index = (py * resolution + px) * 4;
     const color = palette[Math.min(shade, palette.length - 1)];
     pixels.data[index] = color[0]; pixels.data[index + 1] = color[1]; pixels.data[index + 2] = color[2]; pixels.data[index + 3] = 255;
   }
@@ -151,12 +154,13 @@ function drawPixelOpticalLayer(ctx, canvas, exhibit, sideLight) {
   }
   ctx.restore();
 }
-function artCanvas(exhibit) {
+function artCanvas(exhibit, resolution = SIZE) {
   const profile = museumArtProfile(exhibit);
-  const key = `${profile.version}:${exhibit.id ?? exhibit.shape}:${JSON.stringify(exhibit.palette ?? [])}`;
+  const key = `${profile.version}:${resolution}:${exhibit.id ?? exhibit.shape}:${JSON.stringify(exhibit.palette ?? [])}`;
   if (cache.has(key)) return cache.get(key);
-  const canvas = document.createElement('canvas'); canvas.width = canvas.height = SIZE;
+  const canvas = document.createElement('canvas'); canvas.width = canvas.height = resolution;
   const c = canvas.getContext('2d'); c.imageSmoothingEnabled = false;
+  c.scale(resolution / SIZE, resolution / SIZE);
   c.__museumSeed = profile.seed;
   const shape = exhibit.shape ?? 'stone';
   const supplied = Array.isArray(exhibit.palette) && exhibit.palette.length >= 3 ? exhibit.palette : null;
@@ -345,11 +349,193 @@ function artCanvas(exhibit) {
   cache.set(key,canvas); return canvas;
 }
 
+const STUDY_SIZE = 480;
+const studyArt = {
+  'heritage-jadeite-cabbage': drawStudyCabbage,
+  'heritage-cong-king': drawStudyCong,
+  'heritage-yu-mountain': drawStudyMountain,
+};
+
+// Paint the same paths into the jade color and relief maps. Light direction
+// changes the shading of the relief edges without moving the carving.
+function studyPainter(ctx, relief) {
+  function paint(path, color, depth, width = 0) {
+    const shape = new Path2D(path);
+    const gray = `rgb(${depth} ${depth} ${depth})`;
+    if (width) {
+      ctx.strokeStyle = color;
+      relief.strokeStyle = gray;
+      ctx.lineWidth = relief.lineWidth = width;
+      ctx.stroke(shape);
+      relief.stroke(shape);
+    } else {
+      ctx.fillStyle = color;
+      relief.fillStyle = gray;
+      ctx.fill(shape);
+      relief.fill(shape);
+    }
+  }
+  function jade(path, axis, colors, heights) {
+    function gradient(context, stops) {
+      const fill = context.createLinearGradient(...axis);
+      stops.forEach(([at, color]) => fill.addColorStop(at, color));
+      return fill;
+    }
+    const shape = new Path2D(path);
+    ctx.fillStyle = gradient(ctx, colors);
+    relief.fillStyle = gradient(relief, heights.map(([at, h]) => [at, `rgb(${h} ${h} ${h})`]));
+    ctx.fill(shape);
+    relief.fill(shape);
+  }
+  return { paint, jade };
+}
+
+function drawStudyCabbage({ paint, jade }) {
+  const leaves = [
+    { shape: 'M81 116C67 102 61 78 45 69Q33 63 32 54Q26 49 32 42Q29 35 36 30Q35 22 43 23Q49 16 55 24Q64 22 66 34C67 61 83 73 81 116Z', vein: 'M76 97Q65 63 43 34', tips: [[37,42],[38,52],[44,60],[56,29],[60,40],[64,52]], axis: [38,24,91,113], green: '#477c4f' },
+    { shape: 'M78 119C83 93 65 79 64 57Q57 52 61 43Q56 36 63 30Q61 23 68 19Q69 11 76 15Q82 12 87 20Q94 21 92 35C102 56 92 85 78 119Z', vein: 'M78 98Q84 66 75 23', tips: [[65,34],[66,46],[72,59],[85,27],[91,39],[90,52]], axis: [85,17,76,110], green: '#669857' },
+    { shape: 'M76 122C79 96 86 74 88 57Q85 49 92 43Q89 36 97 30Q96 23 103 21Q106 13 113 17Q121 15 122 23Q131 24 127 33Q133 41 125 47Q129 54 119 59C112 78 98 101 76 122Z', vein: 'M84 97Q101 64 112 24', tips: [[99,31],[94,45],[91,56],[121,30],[122,42],[115,55]], axis: [118,18,78,116], green: '#306943' },
+    { shape: 'M72 123C88 108 92 85 106 74Q111 66 119 65Q121 58 128 58Q131 52 137 57Q143 60 139 67Q142 74 133 77Q133 83 125 85C114 101 94 113 72 123Z', vein: 'M89 107Q115 83 134 62', tips: [[113,73],[105,84],[100,95],[132,72],[122,83],[112,94]], axis: [134,55,81,120], green: '#598a53' },
+    { shape: 'M80 145C64 148 51 136 50 122Q48 110 54 98Q45 86 47 75Q40 68 43 60Q36 58 37 52Q38 47 44 50Q48 48 53 55C56 66 66 72 72 81C84 96 85 123 80 145Z', vein: 'M72 136Q68 90 44 55', tips: [[45,64],[49,75],[58,87],[52,59],[61,73],[69,86]], axis: [46,52,76,125], green: '#548753' },
+    { shape: 'M79 145Q89 149 99 133C105 124 100 113 106 103Q110 94 106 89Q108 82 102 79Q103 73 97 71Q91 66 87 72Q80 74 83 81C71 98 68 132 79 145Z', vein: 'M83 140Q82 108 94 77', tips: [[85,87],[81,98],[77,112],[101,81],[103,91],[97,103]], axis: [94,69,82,131], green: '#79a86a' },
+  ];
+  for (const { shape, vein, tips, axis, green } of leaves) {
+    jade(shape, axis, [[0,'#234d36'],[.22,green],[.48,'#8db273'],[.66,'#c9d8a7'],[.83,'#e9e9cf'],[1,'#a6bb90']], [[0,65],[.24,126],[.46,104],[.69,170],[1,204]]);
+    paint(shape, '#cfdfae50', 108, .65);
+    paint(vein, '#d8e3b5b5', 184, 1.5);
+    tips.forEach(([x,y], i) => {
+      const [a,b] = tips[(i + 3) % 6];
+      const endX = x * .35 + a * .65, endY = y + 11;
+      paint(`M${x} ${y}Q${(x + endX) / 2} ${b + 3} ${endX} ${endY}`, '#e2e6b086', 150, .67);
+      paint(`M${x + 1} ${y + 2}q1 3 4 5`, '#254a35a0', 86, .7);
+    });
+  }
+  paint('M60 112q5 4 3 11l5 7m22-27q-4 8-3 15l-4 7', '#78946b9c', 142, .65);
+  for (const [x,y,s] of [[109,31,1],[74,23,.58]]) {
+    paint(`M${x-6*s} ${y+3*s}q${8*s} ${-8*s} ${14*s} ${-2*s}q${-2*s} ${4*s} ${-14*s} ${2*s}Z`, '#203f2b', 186);
+    paint(`M${x-4*s} ${y+2*s}l${7*s} ${-3*s}m${-4*s} ${4*s}l${-4*s} ${5*s} ${-4*s} 0m${13*s} ${-7*s}l${4*s} ${-5*s} ${4*s} ${-2*s}`, '#78904f', 213, .85);
+  }
+}
+
+function drawStudyCong({ paint, jade }) {
+  jade('M33 116L79 98 128 116 127 125Q81 150 34 126Z', [32,121,130,122], [[0,'#949065'],[.47,'#d4c89b'],[.55,'#827b57'],[1,'#655e43']], [[0,85],[.48,163],[1,80]]);
+  jade('M27 46L80 22 133 46 133 111 80 138 27 111Z', [27,70,133,70], [[0,'#8c8860'],[.49,'#d2c397'],[.51,'#9c9369'],[1,'#797251']], [[0,101],[.49,192],[.51,188],[1,105]]);
+  paint('M27 46L80 69 133 46 80 22Z', '#c7bb90', 194);
+  jade('M47 32C47 15 113 15 113 32L113 47C111 66 49 66 47 47Z', [47,40,113,39], [[0,'#8f8b62'],[.37,'#dbcda0'],[.64,'#cabe91'],[1,'#827951']], [[0,156],[.5,213],[1,153]]);
+  paint('M47 32C47 12 113 12 113 32S47 53 47 32Z', '#e0d3a8', 221);
+  jade('M57 32C57 18 103 18 103 32S57 47 57 32Z', [80,20,80,44], [[0,'#625b42'],[.35,'#302f28'],[.62,'#403b2c'],[1,'#a0966b']], [[0,147],[.5,36],[1,163]]);
+  paint('M58 33C65 43 95 43 102 33', '#e9d9a47a', 187, .8);
+  for (const y of [58, 90, 111]) {
+    paint(`M28 ${y}L80 ${y+22} 132 ${y}`, '#655b40', 91, 1.45);
+    paint(`M29 ${y+2}L80 ${y+24} 131 ${y+2}`, '#dacf9b', 164, .8);
+  }
+  for (const side of [-1, 1]) {
+    const x = n => 80 + side * n;
+    const y = (n, offset) => 82 + offset - n * .43;
+    const point = (n, offset) => `${x(n)} ${y(n,offset)}`;
+    paint(`M${point(2,-8)}L${point(8,-15)} ${point(20,-14)} ${point(27,-7)} ${point(30,0)} ${point(23,6)} ${point(17,10)} ${point(3,9)}Z`, side < 0 ? '#b8aa7c' : '#a99d72', 176);
+    paint(`M${point(3,-8)}L${point(9,-13)} ${point(20,-12)} ${point(26,-7)}M${point(4,4)}L${point(10,7)} ${point(21,7)} ${point(29,0)}`, '#695d40', 119, 1.05);
+    paint(`M${point(6,-2)}Q${point(15,-12)} ${point(25,-4)}Q${point(18,4)} ${point(6,-2)}Z`, '#ded1a1', 208);
+    paint(`M${point(17,-4)}l${side*2} -1 1 2 -2 1Z`, '#524a36', 92);
+    paint(`M${point(1,1)}L${point(5,4)} ${point(5,8)} ${point(1,10)}M${point(2,12)}L${point(12,12)} ${point(16,9)}`, '#6a5b41', 112, 1);
+    for (let n = 9; n < 25; n += 2.4) {
+      paint(`M${point(n,-13)}l${side*2} -5M${point(n,7)}l${side*1.6} 2`, '#786b4d', 127, .48);
+    }
+    for (const offset of [24, 43]) {
+      paint(`M${point(3,offset+3)}Q${point(12,offset-4)} ${point(21,offset+2)}Q${point(14,offset+9)} ${point(3,offset+3)}Z`, '#b7a779', 175);
+      paint(`M${point(4,offset+3)}Q${point(12,offset-2)} ${point(19,offset+2)}Q${point(13,offset+7)} ${point(4,offset+3)}M${point(9,offset+3)}L${point(14,offset+3)}`, '#6e6346', 110, .75);
+    }
+  }
+}
+
+function drawStudyMountain({ paint, jade }) {
+  const rock = (path, axis, dark, light, depth) => jade(path, axis, [[0,light],[.31,'#91a18a'],[.75,dark],[1,'#344e44']], [[0,depth],[.38,depth+24],[.77,depth-25],[1,depth-47]]);
+  const silhouette = 'M16 120L18 109 25 99 26 81 33 74 36 61 42 56 44 40 53 34 58 22 63 18 70 24 74 36 81 40 85 30 91 28 98 40 107 39 111 48 119 51 123 66 133 72 135 87 143 94 141 108 148 120 143 133Q83 150 19 135Z';
+  rock(silhouette, [36,28,142,123], '#526958', '#b8c4ad', 122);
+  rock('M19 122L27 98 31 79 45 69 45 51 57 43 63 22 71 43 68 59 58 76 62 88 51 99 47 117 36 133Z', [42,53,66,80], '#456457', '#c0cbb2', 174);
+  rock('M63 91L73 74 74 56 85 47 91 31 98 45 109 43 118 55 113 67 120 77 105 91 81 101Z', [78,44,110,102], '#536e5a', '#b5bfa4', 126);
+  rock('M93 135L102 122 100 108 113 100 111 88 124 76 130 81 130 96 142 102 139 112 146 122 140 132 121 138Z', [103,104,146,114], '#48685a', '#aeba9d', 172);
+  rock('M18 128L27 116 42 112 53 115 61 110 69 117 68 125 84 127 90 138 55 143 20 136Z', [35,110,73,145], '#536e5d', '#bec5a7', 178);
+  const faces = [
+    { x:54, y:50, rows:9, drift:-2.8, span:14 }, { x:86, y:46, rows:11, drift:-.25, span:16 },
+    { x:111, y:56, rows:8, drift:1.15, span:12 }, { x:122, y:86, rows:10, drift:.55, span:15 },
+    { x:30, y:118, rows:4, drift:-1, span:23 },
+  ];
+  for (const {x, y, rows, drift, span} of faces) {
+    for (let i = 0; i < rows; i++) {
+      const a = x + drift*i + Math.sin(i*3)*2, b = y + i*3.7;
+      const path = `M${a} ${b}q${span*.32} -3 ${span*.5} -1l${span*.27} -1.4 ${span*.23} .8`;
+      paint(path, '#40594d98', 105+i%3*9, .8+i%3*.29);
+      paint(`M${a+2} ${b-1.3}l${span*.34} -1.8 ${span*.31} .6`, '#c4ceb190', 162, .54);
+    }
+  }
+  jade('M96 61Q86 70 95 79Q105 89 89 97Q75 103 80 111Q83 120 67 127L85 135Q104 122 95 111Q91 105 106 97Q118 88 106 79Q98 72 104 64Z', [75,112,108,101], [[0,'#6f9683'],[.45,'#a8bc9d'],[1,'#486d61']], [[0,95],[.49,81],[1,109]]);
+  for (const path of ['M99 65q-7 6 0 14t0 14','M102 88q-1 5-10 8m7-2-6 5','M89 100q-11 5-5 12t-6 13','M94 104q-5 4-1 9t-6 14','M71 129q7-4 11-3m-5 6 9-2']) paint(path, '#d0d9bbad', 109, .8);
+  paint('M34 108q10-6 26-5l14-7Q82 92 90 92M101 119q9-5 29-2', '#b7bd9a', 155, 1.75);
+  for (const [x,y,s] of [[53,91,1],[65,84,.82],[113,104,.9]]) {
+    paint(`M${x-s} ${y+8*s}l${-s} ${4*s}m${3*s} ${-4*s}l${2*s} ${3*s}m${-s} ${-10*s}l${4*s} ${s} ${2*s} ${-3*s}m${-7*s} ${s}l${-3*s} ${3*s}`, '#c6ceb0', 199, 1.4*s);
+    paint(`M${x-2*s} ${y+s}q${2*s} ${-2*s} ${4*s} 0l${s} ${6*s} -${5*s} ${s}Z`, '#a8b895', 203);
+    paint(`M${x-2*s} ${y-2*s}q0 ${-3*s} ${2*s} ${-3*s}t${s} ${4*s}q${-2*s} ${2*s} ${-3*s} ${-s}Z`, '#d7d7b2', 218);
+    paint(`M${x+3*s} ${y-6*s}l${4*s} ${10*s}m${-9*s} ${s}l${4*s} ${-s}`, '#5e745b', 112, .64);
+  }
+  for (const [x,y,s] of [[37,91,1],[73,68,.75],[129,115,1.15],[29,127,.7]]) {
+    paint(`M${x} ${y}q${-2*s} ${-5*s} ${s} ${-13*s}m${-s} ${7*s}l${-5*s} ${-4*s}m${5*s} ${2*s}l${5*s} ${-4*s}`, '#4d6850', 147, 1.25*s);
+    paint(`M${x-8*s} ${y-10*s}l${5*s} ${-4*s} ${4*s} ${s} ${5*s} ${-3*s} ${4*s} ${3*s}m${-7*s} ${5*s}l${7*s} ${-3*s}`, '#859e7d', 193, 1.55*s);
+  }
+}
+
+function studyCanvas(exhibit, sideLight) {
+  const draw = studyArt[exhibit.id];
+  const light = sideLight === 'right' ? 1 : sideLight ? -1 : 0;
+  const key = `study:${exhibit.id}:${light}`;
+  if (cache.has(key)) return cache.get(key);
+  const canvas = document.createElement('canvas');
+  const heightMap = document.createElement('canvas');
+  canvas.width = canvas.height = heightMap.width = heightMap.height = STUDY_SIZE;
+  const ctx = canvas.getContext('2d');
+  const relief = heightMap.getContext('2d');
+  ctx.scale(3, 3);
+  relief.scale(3, 3);
+  ctx.lineJoin = ctx.lineCap = relief.lineJoin = relief.lineCap = 'round';
+  if (draw) draw(studyPainter(ctx, relief));
+  else ctx.drawImage(artCanvas(exhibit, STUDY_SIZE), 0, 0, SIZE, SIZE);
+  const pixels = ctx.getImageData(0, 0, STUDY_SIZE, STUDY_SIZE);
+  const heights = draw ? relief.getImageData(0, 0, STUDY_SIZE, STUDY_SIZE).data : new Uint8ClampedArray(pixels.data);
+  if (!draw) {
+    // The fine raster carvings record incisions in their dark strokes.
+    for (let i = 0; i < heights.length; i += 4) heights[i] = 82 + heights[i + 1] * .55;
+  }
+  const seed = museumArtProfile(exhibit).seed % 307;
+  for (let y = 2; y < STUDY_SIZE - 2; y++) {
+    for (let x = 2; x < STUDY_SIZE - 2; x++) {
+      const i = (y * STUDY_SIZE + x) * 4;
+      if (!pixels.data[i + 3]) continue;
+      const heightAt = offset => heights[i + offset] * heights[i + offset + 3] / 255;
+      const dx = (heightAt(8) - heightAt(-8)) / 88;
+      const dy = (heightAt(STUDY_SIZE * 8) - heightAt(-STUDY_SIZE * 8)) / 88;
+      const normal = Math.hypot(1, dx, dy);
+      const grain = ((x * 73 ^ y * 151 ^ seed) % 19 - 9) * .31;
+      const cloud = Math.sin(x * .033 + Math.sin(y * .055) + seed) * Math.cos(y * .028 - x * .013) * 5;
+      const diffuse = light ? (-light * dx * .93 + dy * .19 + .38) / normal - .38 : (dx * .3 + dy * .45 + .84) / normal - .84;
+      const shade = diffuse * (light ? 67 : 35) + grain + cloud + (light ? (x / STUDY_SIZE - .5) * light * 44 : 0);
+      pixels.data[i] += shade;
+      pixels.data[i + 1] += shade * .93;
+      pixels.data[i + 2] += shade * .73;
+    }
+  }
+  ctx.putImageData(pixels, 0, 0);
+  cache.set(key, canvas);
+  return canvas;
+}
+
 export function drawMuseumArtifact(canvas, exhibit, { backdrop = false, light = false, sideLight = false } = {}) {
   const c=canvas.getContext('2d');c.clearRect(0,0,canvas.width,canvas.height);c.imageSmoothingEnabled=false;
   if(backdrop){c.fillStyle=light?'#29473e':'#101f20';c.fillRect(0,0,canvas.width,canvas.height);}
-  const size=Math.min(canvas.width,canvas.height);c.drawImage(artCanvas(exhibit),(canvas.width-size)/2,(canvas.height-size)/2,size,size);
-  drawPixelOpticalLayer(c, canvas, exhibit, sideLight);
+  const size = Math.min(canvas.width, canvas.height);
+  const detailed = size >= STUDY_SIZE;
+  const art = detailed ? studyCanvas(exhibit, sideLight) : artCanvas(exhibit);
+  c.drawImage(art, (canvas.width-size)/2, (canvas.height-size)/2, size, size);
+  if (!detailed) drawPixelOpticalLayer(c, canvas, exhibit, sideLight);
 }
 
 export const MUSEUM_CASE_POSITIONS = [

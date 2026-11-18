@@ -1,3 +1,4 @@
+import { workshopMaterials } from './state.js';
 import { INSPECTION_QUESTIONS, MATERIAL_GUIDES } from './inspection.js';
 import { createDraft, getCraftSurface, LAYOUT_PRESETS } from './craft-model.js';
 import { drawArtisanPiece } from './piece-renderer.js';
@@ -32,9 +33,9 @@ export function createInspectionView({ store, show, button, onCreate = () => {} 
   function render() {
     dispose();
     const previousScroll = document.querySelector('dialog .dialog-body')?.scrollTop ?? 0;
-    const inventory = store.state.inventory;
+    const inventory = workshopMaterials(store.state);
     if (!store.active || store.state.location !== 'workshop' || !inventory.length) {
-      show('观玉 · 石中有意', '<section class="inspection-view inspection-empty"><div class="inspection-empty-seal" aria-hidden="true">玉</div><h3>先寻一块玉</h3><p>从矿洞带回原石，放到观察台上。看看它的色带、色斑和细纹，再想想它能成为什么。</p></section>', button('返回', 'close'));
+      show('观玉 · 石中有意', '<section class="inspection-view inspection-empty"><div class="inspection-empty-seal" aria-hidden="true">玉</div><h3>先向师傅领玉</h3><p>与师傅对话后，把赠玉放到鉴赏台。也可以观察工坊常备玉料的色带、色斑和细纹。</p></section>', button('与师傅对话', 'mentor', 'primary'));
       return;
     }
     selectedMaterial = Math.min(selectedMaterial, inventory.length - 1);
@@ -51,7 +52,8 @@ export function createInspectionView({ store, show, button, onCreate = () => {} 
     const question = INSPECTION_QUESTIONS[questionIndex];
     const completed = store.state.inspectionAnswers.includes(question.id);
     show('观玉 · 石中有意', `<section class="inspection-view">
-      <div class="inspection-heading"><div><p>一石一相</p><h3>${escape(guide.name)}</h3></div><label for="inspect-material">桌上的原石<select id="inspect-material" aria-label="选择观察的原石">${inventory.map((item, index) => `<option value="${index}" ${selectedMaterial === index ? 'selected' : ''}>${escape(MATERIAL_GUIDES[item.material].name)} · ${index + 1} 号</option>`).join('')}</select></label></div>
+      <div class="inspection-heading"><div><p>一石一相</p><h3>${escape(guide.name)}</h3></div><label for="inspect-material">桌上的原石<select id="inspect-material" aria-label="选择观察的原石">${inventory.map((item, index) => `<option value="${index}" ${selectedMaterial === index ? 'selected' : ''}>${escape(item.label ?? (item.id === 'mentor-first-jade' ? '师傅赠玉 · 和田玉' : MATERIAL_GUIDES[item.material].name))} · ${index + 1} 号</option>`).join('')}</select></label></div>
+      <section class="inspection-paper-note" aria-label="故事与工坊练习"><p>${escape(guide.story)}</p><p>${escape(guide.practice)}</p></section>
       <div class="inspection-layout">
         <section class="inspection-observe" aria-label="圆形玉材观察台">
           <div class="inspection-lens"><canvas width="420" height="420" tabindex="0" aria-label="原石圆形观察窗；拖动或方向键移动，按加减号缩放"></canvas><span class="inspection-lens-label" data-lens-label>天然色带</span></div>
@@ -210,7 +212,7 @@ export function createInspectionView({ store, show, button, onCreate = () => {} 
       if (control) { event.preventDefault(); control.click(); }
     });
     listen(root.querySelector('[data-inspect-create]'), 'click', () => {
-      if (!store.active || store.state.location !== 'workshop' || !store.state.inventory.some(item => item.id === material.id)) { render(); return; }
+      if (!store.active || store.state.location !== 'workshop' || !workshopMaterials(store.state).some(item => item.id === material.id)) { render(); return; }
       dispose();
       onCreate({ materialId: material.id, shape: selectedShape, layout: { ...LAYOUT_PRESETS[selectedLayout] }, observedFeature: feature });
     });
