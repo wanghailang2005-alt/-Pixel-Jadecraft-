@@ -38,6 +38,7 @@ dialog .museum-hall-footer button { padding:5px 10px;background:#2d432e;border-c
 .museum-empty h4 { font-size:24px;margin:0 0 8px;color:#e1cc93; }
 .museum-empty p { font-size:12px;line-height:1.8;margin-bottom:12px; }
 .museum-study-heading { display:flex;align-items:center;gap:16px;padding:10px 20px;color:#aeb89b;font-size:12px;border-bottom:1px solid #485c40; }
+.museum-study-period { min-width:0;max-width:42%;padding:3px 8px;border-left:2px solid #a68854;background:#1b2b22;color:#d0bc86;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
 .museum-study-heading>span:last-child { margin-left:auto;color:#96a38b; }
 dialog .museum-study-heading button { padding:5px 11px;background:#293a27;border-color:#8b8958; }
 .museum-study { display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);gap:20px;padding:20px 24px 24px;align-items:start; }
@@ -153,7 +154,7 @@ dialog .museum-player-label button { margin:0 7px 10px 0;background:#4e6843;bord
   .museum-room-heading { padding:10px 14px;gap:10px; }.museum-room-heading h3 { font-size:20px; }.museum-room-heading p { font-size:11px; }
   .museum-hall { margin:0 auto; }.museum-case-label { font-size:10px;padding:2px 4px; }.museum-hall-sign { font-size:10px;top:7px;left:9px; }
   .museum-hall-footer { padding:10px 12px; }.museum-hall-footer p { font-size:11px;max-width:54%; }
-  .museum-study { gap:16px;padding:16px; }.museum-scroll-paper { padding:14px 12px; }.museum-study-heading { gap:10px;padding:10px;font-size:10px; }
+  .museum-study { gap:16px;padding:16px; }.museum-scroll-paper { padding:14px 12px; }.museum-study-heading { gap:10px;padding:10px;font-size:10px; }.museum-study-period { max-width:48%;padding:3px 6px; }
   .museum-study-heading>span:last-child { display:none; }.museum-scroll h3 { font-size:20px; }
   .museum-tools { flex-wrap:wrap;gap:6px; }.museum-clue-count { margin-left:0; }.museum-lens { border-width:7px; }
   .museum-notebook { grid-template-columns:1fr;margin:14px; }.museum-notebook-title { border-right:0;border-bottom:4px double #947442;padding:15px; }.museum-notebook-title>span { display:none; }
